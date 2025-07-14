@@ -864,12 +864,6 @@ function getJurusan(koridorNumber, service) {
                 <b>${operationalStatus.schedule.weekday.dayRange} <br> ${operationalStatus.schedule.weekday.jamOperasiStr || formatHours(operationalStatus.schedule.weekday.hours)}
             </div>
             ` : ''}
-            ${(koridorNumber === 'PRJ1' || koridorNumber === 'PRJ2' || koridorNumber === '2C') ? `
-            <div class="alert alert-warning py-1 small mb-1">
-                <iconify-icon inline icon="mdi:calendar-clock"></iconify-icon>
-                <b>Sampai 14 Juli 2025</b>
-            </div>
-            ` : ''}
         </div>
         `}
     </div>
@@ -1289,7 +1283,7 @@ function displayKoridorResults(service, koridor, highlightHalte = null) {
                 if (halte === "Semanggi") arah = "→ arah Balai Kota";
             }
             if (koridor === "6V") {
-                if (halte === "ASEAN") arah = "→ arah Senayan BANK DKI";
+                if (halte === "ASEAN") arah = "← arah Ragunan";
             }
             if (koridor === "7F") {
                 if (halte === "Pasar Induk") arah = "← Masuk TOL Jagorawi arah Utan Kayu Rawamangun";
