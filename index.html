@@ -247,6 +247,8 @@
   
     <!-- END SLIDER MOTIVASI VERTICAL -->
 
+    
+
     <!-- Ganti bagian alert di HTML dengan ini -->
 <div id="tj-info-alert" class="container"></div>
 
@@ -273,11 +275,14 @@
 
     <h3 class="text-center fw-bold my-3 plus-jakarta-sans">Pilihan Layanan Transajakarta</h3>
 
-    <div class="section-box">
-        <label for="searchServiceKoridor" class="form-label plus-jakarta-sans">Pencarian Layanan dan Koridor</label>
-        <input type="text" id="searchServiceKoridor" class="form-control rounded-input" placeholder="Ketik layanan atau koridor">
-        <ul id="autocompleteResults" class="list-group mt-2"></ul>
-    </div>
+    <!-- UNIFIED SEARCH SECTION -->
+    <div class="section-box mb-4">
+      <label for="unifiedSearchInput" class="form-label plus-jakarta-sans">Pencarian Layanan, Koridor, dan Halte</label>
+      <div class="input-group">
+          <input id="unifiedSearchInput" class="form-control rounded-input" placeholder="Cari halte, layanan, atau koridor..." autocomplete="off">
+      </div>
+      <ul id="unifiedSearchResults" class="list-group mt-2"></ul>
+  </div>
 
     <div class="section-box">
         <div class="row g-3">
@@ -437,6 +442,38 @@
           setInterval(slideToNext, 5000);
         })();
     </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Tambahkan icon di samping select layanan
+  const select = document.getElementById('serviceSelect');
+  if (!select) return;
+  // Buat elemen icon
+  const icon = document.createElement('iconify-icon');
+  icon.id = 'serviceSelectIcon';
+  icon.style.fontSize = '1.5em';
+  icon.style.marginRight = '8px';
+  icon.style.verticalAlign = 'middle';
+  // Fungsi update icon sesuai value
+  function updateIcon() {
+    if (select.value === 'BRT') {
+      icon.setAttribute('icon', 'mdi:bus');
+      icon.setAttribute('title', 'BRT');
+    } else if (select.value === 'Non-BRT') {
+      icon.setAttribute('icon', 'mdi:bus-side');
+      icon.setAttribute('title', 'Non-BRT');
+    } else if (select.value === 'Transjabodetabek') {
+      icon.setAttribute('icon', 'mdi:bus-multiple');
+      icon.setAttribute('title', 'Transjabodetabek');
+    } else {
+      icon.setAttribute('icon', 'mdi:bus');
+      icon.setAttribute('title', 'Layanan');
+    }
+  }
+  updateIcon();
+  select.parentNode.insertBefore(icon, select);
+  select.addEventListener('change', updateIcon);
+});
+</script>
     <script>
 document.addEventListener("DOMContentLoaded", function() {
   // Array info unik Transjakarta
