@@ -460,7 +460,13 @@ export const koridorData = {
                 "Mercedes-Benz OH 1626",
                 "Mercedes-Benz OH 1526", "Scania K310IB"
             ],
-            haltes: ["Tegal Mampang", "Rawa Barat", "Pasar Santa", "CSW", "Mayestik", "Velbak", "Kebayoran Lama", "Seskoal", "Cipulir", "Swadarma ParagonCorp", "JORR", "Petukangan D'MASIV", "Puri Beta 1", "Puri Beta 2", "CBD Ciledug"]
+            haltes: ["Tegal Mampang", "Rawa Barat", "Pasar Santa", "CSW", "Mayestik", "Velbak", "Kebayoran Lama", "Seskoal", "Cipulir", "Swadarma ParagonCorp", "JORR", "Petukangan D'MASIV", "Puri Beta 1", "Puri Beta 2", "CBD Ciledug"],
+            halteDirectionRules: {
+                "Puri Beta 1": [
+                  { time: [5, 22], onlyAccessibleVia: "CBD Ciledug" },   // 05:00-22:00 harus lewat CBD Ciledug
+                  { time: [22, 5], onlyAccessibleVia: "Puri Beta 2" }    // 22:00-05:00 harus lewat Puri Beta 2
+                ]
+              }
         },
         "13B": {
             start: "Puri Beta 2",
@@ -855,11 +861,11 @@ export const integrasiBadge = {
 export const halteIntegrasi = [
     // [halte1, halte2, keterangan]
     ["Velbak", "Kebayoran", "JPO Integrasi"],
-    ["Simpang Cempaka", "Cempaka Mas", "JPO Integrasi"],
+    ["Simpang Cempaka", "Cempaka Mas", "JPO Integrasi 300m"],
     ["CSW", "ASEAN", "JPO Integrasi"],
     ["Kejaksaan Agung", "CSW", "JPO Integrasi"],
     ["Kejaksaan Agung", "ASEAN", "JPO Integrasi"],
     ["Galunggung", "Dukuh Atas", "JPO Integrasi"],
     ["Bendungan Hilir", "Semanggi", "Jalan kaki ±300m"],
-    ["Senen Sentral", "Senen TOYOTA Rangga", "Jalan kaki ±300m"],
+    ["Senen Sentral", "Senen TOYOTA Rangga", "JPO Integrasi jalan kaki ±90m"],
 ];
