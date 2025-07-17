@@ -186,7 +186,48 @@
                       background: transparent !important;
                       border: none !important;
                     }
-        
+  .dark-mode-bg { transition: background 0.3s; }
+  body.dark-mode .dark-mode-bg { background: #232a36 !important; color: #f4f6fa !important; }
+  body.dark-mode #unifiedSearchInput, body.dark-mode .form-control, body.dark-mode .form-select {
+    background: #232a36 !important;
+    color: #f4f6fa !important;
+    border: none !important;
+  }
+  .bus-result-card {
+    border-radius: 1.5em !important;
+    box-shadow: 0 4px 24px 0 #0002 !important;
+    background: #fff;
+    font-family: 'Rubik', 'Plus Jakarta Sans', sans-serif;
+    margin-bottom: 2rem;
+    padding: 2rem 1.5rem;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  body.dark-mode .bus-result-card {
+    background: #232a36 !important;
+    color: #f4f6fa !important;
+  }
+  .bus-result-card .badge {
+    font-size: 2.2em !important;
+    border-radius: 1em !important;
+    background: #4fa8de !important;
+    box-shadow: 0 2px 8px #4fa8de33;
+  }
+  .bus-result-card img {
+    border-radius: 1em !important;
+    background: #fff;
+    padding: 0.2em;
+    box-shadow: 0 2px 8px #0001;
+  }
+  @media (max-width: 600px) {
+    .bus-result-card { padding: 1.2rem 0.7rem; }
+    .bus-result-card .badge { font-size: 1.3em !important; }
+  }
+  .nav-link#unified-tab {
+    color: #264697 !important;
+  }
+  .nav-link#bus-tab {
+    color: #264697 !important;
+  }
     </style>
 </head>
 
@@ -252,44 +293,68 @@
     <!-- Ganti bagian alert di HTML dengan ini -->
 <div id="tj-info-alert" class="container"></div>
 
-    <div class="section-box">
-        <div class="alert alert-warning alert-dismissible fade show py-2 small mb-2" style="font-size:0.95em;" role="alert">
+<!-- SECTION: Cari Rute -->
+<div class="p-4 mb-4 rounded-4 shadow bg-light bg-opacity-75 dark-mode-bg">
+  <div class="alert alert-warning alert-dismissible fade show py-2 small mb-2" style="font-size:1.05em;" role="alert">
             ⚠️ Fitur <b>Cari Rute</b> masih bersifat <b>eksperimental</b>. Kalo kamu ga mau nyasar atau bingung, mendingan tanya petugas di halte yaa!<br>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
         </div>
-        <h3 class="fw-bold text-center plus-jakarta-sans">Mau pergi kemana?</h3>
-        <div class="row g-3 mt-2 plus-jakarta-sans">
+  <h3 class="fw-bold text-center fs-3 mb-3">Mau pergi kemana?</h3>
+  <div class="row g-3 mb-2">
             <div class="col-md-6">
-                <input type="text" id="halteAsalInput" class="form-control rounded-input" placeholder="Masukin halte awal kamu" list="halteList">
+          <input type="text" id="halteAsalInput" class="form-control py-3 px-4 rounded-pill shadow-sm border-0 fs-5" placeholder="Masukin halte awal kamu" list="halteList">
             </div>
             <div class="col-md-6">
-                <input type="text" id="halteTujuanInput" class="form-control rounded-input" placeholder="Masukin halte tujuan kamu" list="halteList">
+          <input type="text" id="halteTujuanInput" class="form-control py-3 px-4 rounded-pill shadow-sm border-0 fs-5" placeholder="Masukin halte tujuan kamu" list="halteList">
                 <datalist id="halteList"></datalist>
             </div>
             <div class="col-12">
-                <button id="cariRuteBtn" class="btn btn-outline-dark rounded-5 w-100">Cari Rute</button>
+          <button id="cariRuteBtn" class="btn btn-outline-dark rounded-pill w-100 py-3 fs-5">Cari Rute</button>
             </div>
         </div>
         <div id="hasilRute" class="mt-3"></div>
     </div>
 
-    <h3 class="text-center fw-bold my-3 plus-jakarta-sans">Pilihan Layanan Transajakarta</h3>
-
-    <!-- UNIFIED SEARCH SECTION -->
+<!-- SECTION: Unified Search & Bus Number Search Tabs -->
     <div class="section-box mb-4">
-      <label for="unifiedSearchInput" class="form-label plus-jakarta-sans">Pencarian Layanan, Koridor, dan Halte</label>
-      <div class="input-group">
-          <input id="unifiedSearchInput" class="form-control rounded-input" placeholder="Cari halte, layanan, atau koridor..." autocomplete="off">
+  <ul class="nav nav-tabs nav-justified mb-3" id="searchTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active shadow-sm" id="unified-tab" data-bs-toggle="tab" data-bs-target="#unified-pane" type="button" role="tab" aria-controls="unified-pane" aria-selected="true">
+        <iconify-icon inline icon="mdi:magnify"></iconify-icon> Pencarian Layanan
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link shadow-sm" id="bus-tab" data-bs-toggle="tab" data-bs-target="#bus-pane" type="button" role="tab" aria-controls="bus-pane" aria-selected="false">
+        <iconify-icon inline icon="mdi:bus"></iconify-icon> Cari Bus
+      </button>
+    </li>
+  </ul>
+  <div class="tab-content pt-2" id="searchTabContent">
+    <!-- Unified Search Tab -->
+    <div class="tab-pane fade show active" id="unified-pane" role="tabpanel" aria-labelledby="unified-tab">
+      <div class="input-group mb-3">
+        <input id="unifiedSearchInput" class="form-control fs-5 py-3 px-4 rounded-pill shadow-sm border-0" placeholder="Cari halte, layanan, atau koridor..." autocomplete="off">
       </div>
       <ul id="unifiedSearchResults" class="list-group mt-2"></ul>
+    </div>
+    <!-- Bus Number Search Tab -->
+    <div class="tab-pane fade" id="bus-pane" role="tabpanel" aria-labelledby="bus-tab">
+      <div class="input-group mb-3">
+        <input id="busNumberInput" class="form-control fs-5 py-3 px-4 rounded-pill shadow-sm border-0" placeholder="Cari nomor bus" autocomplete="off">
+      </div>
+      <div id="busNumberResults" class="mt-2"></div>
+    </div>
   </div>
+</div>
 
-    <div class="section-box">
+<!-- SECTION: Pilihan Layanan -->
+<h3 class="text-center fw-bold my-3 fs-3">Pilihan Layanan Transjakarta</h3>
+<div class="p-4 mb-4 rounded-4 shadow bg-light bg-opacity-75 dark-mode-bg">
         <div class="row g-3">
             <div class="col-md-6">
                 <div class="form-group">
-                    <label for="serviceSelect" class="form-label plus-jakarta-sans">Layanan</label>
-                    <select id="serviceSelect" class="form-select rounded-input fw-bold plus-jakarta-sans bg-light">
+              <label for="serviceSelect" class="form-label fs-5 fw-bold">Layanan</label>
+              <select id="serviceSelect" class="form-select py-3 px-4 rounded-pill shadow-sm border-0 fs-5 bg-light">
                         <option value="BRT" selected>BRT</option>
                         <option value="Non-BRT">Non-BRT</option>
                         <option value="TransJabodetabek">Transjabodetabek</option>
@@ -298,8 +363,8 @@
             </div>
             <div class="col-md-6">
                 <div class="form-group">
-                    <label for="koridorSelect" class="form-label plus-jakarta-sans">Koridor</label>
-                    <select id="koridorSelect" class="form-select rounded-input" disabled>
+              <label for="koridorSelect" class="form-label fs-5 fw-bold">Koridor</label>
+              <select id="koridorSelect" class="form-select py-3 px-4 rounded-pill shadow-sm border-0 fs-5" disabled>
                         <option value="" selected>Koridor</option>
                     </select>
                 </div>
@@ -307,27 +372,17 @@
         </div>
     </div>
 
-    <div class="section-box">
-        <label for="searchInput" class="form-label plus-jakarta-sans">Cari Halte:</label>
-        <div class="mb-2 small text-muted">
-            <span class="text-muted fw-bold plus-jakarta-sans">Sedikit Panduan</span><br>
-            <span class="badge bg-2 mt-2 me-1 mb-1" style="width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">2</span>
-            <span class="badge bg-2 me-1 mb-1" style="width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">11</span> <b>Galur</b>
-            <span class="me-2"></span>
-            <br><span class="badge bg-2 me-1 mb-1" style="width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">2</span> <span class="plus-jakarta-sans">= Badge pertama menunjukan</span> <b>Koridor 2</b>
-            <br><span class="badge bg-2 me-1 mb-1" style="width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">11</span> <span class="plus-jakarta-sans">=  Badge kedua menunjukan posisi halte <b class="pt-sans">Galur</b> berada di urutan ke <b class="pt-sans">11</b> pada <span class="pt-sans fw-bold"><b>Koridor 2</b> PULO GADUNG - MONUMEN NASIONAL</span>
-        </div>
-        <input type="text" id="searchInput" class="form-control rounded-input" placeholder="Masukkan nama halte">
-
-        <div class="text-center mt-4">
-            <h5 class="plus-jakarta-sans">Hasil Pencarian:</h5>
-            <ul id="searchResults" class="list-group fw-bold">Hasil Pencarian kamu akan muncul disini</ul>
-
-            <h5 class="mt-4 plus-jakarta-sans">Daftar Halte:</h5>
-            <h3 id="jurusan"><span class="plus-jakarta-sans">Cari koridor yang kamu mau dulu yaa</span></h3>
-            <ul id="koridorResults" class="list-group fw-bold"></ul>
-        </div>
-    </div>
+<!-- SECTION: Cari Halte (disembunyikan) -->
+<div class="p-4 mb-4 rounded-4 shadow bg-light bg-opacity-75 dark-mode-bg" style="display:none">
+  <label for="searchInput" class="form-label fs-5 fw-bold">Cari Halte</label>
+  <input type="text" id="searchInput" class="form-control py-3 px-4 rounded-pill shadow-sm border-0 fs-5 mb-3" placeholder="Masukkan nama halte">
+</div>
+<!-- DAFTAR HALTE SECTION -->
+<div class="section-box mb-4 p-4">
+  <h5 class="fw-bold fs-4 mb-3" style="color:#264697;">Daftar Halte:</h5>
+  <h3 id="jurusan" class="fs-5 mb-3"><span>Cari koridor yang kamu mau dulu yaa</span></h3>
+  <ul id="koridorResults" class="list-group fw-bold"></ul>
+</div>
 
     <div class="text-center mt-4">
         <a href="https://muhfhri.github.io/-/#home" class="btn btn-outline-dark rounded-5">Kembali ke Beranda</a>
@@ -375,6 +430,7 @@
       <br>Contoh lainnya:
       <span class="text-muted fw-bold bg-warning px-2 py-1 rounded">→ ke Masjid Agung</span> yang berarti langsung ke halte Masjid Agung
     </p>
+<script src="js/tjNumberSearch.js"></script>
 
     <p>
       Ikon transportasi lainnya:
@@ -385,6 +441,22 @@
   </div>
 </div>
 
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('busNumberInput');
+    const resultsDiv = document.getElementById('busNumberResults');
+    if (!input || !resultsDiv) return;
+    input.addEventListener('input', function() {
+      const val = input.value;
+      if (!val) {
+        resultsDiv.innerHTML = '';
+        return;
+      }
+      const results = searchBusByNumber(val);
+      resultsDiv.innerHTML = renderBusSearchResults(results);
+    });
+  });
+</script>
 
     <center class="plus-jakarta-sans">
         <div class="my-3 align-items-center">
