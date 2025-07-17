@@ -9,6 +9,15 @@ body {
   transition: background 0.5s, color 0.5s ease;
 }
 
+@font-face {
+  font-family: New Rubik;
+  src: url('rubikfont.otf');
+}
+
+.rubik {
+  font-family: New Rubik !important;
+}
+
 [data-theme="dark"] body {
   background-color: #0c0e13 !important;
   color: #eee;
