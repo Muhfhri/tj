@@ -153,113 +153,6 @@ function getServicesAndKoridorsByHalte(halteName) {
     return results;
 }
 
-// Menampilkan hasil pencarian halte
-function displaySearchResults(query) {
-    const resultsContainer = document.getElementById('searchResults');
-    resultsContainer.innerHTML = '';
-
-    if (query === '') {
-        resultsContainer.innerHTML = '<li class="list-group-item bg-light rounded-3 text-warning">Masukkan nama halte untuk mencari.</li>';
-        return;
-    }
-
-    const results = new Set();
-    for (const koridors of Object.values(koridorData)) {
-        for (const koridorInfo of Object.values(koridors)) {
-            koridorInfo.haltes.forEach(halte => {
-                if (halte.toLowerCase().includes(query.toLowerCase())) {
-                    results.add(halte);
-                }
-            });
-        }
-    }
-
-    if (results.size === 0) {
-        resultsContainer.innerHTML = '<li class="list-group-item bg-light rounded-3 text-danger">Halte tidak ditemukan.</li>';
-        return;
-    }
-
-    results.forEach(halte => {
-        const servicesAndKoridors = getServicesAndKoridorsByHalte(halte);
-        servicesAndKoridors.forEach(({ service, koridor }) => {
-            const koridorEntry = koridorData[service][koridor];
-            const idx = koridorEntry.haltes.indexOf(halte);
-
-            const listItem = document.createElement('li');
-            listItem.className = 'list-group-item bg-light d-flex align-items-center';
-            listItem.style.cursor = 'pointer';
-
-            // Badge koridor
-            const koridorBadge = createKoridorBadge(service, koridor);
-            koridorBadge.style.marginRight = "8px";
-
-            // Badge nomor urut halte
-            const nomorBadge = document.createElement('span');
-            nomorBadge.textContent = String(idx + 1).padStart(2, '0');
-            nomorBadge.style.backgroundColor = getKoridorBadgeColor(koridor);
-            nomorBadge.style.color = "#fff";
-            nomorBadge.style.width = "24px";
-            nomorBadge.style.height = "24px";
-            nomorBadge.style.display = "inline-flex";
-            nomorBadge.style.alignItems = "center";
-            nomorBadge.style.justifyContent = "center";
-            nomorBadge.style.borderRadius = "50%";
-            nomorBadge.style.fontWeight = "bold";
-            nomorBadge.style.fontSize = "0.8rem";
-            nomorBadge.style.marginRight = "10px";
-
-            // Nama halte (text saja)
-            const halteSpan = document.createElement('span');
-            halteSpan.className = 'text-dark';
-            halteSpan.innerHTML = halte 
-                + (halteKRL.includes(halte)
-                    ? ` <iconify-icon inline icon="jam:train"></iconify-icon>`
-                    : '')
-                + (halteMRT.includes(halte)
-                    ? ` <iconify-icon inline icon="pepicons-pop:train-circle"></iconify-icon>`
-                    : '');
-            listItem.appendChild(koridorBadge);
-            listItem.appendChild(nomorBadge);
-            listItem.appendChild(halteSpan);
-
-            // Klik: langsung arahkan ke koridor dan highlight halte
-            listItem.onclick = function() {
-                selectKoridor(service, koridor);
-                setTimeout(() => {
-                    if (service === 'Non-BRT' || service === 'TransJabodetabek') {
-                        const koridorEntry = koridorData[service][koridor];
-                        let foundDirection = null;
-                        let foundHaltes = null;
-                        if (koridorEntry.directions) {
-                            for (const dir in koridorEntry.directions) {
-                                if (koridorEntry.directions[dir].includes(halte)) {
-                                    foundDirection = dir;
-                                    foundHaltes = koridorEntry.directions[dir];
-                                    break;
-                                }
-                            }
-                        }
-                        if (foundDirection && foundHaltes) {
-                            window._highlightHalte = halte;
-                            // Selalu panggil showHaltes agar highlight selalu muncul, meskipun arah sama
-                            showHaltes(koridor, foundDirection, foundHaltes, halte);
-                            // Tidak perlu trigger klik tombol arah lagi
-                        } else {
-                            window._highlightHalte = null;
-                            displayKoridorResults(service, koridor, halte);
-                        }
-                    } else {
-                        window._highlightHalte = null;
-                        displayKoridorResults(service, koridor, halte);
-                    }
-                }, 150);
-            };
-
-            resultsContainer.appendChild(listItem);
-        });
-    });
-}
-
 // Fungsi untuk mendapatkan status operasi berdasarkan hari dan jam
 function getOperationalStatus(koridorNumber, service) {
     const koridor = koridorData[service]?.[koridorNumber];
@@ -1673,10 +1566,6 @@ function findRoutePanduanMultiTransit(halteAsal, halteTujuan) {
             if (currService && (next.service !== currService || next.koridor !== currKoridor) && next.service !== "Integrasi") {
                 nextTransitCount++;
             }
-            // Tambahkan penalti jika koridor huruf
-            if (/^[0-9]+[A-Z]$/i.test(next.koridor)) {
-                nextTransitCount += 1; // penalti, bisa diubah jika ingin lebih berat
-            }
             // Visited key: halte|service|koridor|transitCount
             let nextKey = `${next.halteTujuan}|${next.service}|${next.koridor}|${nextTransitCount}`;
             if (!visited.has(nextKey)) {
@@ -2752,3 +2641,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// --- PATCH: Enable koridorSelect by default and default to BRT ---
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default layanan ke BRT jika belum ada
+    const serviceSelect = document.getElementById('serviceSelect');
+    if (serviceSelect && !serviceSelect.value) {
+        serviceSelect.value = 'BRT';
+    }
+    // Enable koridorSelect and populate with BRT koridors by default
+    const koridorSelect = document.getElementById('koridorSelect');
+    if (koridorSelect) {
+        koridorSelect.disabled = false;
+        // Populate with BRT koridors if not already populated
+        if (serviceSelect) {
+            serviceSelect.value = serviceSelect.value || 'BRT';
+            updateKoridorOptions();
+        }
+    }
+});
+
