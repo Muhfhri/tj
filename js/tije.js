@@ -507,25 +507,25 @@ function getJurusan(koridorNumber, service) {
     if (busTypes.length > 0) {
         // Mapping gambar bus (bisa ditambah sesuai kebutuhan)
         const busTypeToImage = {
-            "Volvo B11R": "https://live.staticflickr.com/874/41008899292_7698081274_b.jpg",
-            "Mercedes-Benz OH 1626": "https://pbs.twimg.com/media/EMfDLRrUYAU5wAZ.jpg",
+            "Volvo B11R": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Transjakarta%2C_Volvo_B11R_%28SAF-025%29.jpg/1280px-Transjakarta%2C_Volvo_B11R_%28SAF-025%29.jpg",
+            "Mercedes-Benz OH 1626": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Transjakarta_-_MYS-21263_Daimler_OH_1626.jpg/1280px-Transjakarta_-_MYS-21263_Daimler_OH_1626.jpg",
             "Mercedes-Benz OH 1526": "https://pbs.twimg.com/media/EhuPuokU4AAniIJ.jpg",
-            "Mercedes-Benz O500U": "https://live.staticflickr.com/851/28967921207_220cc5117c_b.jpg",
+            "Mercedes-Benz O500U": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/TJ_0791_at_Senayan.jpg/1280px-TJ_0791_at_Senayan.jpg",
             "Mercedes-Benz OC 500 RF 2542": "https://live.staticflickr.com/1825/42375369745_d59b0db737_b.jpg",
             "Scania K320IA": "https://mobilkomersial.com/wp-content/uploads/2023/04/Bus-TJ-Gandeng.jpg",
             "Scania K310IB": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Transjakarta_MYS_18116_at_Gambir.jpg/1100px-Transjakarta_MYS_18116_at_Gambir.jpg",
-            "Scania K250UB": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Transjakarta_-_TJ632_Scania_K250UB.jpg/250px-Transjakarta_-_TJ632_Scania_K250UB.jpg",
+            "Scania K250UB": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Transjakarta_-_TJ632_Scania_K250UB.jpg/1280px-Transjakarta_-_TJ632_Scania_K250UB.jpg",
             "Hino RK1 JSNL": "https://live.staticflickr.com/4624/39561244554_fc5cf21761_b.jpg",
             "Hino RK8 R260": "https://live.staticflickr.com/1937/45752656441_bf9489a0bb_b.jpg",
             "Zhongtong Bus LCK6180GC": "https://redigest.web.id/wp-content/uploads/2019/10/IMG_20191011_104316_HDR.jpg",
-            "Zhongtong Bus LCK6126EVGRA1": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Transjakarta_-_DMR-240127_01.jpg/250px-Transjakarta_-_DMR-240127_01.jpg",
+            "Zhongtong Bus LCK6126EVGRA1": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Transjakarta_-_DMR-240127_01.jpg/1280px-Transjakarta_-_DMR-240127_01.jpg",
             "Zhongtong Bus LCK6126EVGRA2": "https://img.okezone.com/content/2025/06/20/1/3148864/bus_listrik_damri-peyD_large.jpg",
             "SAG Golden Dragon XML6125JEVJ0C3": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Transjakarta_-_BMP-240327.jpg/1100px-Transjakarta_-_BMP-240327.jpg",
             "Skywell NJL6126BEV": "https://www.transgo.co.id/wp-content/uploads/2024/11/002.png",
             "Skywell NJL6129BEV": "https://mobilkomersial.com/wp-content/uploads/2024/11/Snapinsta.app_466929837_870028668268355_8248708680309915930_n_1080.jpg",
             "VKTR BYD D9 (EV)": "https://asset.kompas.com/crops/G33-Spk3Y_p-AZPaLFIgdLT1bd0=/13x164:1080x875/1200x800/data/photo/2024/12/03/674e9cfae21a3.jpg",
-            "Hino GB 150": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Bus_Minitrans_melayani_penumpang_di_rute_6W.jpg/250px-Bus_Minitrans_melayani_penumpang_di_rute_6W.jpg",
-            "VKTR BYD B12 (EV)": "https://mobilkomersial.com/wp-content/uploads/2023/07/904275434704_493450525478316_422167581136174078_n.jpg",
+            "Hino GB 150": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Bus_Minitrans_melayani_penumpang_di_rute_6W.jpg/1280px-Bus_Minitrans_melayani_penumpang_di_rute_6W.jpg",
+            "VKTR BYD B12 (EV)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Transjakarta_SJM-240012.jpg/1280px-Transjakarta_SJM-240012.jpg",
             "Mitsubishi Colt FE 84G": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/MiniTrans.jpg/1100px-MiniTrans.jpg",
             "Hino RN8 285" : "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/BHL_TJ_Kampung_Rambutan_bus_terminal_20220715.jpg/1100px-BHL_TJ_Kampung_Rambutan_bus_terminal_20220715.jpg"
         };
