@@ -17,6 +17,10 @@ const logoOperator = {
   "Pahala Kencana Transportation": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbu5QUTsaredjAkDMv8QN54ZJaZwMMR91F6w&s", // PKT
   "PT Transportasi Jakarta": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/TransJakarta_Logo.svg/2560px-TransJakarta_Logo.svg.png",
   "Swakelola Transjakarta": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/TransJakarta_Logo.svg/2560px-TransJakarta_Logo.svg.png",
+  "Bayu Holong Persada": "https://images.glints.com/unsafe/glints-dashboard.oss-ap-southeast-1.aliyuncs.com/company-logo/07d80154d16da4f9e516883fe6d9c328.png",
+  "Jewa Dian Mitra": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS95OI_9C-MbKXkrtS8dOdYHWUx-M8fu6buqw&s",
+  "Koperasi Wahana Kalpika": "https://absen.e-kwk.com/assets/img/logokwk.png",
+  "Komilet Jaya": "https://images.msha.ke/00f33e2a-f5b6-4735-b503-6b1f3bd78542?auto=format%2Ccompress&cs=tinysrgb&q=30&w=828",
 };
 
 // Mapping logo chasis (brand)
@@ -26,11 +30,12 @@ const logoChasis = {
   "Scania": "https://logos-world.net/wp-content/uploads/2022/12/Scania-Logo.png", // Scania
   "Mercedes-Benz": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh0KKy7H6VeaJ7qYw8kcq_C-Vgmb6o9dqov5uLkUZIKCX-URZTroCSPrv2Rdtv35VMeUmcGRrWc9p4xzh71_p5r7zm8GH9m1rcrGmYrwF_33nMrCLKTIhqOf7iMvl4SEXxbH0fJlv1xHX6Ti7tY4oopw-esuO8XAPmQDRoNZttmfuFBsSSr8NALxA/w320-h247/Mercedes-Benz-(Koleksilogo.com).png",
   "Hino": "https://upload.wikimedia.org/wikipedia/id/5/5d/Logo_Hino.png",
-  "MAN": "https://upload.wikimedia.org/wikipedia/commons/2/2a/MAN_logo_placeholder.png",
+  "MAN": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Logo_MAN.png/1200px-Logo_MAN.png",
   "VKTR": "https://e-ipo.co.id/en/pipeline/get-logo?id=237", // VKTR
   "Volvo": "https://images.seeklogo.com/logo-png/15/2/volvo-logo-png_seeklogo-150600.png", // Volvo
   "Golden Dragon": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Golden_Dragon_logo_2.png/1200px-Golden_Dragon_logo_2.png", // Golden Dragon
   "Mitsubishi": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Mitsubishi_motors_new_logo.svg",
+
 };
 
 // Contoh cara pakai di render:
@@ -38,716 +43,169 @@ const logoChasis = {
 // <img src="${logoOperator[bus.operator] || 'default.png'}" alt="${bus.operator}" ... />
 // <img src="${gambarChasis[bus.tipe] || 'default_chasis.png'}" alt="${bus.tipe}" ... />
 
+// --- DATA RANGE BUS UTAMA UNTUK SEARCH & SUGGESTION (SATU SUMBER DATA) ---
+const busRangeData = [
+  // Contoh entry, copy/ubah dari logic lama
+  // KODE BUS DAN OPERATOR
+  // BIANGLALA METROPOLITAN
+  { 
+    prefix: 'BMP', start: 240322, end: 240411, operator: 'Bianglala Metropolitan', tipe: 'SAG Golden Dragon Pivot E12', warna: 'Putih Biru Tua', bahanBakar: 'Listrik', karoseri: 'CBU', catatan: 'BRT', isBMPGoldenDragon: true, isSingle: true 
+  },
+  { 
+    prefix: 'BMP', start: 230300, end: 230321, operator: 'Bianglala Metropolitan', tipe: 'SAG Golden Dragon Pivot E12', warna: 'Putih Orange', bahanBakar: 'Listrik', karoseri: 'CBU', catatan: 'Non BRT', isBMPGoldenDragon: true, isSingle: true 
+  },
+  { prefix: 'BMP', start: 220252, end: 220299, operator: 'Bianglala Metropolitan', tipe: 'Mercedes Benz OH 1626 A/T', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Tri Sakti', isBMP: true, isSingle: true },
+  { prefix: 'BMP', start: 242, end: 251, operator: 'Bianglala Metropolitan', tipe: 'Mercedes Benz OH 1626 A/T', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Tri Sakti', isBMP: true, isSingle: true },
+{ prefix: 'BMP', start: 1, end: 241, operator: 'Bianglala Metropolitan', tipe: 'Hino RK8 R260', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: ['Rahayu Sentosa', 'Restu Ibu Pusaka', 'Laksana'], isBMP: true, isSingle: true },
+{ prefix: 'BMP', start: 252, end: 400, operator: 'Bianglala Metropolitan', tipe: 'Hino RK8 R260', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: ['Rahayu Sentosa', 'Restu Ibu Pusaka', 'Laksana'], isBMP: true, isSingle: true },
+
+  // MAYASARI BAKTI
+  {
+    prefix: 'MB', start: 1601, end: 1656, operator: 'Mayasari Bakti', tipe: 'Scania K320IA', warna: 'Putih-Biru Muda', bahanBakar: 'BBG', karoseri: 'Laksana', catatan: 'Bus Gandeng',  isGandeng: true
+  },
+  { 
+    prefix: 'MYS', start: 19203, end: 19233, operator: 'Mayasari Bakti', tipe: 'Mercedes-Benz OH 1626', warna: 'Putih-Biru Tua', bahanBakar: 'Diesel', karoseri: 'Laksana', isSingle: true 
+  },
+  { 
+    prefix: 'MYS', start: 21224, end: 21333, operator: 'Mayasari Bakti', tipe: 'Mercedes-Benz OH 1626', warna: 'Putih-Biru Tua', bahanBakar: 'Diesel', karoseri: 'Laksana', catatan:'Bus Generasi 2 1626', isSingle: true 
+  },
+  //scania k310ib MYS
+  { 
+    prefix: 'MYS', start: 17001, end: 17110, operator: 'Mayasari Bakti', tipe: 'Scania K310IB', warna: '', bahanBakar: 'Diesel', karoseri: 'Laksana', isMaxi: true 
+  },
+  { 
+    prefix: 'MYS', start: 18111, end: 18150, operator: 'Mayasari Bakti', tipe: 'Scania K310IB', warna: '', bahanBakar: 'Diesel', karoseri: 'Laksana', isMaxi: true 
+  },
+  //byd b12 mys
+  {
+    prefix: 'MYS', start: 22334, end: 22363, operator: 'Mayasari Bakti', tipe: 'VKTR BYD B12', warna: 'Tosca', bahanBakar: 'Listrik', karoseri: 'CBU', catatan: 'Non BRT', isLowdeck: true 
+  },
+  {
+    prefix: 'MYS', start: 23364, end: 23385, operator: 'Mayasari Bakti', tipe: 'VKTR BYD B12', warna: 'Putih Orange', bahanBakar: 'Listrik', karoseri: 'CBU', catatan: 'Non BRT', isLowdeck: true 
+  },
+
+  // STEADY SAFE (SAF)
+  {
+    prefix: 'SAF', start: 1, end: 119, operator: 'Steady Safe', tipe: 'Volvo B11R', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Laksana', isMaxi: true
+  },
+
+  // PAHALA KENCANA TRANSPORTATION
+  {
+    prefix: 'PKT', start: 101, end: 115, operator: 'Pahala Kencana Transportation', tipe: 'Mercedes-Benz OH 1626 M/T', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Laksana', depo: 'Pegangsaan Dua', isSingle: true // bus single
+  },
+
+  // DAMRI
+  // ZHONGTONG
+  {
+    prefix: 'DMR', start: 704, end: 763, operator: 'DAMRI', tipe: 'Zhongtong Bus LCK6180GC', warna: 'Putih-Biru Tua', bahanBakar: 'BBG', karoseri: 'CBU', pool: 'Klender', catatan: 'Bus Gandeng', isGandeng: true // bus gandeng
+  },
+  { 
+    prefix: 'DMR', start: 240125, end: 240154, operator: 'DAMRI', tipe: 'Zhongtong Bus LCK6126EVGRA1', warna: 'Putih-Biru Tua', bahanBakar: 'Listrik', karoseri: 'CBU', pool: 'Klender', catatan: 'BRT', isZhongtong: true, isSingle: true 
+  },
+  { 
+    prefix: 'DMR', start: 250155, end: 250224, operator: 'DAMRI', tipe: 'Zhongtong Bus LCK6126EVGRA2', warna: 'Putih-Biru Tua', bahanBakar: 'Listrik', karoseri: 'CBU', pool: 'Klender', catatan: 'BRT', isZhongtong: true, isSingle: true 
+  },
+  // SKYWELL
+  { 
+    prefix: 'DMR', start: 240155, end: 240214, operator: 'DAMRI', tipe: 'Skywell NJL6126BEV', warna: 'Putih-Biru Tua', bahanBakar: 'Listrik', karoseri: 'CBU', pool: 'Cakung', catatan: 'BRT', isSkywell: true, isLowdeck: true 
+  },
+  { 
+    prefix: 'DMR', start: 230099, end: 230124, operator: 'DAMRI', tipe: 'Skywell NJL6129BEV', warna: 'Putih Orange', bahanBakar: 'Listrik', karoseri: 'CBU', catatan: 'Non BRT', isSkywellNonBRT: true, isLowdeck: true 
+  },
+  // HINO RK8 R260
+  { 
+    prefix: 'DMR', start: 104, end: 153, operator: 'DAMRI', tipe: 'Hino RK8 R260', warna: 'Biru', bahanBakar: 'Diesel', karoseri: 'Restu Ibu Pusaka', isSingle: true 
+  },
+  { prefix: 'DMR', start: 154, end: 353, operator: 'DAMRI', tipe: 'Hino RK8 R260', warna: 'Biru', bahanBakar: 'Diesel', karoseri: 'Rahayu Sentosa', isSingle: true 
+
+  },
+  { 
+    prefix: 'DMR', start: 354, end: 503, operator: 'DAMRI', tipe: 'Hino RK8 R260', warna: 'Biru', bahanBakar: 'Diesel', karoseri: 'Laksana', isDMRHino: true 
+  },
+  { 
+    prefix: 'DMR', start: 604, end: 703, operator: 'DAMRI', tipe: 'Hino RK8 R260', warna: 'Biru', bahanBakar: 'Diesel', karoseri: 'Laksana', isDMRHino: true 
+  },
+
+  // PT TRANSPORTASI JAKARTA - BUS WISATA & BUS TINGKAT
+  {
+    prefix: 'TJ', start: 188, end: 238, operator: 'PT Transportasi Jakarta', tipe: 'Scania K320IA', warna: 'Putih Biru Muda', bahanBakar: 'BBG', karoseri: 'Laksana', pool: 'Pulo Gadung', isGandeng: true,// bus gandeng
+  },
+  { 
+    prefix: 'TJ', start: 187, end: 187, operator: 'PT Transportasi Jakarta', tipe: 'Scania K340IA', warna: 'Putih Biru Muda', bahanBakar: 'BBG', karoseri: 'Gemilang Coachworks', pool: 'Pulo Gadung', isTJ: true, isGandeng: true 
+  },
+
+  { prefix: 'TJ', start: 347, end: 354, operator: 'PT Transportasi Jakarta', tipe: 'MAN R37', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Nusantara Gemilang', pool: 'Cawang', catatan: 'Bus Wisata', isTingkat: true },
+  { prefix: 'TJ', start: 351, end: 351, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz OC 500 RF 2542', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Nusantara Gemilang', pool: 'Cawang', catatan: 'Bus Wisata', isTingkat: true },
+  { prefix: 'TJ', start: 381, end: 387, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz OC 500 RF 2542', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'New Armada', pool: 'Cawang', catatan: 'Bus Wisata', isTingkat: true },
+  { prefix: 'TJ', start: 884, end: 884, operator: 'PT Transportasi Jakarta', tipe: 'SCANIA K310UB', warna: 'Merah Putih', bahanBakar: 'Diesel', karoseri: 'Adi Putro', pool: 'Cawang', catatan: 'Bus Wisata', isTingkat: true },
+
+  { prefix: 'TJ', start: 247, end: 346, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz OH 1526 M/T', warna: 'Putih Biru Muda', bahanBakar: 'BBG', karoseri: ['Laksana', 'Rahayu Sentosa', 'Tri Sakti', 'Tentrem'], pool: 'Cawang', catatan: 'Bus BRT', isSingle: true },
+{ prefix: 'TJ', start: 355, end: 380, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz OC 500 RF 2542', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Nusantara Gemilang', pool: 'Cawang', catatan: 'Bus BRT Maxi', isMaxi: true },
+{ prefix: 'TJ', start: 388, end: 408, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz OH 1626 A/T', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Laksana', pool: 'Cawang', catatan: 'Bus BRT', isSingle: true },
+{ prefix: 'TJ', start: 469, end: 482, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz OH 1626 A/T', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Restu Ibu Pusaka', pool: 'Cawang', catatan: 'Bus BRT', isSingle: true },
+{ prefix: 'TJ', start: 872, end: 881, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz OH 1626 M/T', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Laksana', pool: 'Cawang', catatan: 'Bus BRT', isSingle: true },
+{ prefix: 'TJ', start: 409, end: 468, operator: 'PT Transportasi Jakarta', tipe: 'HINO RK1 JSNL', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'New Armada', pool: 'Kedaung Kali Angke', catatan: 'Bus BRT', isSingle: true },
+
+{ prefix: 'TJ', start: 483, end: 531, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz O 500U 1726', warna: 'Putih Orange', bahanBakar: 'Diesel', karoseri: 'Laksana', pool: ['Kedaung Kali Angke', 'Kampung Rambutan'], catatan: 'Bus-Non BRT', isLowdeck: true },
+
+{ prefix: 'TJ', start: 782, end: 871, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz O 500U 1726', warna: 'Putih Orange', bahanBakar: 'Diesel', karoseri: 'Nusantara Gemilang', pool: ['Kedaung Kali Angke', 'Kampung Rambutan'], catatan: 'Bus Non-BRT', isLowdeck: true },
+
+{ prefix: 'TJ', start: 632, end: 781, operator: 'PT Transportasi Jakarta', tipe: 'SCANIA K250UB', warna: 'Putih Orange', bahanBakar: 'Diesel', karoseri: 'Laksana', pool: ['Kedaung Kali Angke', 'Pinang Ranti'], catatan: 'Bus Non-BRT', isLowdeck: true },
+
+{ prefix: 'TJ', start: 532, end: 631, operator: 'PT Transportasi Jakarta', tipe: 'Mercedes Benz OF 917', warna: 'Putih Ungu', bahanBakar: 'Diesel', karoseri: ['Tentrem', 'New Armada'], pool: ['Kedaung Kali Angke', 'Kampung Rambutan'], catatan: 'Bus Royaltrans', isLowdeck: true },
+
+// TRANS SWADAYA
+{ prefix: 'TSW', start: 1, end: 1, operator: 'Swakelola Transjakarta', tipe: 'Mitsubishi Colt FE 84G', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'New Armada', pool: 'Pulo Gadung', catatan: 'Non BRT', isSingle: true },
+{ prefix: 'TSW', start: 2, end: 100, operator: 'Swakelola Transjakarta', tipe: 'Mitsubishi Colt FE 84G', warna: 'Putih Orange', bahanBakar: 'Diesel', karoseri: 'New Armada', pool: 'Kedaung Kali Angke', catatan: 'Non BRT', isSingle: true },
+
+
+  // SINAR JAYA MEGAH LANGGENG
+  { prefix: 'SJM', start: 240001, end: 240020, operator: 'Sinar Jaya', tipe: 'VKTR BYD D9', warna: 'Putih-Biru Tua', bahanBakar: 'Listrik', karoseri: 'Laksana',pool: 'Cakung', isSingle: true },
+
+  // BAYU HOLONG PERSADA
+  { prefix: 'BHL', start: 220508, end: 220515, operator: 'Bayu Holong Persada', tipe: 'Hino RN8 285', warna: 'Putih Biru Tua', bahanBakar: 'Diesel', karoseri: 'Laksana', pool: 'Cipayung', isSingle: true },
+  { prefix: 'MBT', start: 240601, end: 240675, operator: 'Bayu Holong Persada', tipe: 'Hino GB 150L', warna: 'Putih Orange', bahanBakar: 'Diesel', karoseri: 'Laksana', pool: 'Cipayung', isSingle: true },
+
+  // JEWA DIAN MITRA
+  { prefix: 'JDM', start: 230001, end: 230073, operator: 'Jewa Dian Mitra', tipe: 'Hino GB 150', warna: 'Putih Orange', bahanBakar: 'Diesel', karoseri: 'Laksana', pool: 'Pamulang', isSingle: true }
+
+  // ... Tambahkan properti isMaxi, isGandeng, isSingle, isLowdeck sesuai kebutuhan pada entry lain
+];
+
+// --- FUNGSI SEARCH BUS BY NUMBER (PAKAI DATA DI ATAS) ---
 function searchBusByNumber(input) {
-    const norm = input.trim().toUpperCase().replace(/_/g, '-');
-    // Skywell
-    const matchSkywell = norm.match(/^(DMR)[- ]?(\d{6})$/);
-    if (matchSkywell) {
-        const code = matchSkywell[1];
-        const numStr = matchSkywell[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 230099 && num <= 230124) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'DAMRI',
-                busNumber: num,
-                tipe: 'Skywell NJL6129BEV',
-                warna: 'Putih Orange',
-                bahanBakar: 'Listrik',
-                karoseri: 'CBU',
-                isSkywellNonBRT: true
-            }];
-        }
+  let norm = input.trim().toUpperCase().replace(/[_\s-]+/g, '');
+  // Cek pola kode bus: PREFIX + angka
+  const match = norm.match(/^([A-Z]+)(\d{1,6})$/);
+  if (match) {
+    const code = match[1];
+    let numStr = match[2].replace(/^0+/, '');
+    const num = parseInt(numStr, 10);
+    // Cari di busRangeData
+    for (const r of busRangeData) {
+      if (r.prefix === code && num >= r.start && num <= r.end) {
+        return [{
+          operatorCode: code,
+          number: numStr,
+          operator: r.operator,
+          busNumber: num,
+          tipe: r.tipe,
+          warna: r.warna,
+          bahanBakar: r.bahanBakar,
+          karoseri: r.karoseri,
+          catatan: r.catatan,
+          pool: r.pool,
+          depo: r.depo,
+          isMaxi: r.isMaxi,
+          isGandeng: r.isGandeng,
+          isSingle: r.isSingle,
+          isLowdeck: r.isLowdeck,
+          isSkywellNonBRT: r.isSkywellNonBRT // Assuming isSkywellNonBRT is part of busRangeData
+        }];
+      }
     }
-    // Sinar Jaya VKTR BYD D9
-    const matchSJM = norm.match(/^(SJM)[- ]?(\d{6})$/);
-    if (matchSJM) {
-        const code = matchSJM[1];
-        const numStr = matchSJM[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 240001 && num <= 240020) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Sinar Jaya',
-                busNumber: num,
-                tipe: 'VKTR BYD D9',
-                warna: 'Putih-Biru Tua',
-                bahanBakar: 'Listrik',
-                karoseri: 'Laksana',
-                isSinarJaya: true
-            }];
-        }
-    }
-    // Steady Safe Volvo B11R
-    const matchSAF = norm.match(/^(SAF)[- ]?(\d{3})$/);
-    if (matchSAF) {
-        const code = matchSAF[1];
-        const numStr = matchSAF[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 1 && num <= 119) {
-            return [{
-                operatorCode: code,
-                number: numStr.padStart(3, '0'),
-                operator: 'Steady Safe',
-                busNumber: num,
-                tipe: 'Volvo B11R',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                isSteadySafe: true
-            }];
-        }
-    }
-    // Mayasari Bakti Mercedes-Benz OH 1626
-    const matchMYS = norm.match(/^(MYS)[- ]?(\d{5})$/);
-    if (matchMYS) {
-        const code = matchMYS[1];
-        const numStr = matchMYS[2];
-        const num = parseInt(numStr, 10);
-        if ((num >= 19203 && num <= 19233) || (num >= 21224 && num <= 21333)) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Mayasari Bakti',
-                busNumber: num,
-                tipe: 'Mercedes-Benz OH 1626',
-                warna: 'Putih-Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                isMayasari: true
-            }];
-        }
-    }
-    // Tambahkan logic Scania K320IA (MB-1601 s/d MB-1656)
-    // Scania K320IA MB-1601 s/d MB-1656
-    const matchMB = norm.match(/^(MB)[- ]?(\d{4})$/);
-    if (matchMB) {
-        const code = matchMB[1];
-        const numStr = matchMB[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 1601 && num <= 1656) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Mayasari Bakti',
-                busNumber: num,
-                tipe: 'Scania K320IA',
-                warna: 'Putih-Biru Muda',
-                bahanBakar: 'BBG',
-                karoseri: 'Laksana',
-                catatan: 'Bus Gandeng',
-                isScaniaK320: true
-            }];
-        }
-    }
-    // Tambahkan logic Scania K310IB (MYS-17001 s/d 17110, 18111 s/d 18150)
-    const matchMYSK310 = norm.match(/^(MYS)[- ]?(\d{5})$/);
-    if (matchMYSK310) {
-        const code = matchMYSK310[1];
-        const numStr = matchMYSK310[2];
-        const num = parseInt(numStr, 10);
-        if ((num >= 17001 && num <= 17110) || (num >= 18111 && num <= 18150)) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Mayasari Bakti',
-                busNumber: num,
-                tipe: 'Scania K310IB',
-                warna: '',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                isScaniaK310: true
-            }];
-        }
-    }
-    // BMP Mercedes Benz OH 1626 A/T
-    const matchBMP3 = norm.match(/^(BMP)[- ]?(\d{3})$/);
-    if (matchBMP3) {
-        const code = matchBMP3[1];
-        const numStr = matchBMP3[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 242 && num <= 251) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Bianglala Metropolitan',
-                busNumber: num,
-                tipe: 'Mercedes Benz OH 1626 A/T',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Tri Sakti',
-                isBMP: true
-            }];
-        } else {
-            // Fallback: Hino RK8 R260, tampilkan semua karoseri
-            const karoseriArr = ['Rahayu Sentosa', 'Restu Ibu Pusaka', 'Laksana'];
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Bianglala Metropolitan',
-                busNumber: num,
-                tipe: 'Hino RK8 R260',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: karoseriArr,
-                isBMP: true
-            }];
-        }
-    }
-    const matchBMP6 = norm.match(/^(BMP)[- ]?(\d{6})$/);
-    if (matchBMP6) {
-        const code = matchBMP6[1];
-        const numStr = matchBMP6[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 220252 && num <= 220300) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Bianglala Metropolitan',
-                busNumber: num,
-                tipe: 'Mercedes Benz OH 1626 A/T',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Tri Sakti',
-                isBMP: true
-            }];
-        }
-    }
-    // VKTR BYD B12 Mayasari Bakti
-    const matchMYSVKTR = norm.match(/^(MYS)[- ]?(\d{5,6})$/);
-    if (matchMYSVKTR) {
-        const code = matchMYSVKTR[1];
-        const numStr = matchMYSVKTR[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 22334 && num <= 22363) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Mayasari Bakti',
-                busNumber: num,
-                tipe: 'VKTR BYD B12',
-                warna: 'Tosca',
-                bahanBakar: 'Listrik',
-                karoseri: '',
-                catatan: 'Non BRT',
-                isMayasariVKTR: true
-            }];
-        } else if (num >= 23364 && num <= 23385) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Mayasari Bakti',
-                busNumber: num,
-                tipe: 'VKTR BYD B12',
-                warna: 'Putih Orange',
-                bahanBakar: 'Listrik',
-                karoseri: '',
-                catatan: 'Non BRT',
-                isMayasariVKTR: true
-            }];
-        }
-    }
-    // DAMRI Bus Gandeng Zhongtong LCK6180GC
-    const matchDMRGandeng = norm.match(/^(DMR)[- ]?(\d{4})$/);
-    if (matchDMRGandeng) {
-        const code = matchDMRGandeng[1];
-        const numStr = matchDMRGandeng[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 704 && num <= 763) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'DAMRI',
-                busNumber: num,
-                tipe: 'Zhongtong Bus LCK6180GC',
-                warna: 'Putih-Biru Tua',
-                bahanBakar: 'BBG',
-                karoseri: 'CBU',
-                pool: 'Klender',
-                catatan: 'Bus Gandeng',
-                isZhongtongGandeng: true
-            }];
-        }
-    }
-    // DAMRI Skywell & Zhongtong BRT
-    const matchDMRBRT = norm.match(/^(DMR)[- ]?(\d{6})$/);
-    if (matchDMRBRT) {
-        const code = matchDMRBRT[1];
-        const numStr = matchDMRBRT[2];
-        const num = parseInt(numStr, 10);
-        // Skywell BRT: 240155-240214
-        if (num >= 240155 && num <= 240214) {
-            const urut = num - 240155 + 1;
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'DAMRI',
-                busNumber: num,
-                tipe: 'Skywell NJL6126BEV',
-                warna: 'Putih-Biru Tua',
-                bahanBakar: 'Listrik',
-                karoseri: 'CBU',
-                pool: 'Cakung',
-                catatan: `BRT, Bus ke ${urut}`,
-                urutan: urut,
-                isSkywell: true
-            }];
-        }
-        // Zhongtong Gen 1: 240125-240154
-        if (num >= 240125 && num <= 240154) {
-            const urut = num - 240125 + 1;
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'DAMRI',
-                busNumber: num,
-                tipe: 'Zhongtong Bus LCK6126EVGRA1',
-                warna: 'Putih-Biru Tua',
-                bahanBakar: 'Listrik',
-                karoseri: 'CBU',
-                pool: 'Klender',
-                catatan: `BRT, Bus ke ${urut}`,
-                urutan: urut,
-                isZhongtong: true
-            }];
-        }
-        // Zhongtong Gen 2: 250155-250224
-        if (num >= 250155 && num <= 250224) {
-            const urut = num - 250155 + 1;
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'DAMRI',
-                busNumber: num,
-                tipe: 'Zhongtong Bus LCK6126EVGRA2',
-                warna: 'Putih-Biru Tua',
-                bahanBakar: 'Listrik',
-                karoseri: 'CBU',
-                pool: 'Klender',
-                catatan: `BRT, Bus ke ${urut}`,
-                urutan: urut,
-                isZhongtong: true
-            }];
-        }
-    }
-    // PKT Mercedes-Benz OH 1626 M/T
-    const matchPKT = norm.match(/^(PKT)[- ]?(\d{3})$/);
-    if (matchPKT) {
-        const code = matchPKT[1];
-        const numStr = matchPKT[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 101 && num <= 115) {
-            const urut = num - 100;
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Pahala Kencana Transportation',
-                busNumber: num,
-                tipe: 'Mercedes-Benz OH 1626 M/T',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                depo: 'Pegangsaan Dua',
-                catatan: `Bus ke ${urut} PKT`,
-                urutan: urut,
-                isPKT: true
-            }];
-        }
-    }
-    // Mayasari Bakti Mercedes-Benz OH 1626 M/T (MYS-18151 s/d MYS-18202)
-    const matchMYSBRT = norm.match(/^(MYS)[- ]?(\d{5})$/);
-    if (matchMYSBRT) {
-        const code = matchMYSBRT[1];
-        const numStr = matchMYSBRT[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 18151 && num <= 18202) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Mayasari Bakti',
-                busNumber: num,
-                tipe: 'Mercedes-Benz OH 1626 M/T',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                catatan: 'BRT',
-                isMayasariBRT: true
-            }];
-        }
-    }
-    // DAMRI Hino RK8 R260
-    const matchDMRHino = norm.match(/^(DMR)[- ]?(\d{3,4})$/);
-    if (matchDMRHino) {
-        const code = matchDMRHino[1];
-        const numStr = matchDMRHino[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 104 && num <= 153) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'DAMRI',
-                busNumber: num,
-                tipe: 'Hino RK8 R260',
-                warna: 'Biru',
-                bahanBakar: 'Diesel',
-                karoseri: 'Restu Ibu Pusaka',
-                isDMRHino: true
-            }];
-        } else if (num >= 154 && num <= 353) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'DAMRI',
-                busNumber: num,
-                tipe: 'Hino RK8 R260',
-                warna: 'Biru',
-                bahanBakar: 'Diesel',
-                karoseri: 'Rahayu Sentosa',
-                isDMRHino: true
-            }];
-        } else if ((num >= 354 && num <= 503) || (num >= 604 && num <= 703)) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'DAMRI',
-                busNumber: num,
-                tipe: 'Hino RK8 R260',
-                warna: 'Biru',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                isDMRHino: true
-            }];
-        }
-    }
-    // Bianglala Metropolitan SAG Golden Dragon Pivot E12
-    const matchBMPGoldenDragon = norm.match(/^(BMP)[- ]?(\d{6})$/);
-    if (matchBMPGoldenDragon) {
-        const code = matchBMPGoldenDragon[1];
-        const numStr = matchBMPGoldenDragon[2];
-        const num = parseInt(numStr, 10);
-        if (num >= 240322 && num <= 240411) {
-            // BRT
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Bianglala Metropolitan',
-                busNumber: num,
-                tipe: 'SAG Golden Dragon Pivot E12',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Listrik',
-                karoseri: 'CBU',
-                catatan: 'BRT',
-                isBMPGoldenDragon: true
-            }];
-        } else if (num >= 230300 && num <= 230321) {
-            // Non BRT
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Bianglala Metropolitan',
-                busNumber: num,
-                tipe: 'SAG Golden Dragon Pivot E12',
-                warna: 'Putih Orange',
-                bahanBakar: 'Listrik',
-                karoseri: 'CBU',
-                catatan: 'Non BRT',
-                isBMPGoldenDragon: true
-            }];
-        }
-    }
-    // Transjakarta (PT Transportasi Jakarta) - kode TJ
-    const matchTJ = norm.match(/^(TJ)[- ]?(\d{1,4})$/); // Ubah jadi 1-4 digit
-    if (matchTJ) {
-        const code = matchTJ[1];
-        let numStr = matchTJ[2].replace(/^0+/, ''); // Hilangkan leading zero
-        const num = parseInt(numStr, 10);
-        // SCANIA K340IA: TJ187
-        if (num === 187) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Scania K340IA',
-                warna: 'Putih Biru Muda',
-                bahanBakar: 'BBG',
-                karoseri: 'Gemilang Coachworks',
-                pool: 'Pulo Gadung',
-                catatan: '',
-                isTJ: true
-            }];
-        }
-        // SCANIA K320IA: TJ0188-TJ0238
-        if (num >= 188 && num <= 238) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Scania K320IA',
-                warna: 'Putih Biru Muda',
-                bahanBakar: 'BBG',
-                karoseri: 'Laksana',
-                pool: 'Pulo Gadung',
-                catatan: '',
-                isTJ: true
-            }];
-        }
-        // MAN R37: TJ0347-TJ0354 (Nusantara Gemilang)
-        if (num >= 347 && num <= 354) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'MAN R37',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Nusantara Gemilang',
-                pool: 'Cawang',
-                catatan: 'Bus Wisata',
-                isTJ: true
-            }];
-        }
-        // Mercedes Benz OC 500 RF 2542: TJ0351 (Nusantara Gemilang)
-        if (num === 351) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz OC 500 RF 2542',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Nusantara Gemilang',
-                pool: 'Cawang',
-                catatan: 'Bus Wisata',
-                isTJ: true
-            }];
-        }
-        // Mercedes Benz OC 500 RF 2542: TJ0381-TJ0387 (New Armada)
-        if (num >= 381 && num <= 387) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz OC 500 RF 2542',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'New Armada',
-                pool: 'Cawang',
-                catatan: 'Bus Wisata',
-                isTJ: true
-            }];
-        }
-        if (num === 884) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'SCANIA K310UB',
-                warna: 'Merah Putih',
-                bahanBakar: 'Diesel',
-                karoseri: 'Adi Putro',
-                pool: 'Cawang',
-                catatan: 'Bus Wisata',
-                isTJ: true
-            }];
-        }
-        if (num >= 247 && num <= 346) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz OH 1526 M/T',
-                warna: 'Putih Biru Muda',
-                bahanBakar: 'BBG',
-                karoseri: ['Laksana', 'Rahayu Sentosa','Tri Sakti','Tentrem'],
-                pool: 'Cawang',
-                catatan: 'Bus BRT',
-                isTJ: true
-            }];
-        }
-        if (num >= 355 && num <= 380) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz OC 500 RF 2542',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Nusantara Gemilang',
-                pool: 'Cawang',
-                catatan: 'Bus BRT Maxi',
-                isTJ: true
-            }];
-        }
-        if (num >= 388 && num <= 408) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz OH 1626 A/T',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                pool: 'Cawang',
-                catatan: 'Bus BRT',
-                isTJ: true
-            }];
-        }
-        if (num >= 469 && num <= 482) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz OH 1626 A/T',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Restu Ibu Pusaka',
-                pool: 'Cawang',
-                catatan: 'Bus BRT',
-                isTJ: true
-            }];
-        }
-        if (num >= 872 && num <= 881) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz OH 1626 M/T',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                pool: 'Cawang',
-                catatan: 'Bus BRT',
-                isTJ: true
-            }];
-        }
-        if (num >= 409 && num <= 468) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'HINO RK1 JSNL',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'New Armada',
-                pool: 'Kedaung Kali Angke',
-                catatan: 'Bus BRT',
-                isTJ: true
-            }];
-        }
-        if (num >= 483 && num <= 531) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz O 500U 1726',
-                warna: 'Putih Orange',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                pool: ['Kedaung Kali Angke', 'Kampung Rambutan'],
-                catatan: 'Bus-BRT',
-                isTJ: true
-            }];
-        }
-        if (num >= 782 && num <= 871) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz O 500U 1726',
-                warna: 'Putih Orange',
-                bahanBakar: 'Diesel',
-                karoseri: 'Nusantara Gemilang',
-                pool: ['Kedaung Kali Angke', 'Kampung Rambutan'],
-                catatan: 'Bus Non-BRT',
-                isTJ: true
-            }];
-        }
-        if (num >= 532 && num <= 631) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'Mercedes Benz OF 917',
-                warna: 'Putih Ungu',
-                bahanBakar: 'Diesel',
-                karoseri: ['Tentrem', 'New Armada'],
-                pool: ['Kedaung Kali Angke', 'Kampung Rambutan'],
-                catatan: 'Bus Royaltrans',
-                isTJ: true
-            }];
-        }
-        if (num >= 632 && num <= 781) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'PT Transportasi Jakarta',
-                busNumber: num,
-                tipe: 'SCANIA K250UB',
-                warna: 'Putih Orange',
-                bahanBakar: 'Diesel',
-                karoseri: 'Laksana',
-                pool: ['Kedaung Kali Angke', 'Pinang Ranti'],
-                catatan: 'Bus Non-BRT',
-                isTJ: true
-            }];
-        }
-        // SCANIA K310UB (adi putro), merah putih, Diesel, Pool Cawang, Bus Wisata
-        // Placeholder: jika ingin range, tambahkan di sini
-    }
-    // Swakelola Transjakarta (TSW/Trans Swadaya) - kode TSW
-    const matchTSW = norm.match(/^(TSW)[- ]?(\d{3})$/);
-    if (matchTSW) {
-        const code = matchTSW[1];
-        const numStr = matchTSW[2];
-        const num = parseInt(numStr, 10);
-        if (num === 1) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Swakelola Transjakarta',
-                busNumber: num,
-                tipe: 'Mitsubishi Colt FE 84G',
-                warna: 'Putih Biru Tua',
-                bahanBakar: 'Diesel',
-                karoseri: 'New Armada',
-                pool: 'Pulo Gadung',
-                catatan: 'Non BRT',
-                isTSW: true
-            }];
-        } else if (num >= 2 && num <= 100) {
-            return [{
-                operatorCode: code,
-                number: numStr,
-                operator: 'Swakelola Transjakarta',
-                busNumber: num,
-                tipe: 'Mitsubishi Colt FE 84G',
-                warna: 'Putih Orange',
-                bahanBakar: 'Diesel',
-                karoseri: 'New Armada',
-                pool: 'Kedaung Kali Angke',
-                catatan: 'Non BRT',
-                isTSW: true
-            }];
-        }
-    }
-    return [];
+  }
+  return [];
 }
 
 function detectLogoByTipe(tipe) {
@@ -805,9 +263,55 @@ function renderBusSearchResults(results) {
       nomorBus = nomorBus.replace(/^0+/, '');
     }
     // Pastikan badge tetap format TJ-xxx
-    const badgeNomor = `${bus.operatorCode || ''}-${nomorBus}`;
+    // Cari digit maksimal untuk prefix ini dari busRangeData
+    let digitCount = 3;
+    // Khusus Mayasari Bakti (MB/MYS), digitCount sesuai range (bisa 4/5/6 digit)
+    if ((bus.operatorCode === 'MB' || bus.operatorCode === 'MYS') && typeof busRangeData !== 'undefined' && Array.isArray(busRangeData)) {
+      const ranges = busRangeData.filter(r => r.prefix === (bus.operatorCode || ''));
+      if (ranges.length) {
+        digitCount = Math.max(...ranges.map(r => r.end.toString().length));
+      }
+    }
+    // Untuk BMP Hino RK8 dan DMR/SAF, tetap 3 digit
+    if ((bus.operatorCode === 'BMP' && /hino/i.test(bus.tipe)) || bus.operatorCode === 'DMR' || bus.operatorCode === 'SAF') {
+      digitCount = 3;
+    }
+    const badgeNomor = `${bus.operatorCode || ''}-${nomorBus.padStart(digitCount, '0')}`;
     // Info ringkas
     let infoRingkas = '';
+    // Hitung total bus dan urutan bus keberapa dari seluruh bus dengan prefix yang sama (tanpa mengulang per range)
+    let totalBus = 0;
+    let urutan = 0;
+    if (typeof busRangeData !== 'undefined' && Array.isArray(busRangeData)) {
+      const ranges = busRangeData.filter(r => r.prefix === (bus.operatorCode || ''));
+      totalBus = ranges.reduce((sum, r) => sum + (r.end - r.start + 1), 0);
+      let offset = 0;
+      for (const r of ranges) {
+        if (bus.busNumber >= r.start && bus.busNumber <= r.end) {
+          urutan = offset + (bus.busNumber - r.start + 1);
+          break;
+        }
+        offset += (r.end - r.start + 1);
+      }
+    }
+    // Cek jika nomor bus (tanpa leading zero) diawali 2 digit (misal 17, 18, dst) → tahun bus, hanya untuk 5/6 digit
+    const nomorTanpaZero = nomorBus.replace(/^0+/, '');
+    let tahunDuaDigit = null;
+    if (/^\d{5,6}$/.test(nomorTanpaZero)) {
+      const duaDigit = nomorTanpaZero.slice(0, 2);
+      if (/^(1[7-9]|2[0-6])$/.test(duaDigit)) {
+        tahunDuaDigit = '20' + duaDigit;
+      }
+    }
+    if (tahunDuaDigit) {
+      infoRingkas = `Bus ke ${urutan} ${bus.operator} tahun ${tahunDuaDigit}`;
+    } else if (digitCount === 5 || digitCount === 6) {
+      // Tahun dari 2 digit pertama nomor bus
+      const tahun = '20' + badgeNomor.replace(/^[A-Z]+-?0*/, '').slice(0, 2);
+      infoRingkas = `Bus ke ${urutan} ${bus.operator} tahun ${tahun}`;
+    } else if (digitCount === 4 || digitCount === 3) {
+      infoRingkas = `Bus ke ${urutan} ${bus.operator} dari total ${totalBus} bus`;
+    }
     // Perbaiki deteksi Bus Maxi agar lebih fleksibel
     const busMaxiTypes = [
       'SCANIAK310IB',
@@ -1075,6 +579,11 @@ function renderBusSearchResults(results) {
             : ''
         }
         ${bus.catatan && bus.catatan.toLowerCase().includes('gandeng') ? '<span class="badge bg-primary">Bus Gandeng</span>' : ''}
+        ${bus.isMaxi ? '<span class="badge bg-dark">Maxi</span>' : ''}
+        ${bus.isGandeng ? '<span class="badge bg-primary">Gandeng</span>' : ''}
+        ${bus.isSingle ? '<span class="badge bg-secondary">Single</span>' : ''}
+        ${bus.isLowdeck ? '<span class="badge bg-info text-dark">Lowdeck</span>' : ''}
+        ${bus.isTingkat ? '<span class="badge bg-danger">Tingkat</span>' : ''}
       </div>
     </div>
     `;
@@ -1120,6 +629,9 @@ const busImages = {
   'Mercedes Benz O 500U 1726 Nusantara Gemilang': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/TJ_0791_at_Senayan.jpg/1280px-TJ_0791_at_Senayan.jpg',
   'Mercedes Benz OF 917': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Royal_Trans_TJ_536.jpg/1280px-Royal_Trans_TJ_536.jpg',
   'SCANIA K250UB': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Transjakarta_-_TJ632_Scania_K250UB.jpg/1280px-Transjakarta_-_TJ632_Scania_K250UB.jpg',
+  'Hino RN8 285': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/BHL_TJ_Kampung_Rambutan_bus_terminal_20220715.jpg/1280px-BHL_TJ_Kampung_Rambutan_bus_terminal_20220715.jpg',
+  'Hino GB 150L': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Transjakarta_Minitrans_Hino_GB150_L_bus_%28MBT-240624%29.jpg/1280px-Transjakarta_Minitrans_Hino_GB150_L_bus_%28MBT-240624%29.jpg',
+  'Hino GB 150': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Bus_Minitrans_melayani_penumpang_di_rute_6W.jpg/1280px-Bus_Minitrans_melayani_penumpang_di_rute_6W.jpg',
 };
 busImages['Mercedes Benz OH 1626 M/T'] = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/TJ_1626.jpg/1280px-TJ_1626.jpg';
 busImages['Mercedes Benz OH 1626 A/T'] = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/TJ_1626.jpg/1280px-TJ_1626.jpg';
@@ -1152,3 +664,100 @@ function renderBusListByOperator(operator) {
   html += '</ul>';
   return html;
 }
+
+// --- FUNGSI SUGGESTION (PAKAI DATA YANG SAMA) ---
+function getBusSuggestions(input) {
+  let norm = input.trim().toUpperCase().replace(/[_\s-]+/g, '');
+  if (!norm) return '';
+  // Cek jika hanya kode operator
+  const operatorCodes = {
+    'MB': 'Mayasari Bakti',
+    'MYS': 'Mayasari Bakti',
+    'DMR': 'DAMRI',
+    'SAF': 'Steady Safe',
+    'SJM': 'Sinar Jaya',
+    'BMP': 'Bianglala Metropolitan',
+    'PKT': 'Pahala Kencana Transportation',
+    'TSW': 'Swakelola Transjakarta',
+    'TJ': 'PT Transportasi Jakarta',
+    'BHL': 'Bayu Holong Persada',
+    'MBT': 'Bayu Holong Persada',
+    'JDM': 'Jewa Dian Mitra',
+    'KBM': 'Koantas Bima',
+    'PSU': 'Bluebird',
+    'KWK': 'Koperasi Wahana Kalpika',
+    'LSG': 'Lestari Surya Gemapersada',
+    'BDL': 'Budi Luhur',
+    'KPM': 'Kopamilet Jaya',
+    'KMJ': 'Komilet Jaya',
+    'PRM': 'Purimas Jaya',
+    'KMK': 'Komika Jaya',
+    'PUS': 'Puskopau (Trans Halim)',
+    'KST': 'Kencana Sakti Transpor',
+    'KLM': 'Kolamas Jaya',
+  };
+  for (const code in operatorCodes) {
+    if (norm === code) {
+      const op = operatorCodes[code];
+      const logo = logoOperator[op] ? `<img src="${logoOperator[op]}" alt="${op}" style="max-height:32px;max-width:60px;object-fit:contain;vertical-align:middle;" class="shadow-sm rounded-2 me-2" />` : '';
+      return `<div class='alert alert-info d-flex align-items-center'><span>${logo}<b>${op}</b></span></div>`;
+    }
+  }
+  // Saran dari busRangeData
+  // Gunakan satu deklarasi match saja
+  const match = norm.match(/^([A-Z]+)(\d{0,4})$/); // allow empty numPart
+  if (match) {
+    const code = match[1];
+    const numPart = match[2];
+    // Tampilkan semua range yang prefix-nya sama dan (numPart kosong ATAU start/end range mengandung numPart di awal)
+    const suggestions = busRangeData.filter(r => {
+      if (r.prefix !== code) return false;
+      if (!numPart) return true;
+      // Cek apakah start atau end mengandung numPart di awal
+      return r.start.toString().startsWith(numPart) || r.end.toString().startsWith(numPart);
+    });
+    if (suggestions.length) {
+      let html = '<div class="list-group">';
+      suggestions.forEach(s => {
+        // Logo operator
+        const logoOp = logoOperator[s.operator] ? `<img src="${logoOperator[s.operator]}" alt="${s.operator}" style="height:32px;width:auto;object-fit:contain;vertical-align:middle;" class="me-2 rounded-2" />` : '';
+        // Logo chasis
+        const logoChas = detectLogoChasis(s.tipe) ? `<img src="${detectLogoChasis(s.tipe)}" alt="Chasis" style="height:32px;width:auto;object-fit:contain;vertical-align:middle;" class="ms-2 me-2" />` : '';
+        // Format nomor badge (pakai leading zero sesuai digit start/end)
+        const digitCount = Math.max(s.start.toString().length, s.end.toString().length);
+        const pad = n => n.toString().padStart(digitCount, '0');
+        let badgeRange = '';
+        if (s.start === s.end) {
+          badgeRange = `${s.prefix}-${pad(s.start)}`;
+        } else {
+          badgeRange = `${s.prefix}-${pad(s.start)} s/d ${s.prefix}-${pad(s.end)}`;
+        }
+        // Badge jenis bus
+        let jenisBadge = '';
+        if (s.isMaxi) jenisBadge += '<span class="badge bg-dark me-1">Maxi</span>';
+        if (s.isGandeng) jenisBadge += '<span class="badge bg-primary me-1">Gandeng</span>';
+        if (s.isSingle) jenisBadge += '<span class="badge bg-secondary me-1">Single</span>';
+        if (s.isLowdeck) jenisBadge += '<span class="badge bg-info text-dark me-1">Lowdeck</span>';
+        if (s.isTingkat) jenisBadge += '<span class="badge bg-danger me-1">Tingkat</span>';
+        // Badge warna bus
+        let warnaBadge = '';
+        if (s.warna) {
+          let bg = 'rgba(133, 151, 255, 0.13)';
+          if (typeof getCardBgColor === 'function') bg = getCardBgColor(s.warna);
+          warnaBadge = `<span class='badge' style='background:${bg};color:#222;border:1px solid #bbb;'>${s.warna}</span>`;
+        }
+        html += `<div class='list-group-item'>
+          <div class='mb-1 text-center'><span class='badge bg-primary fs-6'>${badgeRange}</span></div>
+          <div class='mb-1 d-flex justify-content-center align-items-center gap-2'>${logoOp}${logoChas}</div>
+          <div class='mb-1 text-center'><span class='fw-bold'>${s.operator}</span> <span class='ms-2'>${s.tipe}</span></div>
+          <div class='mb-1 text-center'>${warnaBadge}</div>
+          <div class='mb-1 text-center'>${jenisBadge}</div>
+        </div>`;
+      });
+      html += '</div>';
+      return html;
+    }
+  }
+  return '';
+}
+window.getBusSuggestions = getBusSuggestions;
