@@ -234,7 +234,7 @@ function searchBusByNumber(input) {
                 catatan: 'Non BRT',
                 isMayasariVKTR: true
             }];
-        } else if (num >= 22364 && num <= 23385) {
+        } else if (num >= 23364 && num <= 23385) {
             return [{
                 operatorCode: code,
                 number: numStr,
