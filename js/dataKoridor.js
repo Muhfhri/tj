@@ -6,6 +6,12 @@ export const koridorData = {
             operator: "Transjakarta (TJ), DAMRI (DMR), Bianglala Metropolitan (BMP),Mayasari Bakti (MB/MYS)",
             isAMARI: true,
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/1-20250102.jpg",
+            directionalNotes: {
+                "ASEAN": "Bus dari arah Blok M tidak berhenti di halte ini, lanjut langsung ke Halte Masjid Agung.",
+                "Kejaksaan Agung": "Hanya melayani bus arah Blok M.",
+                "Museum Sejarah Jakarta": "Hanya melayani bus arah Blok M.",
+                "Kota": "Hanya melayani bus arah Blok M."
+            },
             busType: [
                 "Zhongtong Bus LCK6180GC",
                 "SAG Golden Dragon XML6125JEVJ0C3",
@@ -26,9 +32,12 @@ export const koridorData = {
             start: "Pulo Gadung",
             end: "Monumen Nasional",
             operator: "Transjakarta (TJ),DAMRI (DMR), Bianglala Metropolitan (BMP) amari",
+            directionalNotes: {
+                "Kwitang": "Hanya melayani bus arah Monumen Nasional."
+            },
             busType: [
                 "Hino RK8 R260 amari",
-                "Hino RK1 JSNL amari",
+                "Hino RK1 JSNL",
                 "Hino RK1 JSNL",
                 "Zhongtong Bus LCK6126EVGRA1", 
                 "Skywell NJL6126BEV",
@@ -82,6 +91,9 @@ export const koridorData = {
                 start: "Kalideres",
                 end: "Senayan BANK DKI",
                 map: "https://smk.transjakarta.co.id/aset/berkas/rute/3F-20240709.jpg",
+                directionalNotes: {
+                    "Grogol Reformasi": "Hanya melayani bus arah Senayan BANK DKI."
+                },
                 operationalSchedule: {
                     weekday: {
                         days: [0,1, 2, 3, 4, 5,6], // Senin-Jumat
@@ -96,6 +108,10 @@ export const koridorData = {
                 start: "Damai",
                 end: "Kota",
                 map: "https://smk.transjakarta.co.id/aset/berkas/rute/3F-20240709.jpg",
+                directionalNotes: {
+                    "Kali Besar": "Hanya melayani bus arah Kota.",
+                    "Museum Sejarah Jakarta": "Hanya melayani bus arah Kota."
+                },
                 operationalSchedule: {
                     weekday: {
                         days: [0,1, 2, 3, 4, 5,6], // Senin-Jumat
@@ -114,6 +130,12 @@ export const koridorData = {
             end: "Galunggung",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/4-20250605.jpg",
             operator: "Transjakarta (TJ) , DAMRI (DMR), Bianglala Metropolitan (BMP) amari",
+            directionalNotes: {
+                "Matraman": "Hanya melayani bus arah Galunggung.",
+                "Tegalan": "Hanya melayani bus arah Galunggung.",
+                "Kesatrian": "Hanya melayani bus arah Galunggung.",
+                "Flyover Pramuka": "Hanya melayani bus arah Pulo Gadung."
+            },
             busType: [
                 "Zhongtong Bus LCK6126EVGRA1",
                 "Hino RK8 R260 amari",
@@ -129,6 +151,12 @@ export const koridorData = {
             start: "Pulo Gadung",
             end: "Patra Kuningan",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/4D-20250605.jpg",
+            directionalNotes: {
+                "Matraman": "Hanya melayani bus arah Patra Kuningan.",
+                "Tegalan": "Hanya melayani bus arah Patra Kuningan.",
+                "Kesatrian": "Hanya melayani bus arah Patra Kuningan.",
+                "Flyover Pramuka": "Hanya melayani bus arah Pulo Gadung."
+            },
             operationalSchedule: {
                 weekday: {
                     days: [0,1, 2, 3, 4, 5,6], // Senin-Jumat
@@ -148,6 +176,10 @@ export const koridorData = {
             start: "Kampung Melayu",
             end: "Ancol",
             isAMARI: true,
+            directionalNotes: {
+                "Jatinegara": "Hanya melayani bus arah Kampung Melayu.",
+                "Bali Mester": "Hanya melayani bus arah Kampung Melayu."
+            },
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/5-20250102.jpg",
             busType: [
                 "Zhongtong Bus LCK6126EVGRA2",
@@ -165,6 +197,10 @@ export const koridorData = {
             end: "Juanda",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/5C-20250312.jpg",
             operator: "Transjakarta (TJ), Steady Safe (SAF) , DAMRI (DMR)",
+            directionalNotes: {
+                "Jatinegara": "Hanya melayani bus arah Cililitan.",
+                "Bali Mester": "Hanya melayani bus arah Cililitan."
+            },
              busType: [
                 "Volvo B11R","Scania K310IB",
                 "Mercedes-Benz OH 1626",
@@ -185,6 +221,10 @@ export const koridorData = {
             isAMARI: true,
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/6-20250102.jpeg",
             operator: "DAMRI (DMR) , Bianglala Metropolitan (BMP), Mayasari Bakti (MYS)",
+            directionalNotes: {
+                "Flyover Kuningan": "Hanya melayani bus arah Galunggung.",
+                "Halimun": "Hanya melayani bus arah Galunggung."
+            },
             busType: [
                 "SAG Golden Dragon XML6125JEVJ0C3",
                 "Skywell NJL6126BEV",
@@ -217,6 +257,9 @@ export const koridorData = {
             start: "Ragunan",
             end: "Balai Kota via Semanggi",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/6B-20241218.jpg",
+            directionalNotes: {
+                "Semanggi": "Hanya melayani bus arah Balai Kota."
+            },
             busType: [
                 "SAG Golden Dragon XML6125JEVJ0C3",
                 "Skywell NJL6126BEV",
@@ -236,6 +279,9 @@ export const koridorData = {
             start: "Ragunan",
             end: "Senayan BANK DKI",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/6V-20241007.jpg",
+            directionalNotes: {
+                "ASEAN": "Hanya melayani bus arah Ragunan."
+            },
             busType: [
                 "SAG Golden Dragon XML6125JEVJ0C3",
                 "Skywell NJL6126BEV",
@@ -283,6 +329,16 @@ export const koridorData = {
             start: "Kampung Rambutan",
             end: "Juanda via Cempaka Putih",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/7F-20250422.jpg",
+            directionalNotes: {
+                "Pasar Induk": "Bus masuk TOL Jagorawi, hanya melayani arah Utan Kayu Rawamangun.",
+                "Utan Kayu Rawamangun": "Bus masuk TOL Jagorawi, hanya melayani arah Pasar Induk.",
+                "Juanda": "Hanya melayani bus arah Pasar Baru.",
+                "Pecenongan": "Hanya melayani bus arah Juanda.",
+                "Sumur Batu": "Hanya melayani bus arah Kampung Rambutan, lanjut via Pulomas Bypass.",
+                "Cempaka Mas": "Hanya melayani bus arah Juanda.",
+                "Cempaka Putih": "Hanya melayani bus arah Juanda.",
+                "Pasar Baru": "Hanya melayani bus arah Kampung Rambutan, lanjut via Kwitang."
+            },
             busType: [,
                 "Hino RK8 R260",
                "Mercedes-Benz OH 1626",
@@ -306,6 +362,10 @@ export const koridorData = {
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/8-20250102.jpg",
             isAMARI: true,
             operator: "Bianglala Metropolitan (BMP),Transjakarta (TJ),DAMRI (DMR)",
+            directionalNotes: {
+                "Grogol Reformasi": "Hanya melayani bus arah Pasar Baru.",
+                "Pondok Pinang": "Hanya melayani bus arah Pasar Baru."
+            },
             busType: [
                 "SAG Golden Dragon XML6125JEVJ0C3",
                 "Mercedes-Benz OH 1626",
@@ -351,6 +411,9 @@ export const koridorData = {
             end: "Bundaran Senayan",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/9C-20241218.jpg",
             operator: "Transjakarta (TJ) , Mayasari Bakti (MYS)",
+            directionalNotes: {
+                "Semanggi": "Hanya melayani bus arah Pinang Ranti."
+            },
             operationalSchedule: {
                 weekday: {
                     days: [0,1, 2, 3, 4, 5,6], // Senin-Jumat
@@ -428,6 +491,10 @@ export const koridorData = {
             end: "Pulo Gebang",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/11-20250102.jpg",
             isAMARI: true,
+            directionalNotes: {
+                "Jatinegara": "Hanya melayani bus arah Kampung Melayu.",
+                "Kampung Melayu": "Hanya melayani bus arah Stasiun Jatinegara."
+            },
             busType: [
                 "Volvo B11R",
                 "Mercedes-Benz OH 1626 amari",
@@ -441,6 +508,17 @@ export const koridorData = {
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/12-20250102.jpg",
             isAMARI: true,
             operator: "Transjakarta (TJ) , DAMRI (DMR) amari",
+            directionalNotes: {
+                "Penjaringan": "Hanya melayani bus arah Pluit.",
+                "Bandengan": "Hanya melayani bus arah Pluit.",
+                "Kali Besar": "Hanya melayani bus arah Pluit.",
+                "Pluit": "Hanya melayani bus arah Tanjung Priok.",
+                "Pluit Selatan": "Hanya melayani bus arah Tanjung Priok.",
+                "Pakin": "Hanya melayani bus arah Tanjung Priok.",
+                "Gedong Panjang": "Hanya melayani bus arah Tanjung Priok.",
+                "Museum Sejarah Jakarta": "Hanya melayani bus arah Tanjung Priok.",
+                "Kota": "Hanya melayani bus arah Tanjung Priok."
+            },
             busType: [
                 "Skywell NJL6126BEV amari", "Zhongtong Bus LCK6126EVGRA1 amari",
                 "Mercedes-Benz OH 1626",
@@ -456,6 +534,9 @@ export const koridorData = {
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/13-20250614.jpg",
             isAMARI: true,
             operator: "Transjakarta (TJ), Mayasari Bakti (MYS)",
+            directionalNotes: {
+                "Puri Beta 1": "Hanya melayani bus arah Tegal Mampang."
+            },
              busType: [
                 "Mercedes-Benz OH 1626",
                 "Mercedes-Benz OH 1526", "Scania K310IB"
@@ -472,6 +553,11 @@ export const koridorData = {
             start: "Puri Beta 2",
             end: "Pancoran",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/13B-20250303.jpg",
+            directionalNotes: {
+                "Pancoran": "Hanya melayani bus arah Puri Beta 2.",
+                "Tegal Mampang": "Hanya melayani bus arah Puri Beta 2.",
+                "Puri Beta 1": "Hanya melayani bus arah Pancoran."
+            },
             operationalSchedule: {
                 weekday: {
                     days: [0,1, 2, 3, 4, 5,6], // Senin-Jumat
@@ -485,6 +571,12 @@ export const koridorData = {
             start: "Puri Beta 2",
             end: "Pancoran",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/13E-20250303.jpg",
+            directionalNotes: {
+                "Underpass Kuningan": "Hanya melayani bus arah Puri Beta 2.",
+                "Tegal Mampang": "Hanya melayani bus arah Puri Beta 2.",
+                "Simpang Kuningan": "Hanya melayani bus arah Flyover Kuningan.",
+                "Puri Beta 1": "Hanya melayani bus arah Flyover Kuningan."
+            },
             operationalSchedule: {
                 weekday: {
                     days: [6, 0], // Senin-Jumat
@@ -498,6 +590,12 @@ export const koridorData = {
             start: "Puri Beta",
             end: "Flyover Kuningan (Express)",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/L13E-20250303.jpg",
+            directionalNotes: {
+                "Underpass Kuningan": "Hanya melayani bus arah Puri Beta 2.",
+                "Tegal Mampang": "Hanya melayani bus arah Puri Beta 2.",
+                "Simpang Kuningan": "Hanya melayani bus arah Flyover Kuningan.",
+                "Puri Beta 1": "Hanya melayani bus arah Flyover Kuningan."
+            },
             operationalSchedule: {
                 weekday: {
                     days: [1, 2, 3, 4, 5], // Senin-Jumat
@@ -649,7 +747,7 @@ export const koridorData = {
         },
         "5M": {
             start: "Kampung Melayu",
-            end: "Tanah Abang",
+            end: "Tanah Abang via Cikini",
             map: "https://smk.transjakarta.co.id/aset/berkas/rute/5M-20240918.jpeg",
             operator: "Transjakarta (TJ), Mayasari Bakti (MYS)",
             busType: [
@@ -658,7 +756,7 @@ export const koridorData = {
                 "Scania K250UB"
             ],
             directions : {
-                "Tanah Abang" :[
+                "Tanah Abang via Cikini" :[
                     "Term. Kampung Melayu 2", "Rusun Jatinegara Barat","RS Hermina","Santa Maria","Bukit Duri","Jln. Kb. Pala II","Slamet Riyadi 1","Kesatriaan","Tegalan 1","Matraman 3","Simpang Matraman","Masjid Jami Matraman","Tugu Proklamasi","Tugu Proklamasi 2","Jln. Penataran","SMPN 8","Teuku Cik Ditiro","RS Mata Menteng","RSIA Bunda 2","Konsil Kedokteran Indonesia","Simpang RP Soeroso","Farmasi RP Soeroso","Kanisius","Telkom Grapari","Balai Kota 1","Perpustakaan Nasional","Dana Reksa","Wisma Mandiri 2","Kementrian Agama","Sbr. Jembatan Serong","Jln. Taman Kb. Sirih","JPO Blok E","Pharmin","Explorer Tanah Abang","Blok F","Pospol Jati Bunder","JPO Blok G","Transjakarta Tanah Abang 2"
                 ],
                 "Kampung Melayu" : [
@@ -833,14 +931,6 @@ export const koridorData = {
         
 };
 
-export const halteKRL = [
-    "Manggarai", "Duri", "Stasiun Jatinegara", "Tanah Abang", "Juanda", "Kampung Bandan", "Simpang Buaran", "Stasiun Klender", "Matraman Baru","Kota", "Gambir 2", "Gambir","Cikoko", "Flyover Radin Inten 1", "Flyover Radin Inten 2", "Terminal Senen","Senen TOYOTA Rangga","Senen Sentral", "St. Sudirman 2", "St. Cikini Selatan"
-];
-
-export const halteMRT = [
-    "Bundaran HI ASTRA", "Dukuh Atas", "Setiabudi", "Bendungan Hilir", "Istora Mandiri", "Senayan", "ASEAN", "Blok M", "Blok A", "Haji Nawi", "Cipete Raya", "Fatmawati", "Lebak Bulus", "CSW", "Dukuh Atas","Cikoko","Kejaksaan Agung","Gelora Bung Karno 2", "St. Sudirman 2", "Wisma Nusantara","Plaza Indonesia","Kedutaan Besar Jepang","Chase Plaza"
-];
-
 export const integrasiBadge = {
     "Velbak": ["8"],
     "Kebayoran": ["13"],
@@ -869,3 +959,50 @@ export const halteIntegrasi = [
     ["Bendungan Hilir", "Semanggi", "Jalan kaki ±300m"],
     ["Senen Sentral", "Senen TOYOTA Rangga", "JPO Integrasi jalan kaki ±90m"],
 ];
+
+export const integrasiTransportasi = {
+    // KRL Commuter Line
+    "Kota": [{ tipe: "KRL", nama: "Stasiun Jakarta Kota" }],
+    "Stasiun Jatinegara": [{ tipe: "KRL", nama: "Stasiun Jatinegara" }],
+    "Juanda": [{ tipe: "KRL", nama: "Stasiun Juanda" }],
+    "Cikoko": [{ tipe: "KRL", nama: "Stasiun Cawang" }, { tipe: "LRT", nama: "Stasiun LRT Cikoko" }],
+    "Dukuh Atas": [{ tipe: "KRL", nama: "Stasiun Sudirman" }, { tipe: "MRT", nama: "Stasiun MRT Dukuh Atas BNI" }, { tipe: "LRT", nama: "Stasiun LRT Dukuh Atas" }],
+    "Galunggung": [{ tipe: "KRL", nama: "Stasiun Sudirman" }, { tipe: "MRT", nama: "Stasiun MRT Dukuh Atas BNI" }, { tipe: "LRT", nama: "Stasiun LRT Dukuh Atas" }],
+    "Tanah Abang": [{ tipe: "KRL", nama: "Stasiun Tanah Abang" }],
+    "Manggarai": [{ tipe: "KRL", nama: "Stasiun Manggarai" }],
+    "Kampung Bandan": [{ tipe: "KRL", nama: "Stasiun Kampung Bandan" }],
+    "Grogol": [{ tipe: "KRL", nama: "Stasiun Grogol" }],
+    "Stasiun Klender": [{ tipe: "KRL", nama: "Stasiun Klender" }],
+    "Tanjung Priok": [{ tipe: "KRL", nama: "Stasiun Tanjung Priok" }],
+
+    // MRT Jakarta
+    "Bundaran HI ASTRA": [{ tipe: "MRT", nama: "Stasiun MRT Bundaran HI" }],
+    "Lebak Bulus": [{ tipe: "MRT", nama: "Stasiun MRT Lebak Bulus" }],
+    "Tosari": [{ tipe: "MRT", nama: "Stasiun MRT Tosari" }],
+    "Setiabudi": [{ tipe: "MRT", nama: "Stasiun MRT Setiabudi Astra" }],
+    "Bendungan Hilir": [{ tipe: "MRT", nama: "Stasiun MRT Bendungan Hilir" }],
+    "Senayan BANK DKI": [{ tipe: "MRT", nama: "Stasiun MRT Senayan" }],
+    "ASEAN": [{ tipe: "MRT", nama: "Stasiun MRT ASEAN" }],
+    "CSW": [{ tipe: "MRT", nama: "Stasiun MRT ASEAN" }],
+    "Blok M": [{ tipe: "MRT", nama: "Stasiun MRT Blok M" }],
+    "Polda Metro Jaya": [{ tipe: "MRT", nama: "Stasiun MRT Istora" }],
+    "Karet": [{ tipe: "MRT", nama: "Stasiun MRT Bendungan Hilir" }],
+    
+    // LRT Jabodebek
+    "Cawang": [{ tipe: "LRT", nama: "Stasiun LRT Cawang" }],
+    "Kampung Rambutan": [{ tipe: "LRT", nama: "Stasiun LRT Kampung Rambutan" }],
+    "Setiabudi": [{ tipe: "LRT", nama: "Stasiun LRT Setiabudi" }],
+    "Rasuna Said": [{ tipe: "LRT", nama: "Stasiun LRT Rasuna Said" }],
+    "Kuningan": [{ tipe: "LRT", nama: "Stasiun LRT Kuningan" }],
+    "Pancoran": [{ tipe: "LRT", nama: "Pancoran BANK BJB" }],
+    "Cikoko": [{ tipe: "LRT", nama: "Stasiun LRT Cikoko" }],
+    "Ciliwung": [{ tipe: "LRT", nama: "Stasiun LRT Ciliwung" }],
+    "Makasar": [{ tipe: "LRT", nama: "Stasiun LRT Taman Mini" }],
+
+    // Integrasi lainnya
+    "Simpang Buaran": [{ tipe: "KRL", nama: "Stasiun Buaran (via JPO)" }],
+    "Flyover Radin Inten 1": [{ tipe: "KRL", nama: "Stasiun Klender Baru (via JPO)" }],
+    "Senen TOYOTA Rangga": [{ tipe: "KRL", nama: "Stasiun Pasar Senen" }],
+    "Matraman Baru": [{ tipe: "KRL", nama: "Stasiun Matraman" }],
+    "Gambir 2": [{ tipe: "KRL", nama: "Stasiun Gambir" }],
+};
