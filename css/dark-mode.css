@@ -4,7 +4,7 @@
  * Licensed under MIT (https://github.com/coliff/dark-mode-switch/blob/main/LICENSE)
  */
 body {
-  background-color: #f9f9ff !important;
+  background-color: #f9f9ff ;
   color: #191c20;
   transition: background 0.5s, color 0.5s ease;
 }
@@ -27,6 +27,7 @@ body {
   background: #f9f9ff !important;
   transition: background 0.5s;
 }
+
 
 
 html {
@@ -62,6 +63,8 @@ html {
 [data-theme="dark"] .nav-link {
   color: #eee !important;
 }
+
+
 
 [data-theme="dark"] .navbar-toggler span {
   background-color: #eee !important;
@@ -187,9 +190,8 @@ label {
   color: #0a305f !important;
 }
 [data-theme="dark"] .card {
-  background: #262626 !important;
-  color: white !important;
-  border-color: white !important;
+  color: white ;
+  border-color: rgb(138, 137, 137) !important;
 }
 
 [data-theme="dark"] .text-muted {
