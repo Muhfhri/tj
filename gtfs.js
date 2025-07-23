@@ -804,17 +804,21 @@ window.addEventListener('DOMContentLoaded', function() {
                         }
                     });
                     // --- Tambahan: Deteksi perubahan halte terdekat ---
-                    const nearestStopId = nearestStop && nearestStop.stop_id;
-                    const lastNearestStopId = window.lastNearestStopId;
-                    const halteChanged = !lastNearestStopId || lastNearestStopId !== nearestStopId;
-                    if (halteChanged) {
+                    if (!window.lastNearestStopId || window.lastNearestStopId !== (nearestStop && nearestStop.stop_id)) {
                         window.nearestStopPopupClosedManually = false;
-                        window.lastNearestStopId = nearestStopId;
+                        window.lastNearestStopId = nearestStop && nearestStop.stop_id;
                     }
                     // Tampilkan popup halte terdekat dan garis (tanpa lingkaran merah)
-                    if (window.nearestStopCircle) map.removeLayer(window.nearestStopCircle); window.nearestStopCircle = null; // Hapus jika ada sisa lama
-                    // Jangan close popup jika halte tidak berubah dan popup masih terbuka
-                    if (halteChanged && window.nearestStopPopup) map.closePopup(window.nearestStopPopup);
+                    if (window.nearestStopCircle) { map.removeLayer(window.nearestStopCircle); window.nearestStopCircle = null; }
+                    if (window.nearestStopPopup) { map.closePopup(window.nearestStopPopup); window.nearestStopPopup = null; }
+                    if (!selectedRouteId) {
+                        // Jika belum memilih layanan, tampilkan circle merah halte terdekat dan popup
+                        window.nearestStopCircle = L.circle([parseFloat(nearestStop.stop_lat), parseFloat(nearestStop.stop_lon)], {
+                            color: 'red', fillColor: '#f03', fillOpacity: 0.3, radius: 60
+                        }).addTo(map);
+                        // ... lanjutkan logic popup halte terdekat di sini ...
+                        // (pindahkan seluruh logic popup halte terdekat ke dalam blok ini jika perlu)
+                    }
                     let layanan = '';
                     if (nearestStop && stopToRoutes[nearestStop.stop_id]) {
                         layanan = Array.from(stopToRoutes[nearestStop.stop_id])
@@ -911,79 +915,70 @@ window.addEventListener('DOMContentLoaded', function() {
                             }
                         }
                         const popupContent = `<b>Halte Terdekat:</b><br>${nearestStop.stop_name}<br>Jarak: ${minDist.toFixed(0)} m${nextStopInfo}${layananBadges ? '<hr>Layanan:<br>' + layananBadges : ''}${busInfo}`;
-                        // Jika popup sudah ada dan halte tidak berubah, update konten saja tanpa open/close
-                        if (window.nearestStopPopup && !halteChanged) {
-                            window.nearestStopPopup.setContent(popupContent);
-                        } else {
-                            window.nearestStopPopup = L.popup({autoClose: false, closeOnClick: false})
-                                .setLatLng([parseFloat(nearestStop.stop_lat), parseFloat(nearestStop.stop_lon)])
-                                .setContent(popupContent);
-                            // Event: badge layanan di popup bisa diklik (pakai event popupopen agar pasti sudah render)
-                            map.once('popupopen', function(e) {
-                                const popupEl = e.popup.getElement();
-                                if (popupEl) {
-                                    popupEl.querySelectorAll('.layanan-badge-popup').forEach(badge => {
-                                        badge.onclick = function(ev) {
-                                            console.log('Badge layanan diklik', badge.getAttribute('data-routeid'));
-                                            ev.stopPropagation();
-                                            const rid = badge.getAttribute('data-routeid');
-                                            if (rid) {
-                                                selectedRouteId = rid;
-                                                renderRoutes();
-                                                showStopsByRoute(rid, routes.find(r => r.route_id === rid));
-                                                window.nearestStopPopup && map.closePopup(window.nearestStopPopup);
-                                            }
-                                        };
-                                    });
-                                    // Badge bus menuju halte ini
-                                    popupEl.querySelectorAll('.badge-bus-link').forEach(badge => {
-                                        badge.onclick = function(ev) {
-                                            ev.stopPropagation();
-                                            const busKey = badge.getAttribute('data-buskey');
-                                            if (busKey && busMarkerMap[busKey]) {
-                                                map.panTo(busMarkerMap[busKey].getLatLng());
-                                                busMarkerMap[busKey].openPopup();
-                                            }
-                                        };
-                                    });
-                                }
-                            });
-                            // Tambahkan event popupclose untuk deteksi manual close
-                            window.nearestStopPopup.on('remove', function() {
-                                window.nearestStopPopupClosedManually = true;
-                            });
-                            // Hanya buka popup jika belum pernah ditutup manual
-                            if (!window.nearestStopPopupClosedManually) {
-                                window.nearestStopPopup.openOn(map);
+                        window.nearestStopPopup = L.popup({autoClose: false, closeOnClick: false})
+                            .setLatLng([parseFloat(nearestStop.stop_lat), parseFloat(nearestStop.stop_lon)])
+                            .setContent(popupContent);
+                        // Event: badge layanan di popup bisa diklik (pakai event popupopen agar pasti sudah render)
+                        map.once('popupopen', function(e) {
+                            const popupEl = e.popup.getElement();
+                            if (popupEl) {
+                                popupEl.querySelectorAll('.layanan-badge-popup').forEach(badge => {
+                                    badge.onclick = function(ev) {
+                                        console.log('Badge layanan diklik', badge.getAttribute('data-routeid'));
+                                        ev.stopPropagation();
+                                        const rid = badge.getAttribute('data-routeid');
+                                        if (rid) {
+                                            selectedRouteId = rid;
+                                            renderRoutes();
+                                            showStopsByRoute(rid, routes.find(r => r.route_id === rid));
+                                            window.nearestStopPopup && map.closePopup(window.nearestStopPopup);
+                                        }
+                                    };
+                                });
+                                // Badge bus menuju halte ini
+                                popupEl.querySelectorAll('.badge-bus-link').forEach(badge => {
+                                    badge.onclick = function(ev) {
+                                        ev.stopPropagation();
+                                        const busKey = badge.getAttribute('data-buskey');
+                                        if (busKey && busMarkerMap[busKey]) {
+                                            map.panTo(busMarkerMap[busKey].getLatLng());
+                                            busMarkerMap[busKey].openPopup();
+                                        }
+                                    };
+                                });
                             }
+                        });
+                        // Tambahkan event popupclose untuk deteksi manual close
+                        window.nearestStopPopup.on('remove', function() {
+                            window.nearestStopPopupClosedManually = true;
+                        });
+                        // Hanya buka popup jika belum pernah ditutup manual
+                        if (!window.nearestStopPopupClosedManually) {
+                            window.nearestStopPopup.openOn(map);
                         }
                         // Garis dari user ke halte terdekat (pakai OSRM)
-                        // Simpan koordinat tujuan terakhir agar tidak ngeblink jika belum berubah
-                        if (!window.lastUserToHalteLineTarget || window.lastUserToHalteLineTarget.lat !== parseFloat(nearestStop.stop_lat) || window.lastUserToHalteLineTarget.lon !== parseFloat(nearestStop.stop_lon)) {
-                            window.lastUserToHalteLineTarget = {lat: parseFloat(nearestStop.stop_lat), lon: parseFloat(nearestStop.stop_lon)};
-                            if (userToHalteLine) { map.removeLayer(userToHalteLine); userToHalteLine = null; }
-                            fetch(`https://router.project-osrm.org/route/v1/foot/${lon},${lat};${nearestStop.stop_lon},${nearestStop.stop_lat}?overview=full&geometries=geojson`)
-                                .then(res => res.json())
-                                .then(data => {
-                                    if (userToHalteLine) { map.removeLayer(userToHalteLine); userToHalteLine = null; }
-                                    if (data.routes && data.routes[0] && data.routes[0].geometry) {
-                                        const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-                                        userToHalteLine = L.polyline(coords, {color: '#0074D9', weight: 4, dashArray: '6, 8'}).addTo(map);
-                                    } else {
-                                        userToHalteLine = L.polyline(
-                                            [[lat, lon], [parseFloat(nearestStop.stop_lat), parseFloat(nearestStop.stop_lon)]],
-                                            {color: '#0074D9', weight: 4, dashArray: '6, 8'}
-                                        ).addTo(map);
-                                    }
-                                })
-                                .catch(() => {
-                                    if (userToHalteLine) { map.removeLayer(userToHalteLine); userToHalteLine = null; }
+                        if (userToHalteLine) { map.removeLayer(userToHalteLine); userToHalteLine = null; }
+                        fetch(`https://router.project-osrm.org/route/v1/foot/${lon},${lat};${nearestStop.stop_lon},${nearestStop.stop_lat}?overview=full&geometries=geojson`)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (userToHalteLine) { map.removeLayer(userToHalteLine); userToHalteLine = null; }
+                                if (data.routes && data.routes[0] && data.routes[0].geometry) {
+                                    const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+                                    userToHalteLine = L.polyline(coords, {color: '#0074D9', weight: 4, dashArray: '6, 8'}).addTo(map);
+                                } else {
                                     userToHalteLine = L.polyline(
                                         [[lat, lon], [parseFloat(nearestStop.stop_lat), parseFloat(nearestStop.stop_lon)]],
                                         {color: '#0074D9', weight: 4, dashArray: '6, 8'}
                                     ).addTo(map);
-                                });
-                        }
+                                }
+                            })
+                            .catch(() => {
+                                if (userToHalteLine) { map.removeLayer(userToHalteLine); userToHalteLine = null; }
+                                userToHalteLine = L.polyline(
+                                    [[lat, lon], [parseFloat(nearestStop.stop_lat), parseFloat(nearestStop.stop_lon)]],
+                                    {color: '#0074D9', weight: 4, dashArray: '6, 8'}
+                                ).addTo(map);
+                            });
                     }
                 }, function(err) {
                     alert('Gagal mendapatkan lokasi: ' + err.message);
