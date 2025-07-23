@@ -803,6 +803,11 @@ window.addEventListener('DOMContentLoaded', function() {
                             }
                         }
                     });
+                    // --- Tambahan: Deteksi perubahan halte terdekat ---
+                    if (!window.lastNearestStopId || window.lastNearestStopId !== (nearestStop && nearestStop.stop_id)) {
+                        window.nearestStopPopupClosedManually = false;
+                        window.lastNearestStopId = nearestStop && nearestStop.stop_id;
+                    }
                     // Tampilkan popup halte terdekat dan garis (tanpa lingkaran merah)
                     if (window.nearestStopCircle) map.removeLayer(window.nearestStopCircle); window.nearestStopCircle = null; // Hapus jika ada sisa lama
                     if (window.nearestStopPopup) map.closePopup(window.nearestStopPopup);
@@ -856,8 +861,7 @@ window.addEventListener('DOMContentLoaded', function() {
                         const popupContent = `<b>Halte Terdekat:</b><br>${nearestStop.stop_name}<br>Jarak: ${minDist.toFixed(0)} m${layananBadges ? '<hr>Layanan:<br>' + layananBadges : ''}${busInfo}`;
                         window.nearestStopPopup = L.popup({autoClose: false, closeOnClick: false})
                             .setLatLng([parseFloat(nearestStop.stop_lat), parseFloat(nearestStop.stop_lon)])
-                            .setContent(popupContent)
-                            .openOn(map);
+                            .setContent(popupContent);
                         // Event: badge layanan di popup bisa diklik (pakai event popupopen agar pasti sudah render)
                         map.once('popupopen', function(e) {
                             const popupEl = e.popup.getElement();
@@ -888,6 +892,14 @@ window.addEventListener('DOMContentLoaded', function() {
                                 });
                             }
                         });
+                        // Tambahkan event popupclose untuk deteksi manual close
+                        window.nearestStopPopup.on('remove', function() {
+                            window.nearestStopPopupClosedManually = true;
+                        });
+                        // Hanya buka popup jika belum pernah ditutup manual
+                        if (!window.nearestStopPopupClosedManually) {
+                            window.nearestStopPopup.openOn(map);
+                        }
                         // Garis dari user ke halte terdekat (pakai OSRM)
                         if (userToHalteLine) { map.removeLayer(userToHalteLine); userToHalteLine = null; }
                         fetch(`https://router.project-osrm.org/route/v1/foot/${lon},${lat};${nearestStop.stop_lon},${nearestStop.stop_lat}?overview=full&geometries=geojson`)
