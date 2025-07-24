@@ -519,6 +519,8 @@ function showNearestStopFromUser(userLat, userLon) {
             popupAnchor: [1, -34]
         })
     }).addTo(map).bindPopup(popupContent).openPopup();
+    // Pada showNearestStopFromUser, simpan stopData di marker
+    nearestStopMarker.stopData = stop;
     // Coba fetch rute jalan kaki dari OSRM
     fetch(`https://router.project-osrm.org/route/v1/foot/${userLon},${userLat};${stopLon},${stopLat}?overview=full&geometries=geojson`)
         .then(res => res.json())
@@ -692,11 +694,36 @@ function enableLiveLocation() {
                         iconAnchor: [20, 40],
                         popupAnchor: [1, -34]
                     })
-                }).addTo(map).bindPopup('Posisi Anda');
+                }).addTo(map);
             }
             if (!window.userCentered) {
                 map.setView([lat, lon], 16);
                 window.userCentered = true;
+            }
+            // Update popup halte terdekat jika ada
+            if (window.nearestStopMarker && window.nearestStopMarker._popup && window.nearestStopMarker.stopData) {
+                const stop = window.nearestStopMarker.stopData;
+                const distance = haversine(lat, lon, parseFloat(stop.stop_lat), parseFloat(stop.stop_lon));
+                let koridorBadges = '';
+                if (stopToRoutes[stop.stop_id]) {
+                    koridorBadges = Array.from(stopToRoutes[stop.stop_id]).map(rid => {
+                        const route = routes.find(r => r.route_id === rid);
+                        if (route) {
+                            let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
+                            let badgeFontSize = '1em';
+                            if (route.route_short_name && route.route_short_name.length > 3) badgeFontSize = '0.5em';
+                            else if (route.route_short_name && route.route_short_name.length > 2) badgeFontSize = '0.6em';
+                            return `<span class='badge badge-koridor-interaktif me-1' style='background:${badgeColor};color:#fff;cursor:pointer;font-size:${badgeFontSize}!important;' data-routeid='${route.route_id}'>${route.route_short_name}</span>`;
+                        }
+                        return '';
+                    }).join('');
+                }
+                let layananInfo = koridorBadges ? `<div class='mt-2 plus-jakarta-sans'>Layanan: ${koridorBadges}</div>` : '';
+                let popupContent = `<b class='plus-jakarta-sans'>${stop.stop_name}</b><br><span class='plus-jakarta-sans'>Jarak: ${distance < 1000 ? Math.round(distance) + ' m' : (distance/1000).toFixed(2) + ' km'}</span>${layananInfo}`;
+                window.nearestStopMarker.setPopupContent(popupContent);
+            }
+            if (window.userMarker) {
+                window.userMarker.bindPopup('Posisi Anda');
             }
             if (window.selectedRouteIdForUser && window.selectedCurrentStopForUser) {
                 // Deteksi jika user sudah berada di halte (jarak < 30m), update ke halte berikutnya
