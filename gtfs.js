@@ -494,7 +494,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let minSeq = Infinity;
     let tripUsed = null;
     let stopTimes = [];
-    // Cari trip yang lewat halte ini dan halte berikutnya
     for (const trip of tripsForRoute) {
         const stTimes = stop_times.filter(st => st.trip_id === trip.trip_id)
             .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
@@ -514,11 +513,10 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let userOnShape = false;
     let userShapeIdx = 0;
     let shapePoints = [];
+    let nextStopShapeIdx = null;
     if (tripUsed && tripUsed.shape_id) {
-        // Ambil shape points
         shapePoints = shapes.filter(s => s.shape_id === tripUsed.shape_id)
             .sort((a, b) => parseInt(a.shape_pt_sequence) - parseInt(b.shape_pt_sequence));
-        // Proyeksikan posisi user ke shape (cari titik shape terdekat)
         let minShapeDist = Infinity;
         userShapeIdx = 0;
         shapePoints.forEach((pt, idx) => {
@@ -528,11 +526,8 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                 userShapeIdx = idx;
             }
         });
-        // Anggap user "on shape" jika jarak ke shape < 50 meter
         userOnShape = minShapeDist < 50;
-        // Ambil urutan halte di trip setelah posisi user
         const halteIdxs = stopTimes.map(st => {
-            // Cari index shape terdekat ke halte
             let halteShapeIdx = 0;
             let halteMinDist = Infinity;
             shapePoints.forEach((pt, idx) => {
@@ -544,26 +539,42 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             });
             return {st, halteShapeIdx};
         });
+        // Cari shapeIdx untuk nextStop
+        if (nextStop) {
+            const found = halteIdxs.find(h => h.st.stop_id === nextStop.stop_id);
+            if (found) nextStopShapeIdx = found.halteShapeIdx;
+        }
         // Filter halte yang shapeIdx > userShapeIdx (ke depan)
         upcomingHaltes = halteIdxs.filter(h => h.halteShapeIdx > userShapeIdx).map(h => stops.find(s => s.stop_id === h.st.stop_id));
+        // Jika user sudah melewati halte (userShapeIdx >= nextStopShapeIdx), skip ke halte berikutnya
+        if (nextStopShapeIdx !== null && userShapeIdx >= nextStopShapeIdx) {
+            if (upcomingHaltes.length > 0) {
+                nextStop = upcomingHaltes[0];
+                // update jarak dan info
+                jarakNext = haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
+                nextStopInfo = `<b>Halte Selanjutnya:</b> ${nextStop.stop_name}`;
+                jarakInfo = `<br><b>Jarak ke Halte Selanjutnya:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}`;
+            } else {
+                nextStop = null;
+                nextStopInfo = 'Tidak ada halte berikutnya.';
+                jarakInfo = '';
+            }
+        }
     }
     let nextStopInfo = nextStop ? `<b>Halte Selanjutnya:</b> ${nextStop.stop_name}` : 'Tidak ada halte berikutnya.';
     let jarakNext = nextStop ? haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon)) : null;
     let jarakInfo = nextStop ? `<br><b>Jarak ke Halte Selanjutnya:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}` : '';
-    // Kecepatan real time di sepanjang shape
     let speed = null;
     if (userOnShape && window.lastShapeIdx !== undefined && window.lastShapeTime !== undefined && window.lastShapeIdx !== null) {
         const dt = (Date.now() - window.lastShapeTime) / 1000; // detik
         let d = 0;
         if (userShapeIdx > window.lastShapeIdx) {
-            // Hitung jarak sepanjang shape dari lastShapeIdx ke userShapeIdx
             for (let i = window.lastShapeIdx; i < userShapeIdx; i++) {
                 const pt1 = shapePoints[i];
                 const pt2 = shapePoints[i+1];
                 d += haversine(parseFloat(pt1.shape_pt_lat), parseFloat(pt1.shape_pt_lon), parseFloat(pt2.shape_pt_lat), parseFloat(pt2.shape_pt_lon));
             }
         } else if (userShapeIdx < window.lastShapeIdx) {
-            // Mundur (misal user balik arah)
             for (let i = window.lastShapeIdx; i > userShapeIdx; i--) {
                 const pt1 = shapePoints[i];
                 const pt2 = shapePoints[i-1];
@@ -572,7 +583,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         }
         if (dt > 0 && d > 0) speed = d / dt;
     }
-    // Simpan posisi terakhir di shape
     if (userOnShape) {
         window.lastShapeIdx = userShapeIdx;
         window.lastShapeTime = Date.now();
@@ -581,12 +591,10 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         window.lastShapeTime = null;
     }
     let speedInfo = (userOnShape && speed) ? `<br><b>Kecepatan di Jalur:</b> ${(speed * 3.6).toFixed(2)} km/jam` : '';
-    // Daftar halte berikutnya
     let upcomingInfo = '';
     if (upcomingHaltes.length > 0) {
         upcomingInfo = `<br><b>Halte Berikutnya:</b><ul style='margin-bottom:0'>` + upcomingHaltes.map(h => `<li>${h.stop_name}</li>`).join('') + '</ul>';
     }
-    // Update popup marker user
     if (window.userMarker) {
         window.userMarker.bindPopup(`<b>Info Layanan ${routeId}</b><br>${nextStopInfo}${jarakInfo}${speedInfo}${upcomingInfo}`).openPopup();
     }
@@ -594,6 +602,9 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
 
 // Patch: update info marker user setiap update posisi jika sudah pilih layanan
 // Ganti patching: deklarasikan enableLiveLocation sebagai function agar hoisted
+// Tambahkan debounce untuk update halte terdekat
+let nearestStopDebounceTimeout = null;
+
 function enableLiveLocation() {
     if (!navigator.geolocation) {
         alert('Geolocation tidak didukung di browser ini.');
@@ -626,8 +637,11 @@ function enableLiveLocation() {
             if (window.selectedRouteIdForUser && window.selectedCurrentStopForUser) {
                 showUserRouteInfo(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
             } else {
-                // Jika belum pilih layanan, tampilkan popup halte terdekat
-                showNearestStopFromUser(lat, lon);
+                // Debounce update halte terdekat
+                if (nearestStopDebounceTimeout) clearTimeout(nearestStopDebounceTimeout);
+                nearestStopDebounceTimeout = setTimeout(() => {
+                    showNearestStopFromUser(lat, lon);
+                }, 1000); // 1 detik
             }
         },
         err => {
@@ -646,6 +660,14 @@ function disableLiveLocation() {
     if (window.userMarker) {
         map.removeLayer(window.userMarker);
         window.userMarker = null;
+    }
+    if (window.nearestStopMarker) {
+        map.removeLayer(window.nearestStopMarker);
+        window.nearestStopMarker = null;
+    }
+    if (window.userToStopLine) {
+        map.removeLayer(window.userToStopLine);
+        window.userToStopLine = null;
     }
     window.userCentered = false;
 }
