@@ -1433,7 +1433,16 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
                 iconAnchor: [9, 30],
                 popupAnchor: [1, -24]
             })
-        }).addTo(map).bindPopup(`<div class='plus-jakarta-sans'><b>${stop.stop_name}</b><br>(${stop.stop_id})${layananInfo}</div>`);
+        });
+        // Tambahkan info jarak ke user jika userMarker aktif
+        let jarakUser = '';
+        if (window.userMarker) {
+            const userLatLng = window.userMarker.getLatLng();
+            const d = haversine(userLatLng.lat, userLatLng.lng, parseFloat(stop.stop_lat), parseFloat(stop.stop_lon));
+            jarakUser = `<br><span class='plus-jakarta-sans text-primary'>Jarak ke Anda: ${d < 1000 ? Math.round(d) + ' m' : (d/1000).toFixed(2) + ' km'}</span>`;
+        }
+        marker.bindPopup(`<div class='plus-jakarta-sans'><b>${stop.stop_name}</b><br>(${stop.stop_id})${jarakUser}${layananInfo}</div>`);
+        marker.addTo(map);
         marker.on('popupopen', function() {
             lastRadiusPopupMarker = marker;
             lastRadiusPopupStopId = stop.stop_id;
