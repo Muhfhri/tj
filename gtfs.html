@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="css/dark-mode.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <style>
        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
         body { font-family: 'PT Sans Narrow', sans-serif; background: #f8f9fa; letter-spacing: 0.6px; }
@@ -25,7 +27,32 @@
         .section-box { padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); margin-bottom: 2rem; }
         .form-label { font-weight: 700; }
         #map { height: 400px; margin-bottom: 1.5rem; border-radius: 1.5rem; }
-
+        .leaflet-control-livelocation {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px #0002;
+  padding: 0;
+  margin: 8px 0 0 8px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.leaflet-control-livelocation.active {
+  background: #22c55e !important; /* hijau */
+  color: #fff !important;
+  border: 1.5px solid #16a34a;
+}
+.leaflet-control-livelocation.disabled {
+  background: #ef4444 !important; /* merah */
+  color: #fff !important;
+  border: 1.5px solid #b91c1c;
+}
+.leaflet-control-livelocation:hover {
+  background: #e6f0ff;
+}
         .badge-koridor-interaktif:hover {
             box-shadow: 0 0 0 2px #26469744;
             transform: scale(1.08);
@@ -55,6 +82,42 @@
           font-size: 2em;
           font-weight: bold;
         }
+    .leaflet-control-neareststops {
+      background: #22c55e !important;
+      color: #fff !important;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px #0002;
+      padding: 0;
+      margin: 8px 0 0 8px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid #16a34a;
+    }
+    .leaflet-control-neareststops:hover {
+      background: #16a34a !important;
+    }
+    .leaflet-control-resetmap {
+      background: #f59e42 !important;
+      color: #fff !important;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px #0002;
+      padding: 0;
+      margin: 8px 0 0 8px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid #ea580c;
+    }
+    .leaflet-control-resetmap:hover {
+      background: #ea580c !important;
+    }
     </style>
 </head>
 <body class="container py-4">
@@ -101,6 +164,8 @@
         </div>
     </div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="gtfs.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.2/iconify-icon.min.js"></script>
     <script src="js/dark-mode-switch.js"></script>

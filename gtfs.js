@@ -49,7 +49,6 @@ Promise.all([
         renderRoutes();
     }
     setupSearch();
-    setupRadiusHalteButton();
     // setupRouteSearch(); // dikomentari agar tidak error
 });
 
@@ -81,6 +80,10 @@ let filteredRoutes = [];
 let selectedRouteId = null;
 let stopToRoutes = {};
 let frequencies = [];
+let radiusHalteMarkers = [];
+let lastRadiusPopupMarker = null;
+let lastRadiusPopupStopId = null;
+window.radiusHalteActive = false;
 // Simpan ke localStorage setiap kali user memilih koridor
 function saveActiveRouteId(routeId) {
     if (routeId) {
@@ -102,17 +105,161 @@ function saveActiveRouteId(routeId) {
 
 function initMap() {
     if (!map) {
-        map = L.map('map').setView([-6.2, 106.8], 11); // Jakarta default
+        map = L.map('map', { fullscreenControl: true }).setView([-6.2, 106.8], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
+        // Daftarkan event handler radius hanya sekali setelah map dibuat
+        if (!window._radiusZoomHandlerAdded) {
+            map.on('zoomend moveend', function() {
+                if (window.radiusHalteActive && map.getZoom() >= 16) {
+                    const center = map.getCenter();
+                    showHalteRadius(center.lat, center.lng, 300);
+                } else {
+                    removeHalteRadiusMarkers();
+                }
+            });
+            window._radiusZoomHandlerAdded = true;
+        }
     }
     if (markersLayer) {
         map.removeLayer(markersLayer);
     }
     if (polylineLayer) {
         map.removeLayer(polylineLayer);
+    }
+    // Tambahkan tombol custom
+    ensureCustomMapButtons();
+    // Tambahkan kembali kontrol geocoder (search box) di pojok kanan atas
+    if (!map._geocoderControl && typeof L.Control.Geocoder !== 'undefined') {
+        map._geocoderControl = L.Control.geocoder({
+            defaultMarkGeocode: true,
+            placeholder: 'Cari tempat...',
+            errorMessage: 'Tidak ditemukan',
+            geocoder: L.Control.Geocoder.nominatim(),
+            position: 'topright'
+        }).addTo(map);
+    }
+}
+
+function ensureCustomMapButtons() {
+    const mapDiv = document.getElementById('map');
+    // --- Live Location ---
+    if (!document.getElementById('liveLocationBtnMap')) {
+        const btn = document.createElement('button');
+        btn.id = 'liveLocationBtnMap';
+        btn.className = 'btn btn-primary rounded-5 btn-sm position-absolute';
+        btn.style.top = '70px';
+        btn.style.right = '12px';
+        btn.style.zIndex = 1000;
+        btn.innerHTML = '<iconify-icon icon="typcn:location" inline></iconify-icon>';
+        btn.onclick = function() {
+            const isActive = btn.classList.toggle('active');
+            const nearestBtn = document.getElementById('nearestStopsBtn');
+            if (isActive) {
+                setLiveBtnState(true);
+                enableLiveLocation(
+                    // onError callback
+                    function onError() {
+                        btn.classList.remove('btn-primary', 'btn-success');
+                        btn.classList.add('btn-danger');
+                    }
+                );
+                btn.classList.remove('btn-primary', 'btn-danger');
+                btn.classList.add('btn-success');
+                if (nearestBtn) nearestBtn.style.display = '';
+            } else {
+                setLiveBtnState(false);
+                disableLiveLocation();
+                btn.classList.remove('btn-success', 'btn-danger');
+                btn.classList.add('btn-primary');
+                if (nearestBtn) nearestBtn.style.display = 'none';
+            }
+        };
+        mapDiv.appendChild(btn);
+    }
+    // --- Reset ---
+    if (!document.getElementById('resetMapBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'resetMapBtn';
+        btn.className = 'btn btn-primary rounded-5 btn-sm position-absolute';
+        btn.style.top = '118px';
+        btn.style.right = '12px';
+        btn.style.zIndex = 1000;
+        btn.innerHTML = '<iconify-icon icon="mdi:refresh" inline></iconify-icon>';
+        btn.onclick = function() {
+            if (typeof selectedRouteId !== 'undefined') selectedRouteId = null;
+            window.selectedRouteIdForUser = null;
+            window.selectedCurrentStopForUser = null;
+            saveActiveRouteId(null);
+            if (window.nearestStopMarker) { map.removeLayer(window.nearestStopMarker); window.nearestStopMarker = null; }
+            if (window.userToStopLine) { map.removeLayer(window.userToStopLine); window.userToStopLine = null; }
+            if (window.nearestStopsMarkers) { window.nearestStopsMarkers.forEach(m => map.removeLayer(m)); window.nearestStopsMarkers = []; }
+            if (polylineLayers && polylineLayers.length) { polylineLayers.forEach(pl => map.removeLayer(pl)); polylineLayers = []; }
+            renderRoutes();
+            const isLiveActive = window.userMarker != null;
+            if (!isLiveActive) {
+                if (window.userMarker) { map.removeLayer(window.userMarker); window.userMarker = null; }
+                map.setView([-6.2, 106.8], 11);
+            } else {
+                if (window.userMarker) window.userMarker.bindPopup('Posisi Anda');
+            }
+        };
+        mapDiv.appendChild(btn);
+    }
+    // --- Halte Terdekat ---
+    if (!document.getElementById('nearestStopsBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'nearestStopsBtn';
+        btn.className = 'btn btn-primary rounded-5 btn-sm position-absolute';
+        btn.style.top = '214px';
+        btn.style.right = '12px';
+        btn.style.zIndex = 1000;
+        btn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius-outline" inline></iconify-icon>';
+        btn.onclick = function() {
+            if (window.nearestStopsMarkers && window.nearestStopsMarkers.length > 0) {
+                window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
+                window.nearestStopsMarkers = [];
+            } else {
+                if (window.userMarker) {
+                    const latlng = window.userMarker.getLatLng();
+                    showMultipleNearestStops(latlng.lat, latlng.lng, 2);
+                } else {
+                    alert('Aktifkan live location terlebih dahulu!');
+                }
+            }
+        };
+        // Sembunyikan tombol ini secara default, hanya tampil saat live location aktif
+        btn.style.display = 'none';
+        mapDiv.appendChild(btn);
+    }
+    // --- Radius (di bawah reset, dalam map) ---
+    if (!document.getElementById('radiusHalteBtnMap')) {
+        const btn = document.createElement('button');
+        btn.id = 'radiusHalteBtnMap';
+        btn.className = 'btn btn-primary rounded-5 btn-sm position-absolute';
+        btn.style.top = '166px';
+        btn.style.right = '12px';
+        btn.style.zIndex = 1000;
+        btn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon> <span class="d-none d-md-inline">Sembunyikan Halte Radius</span>';
+        btn.onclick = function() {
+            if (!window.radiusHalteActive) {
+                const center = map.getCenter();
+                showHalteRadius(center.lat, center.lng, 300);
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-warning');
+                btn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon> <span class="d-none d-md-inline">Sembunyikan Halte Radius</span>';
+                window.radiusHalteActive = true;
+            } else {
+                removeHalteRadiusMarkers();
+                btn.classList.remove('btn-warning');
+                btn.classList.add('btn-primary');
+                btn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon> <span class="d-none d-md-inline">Tampilkan Halte Radius</span>';
+                window.radiusHalteActive = false;
+            }
+        };
+        document.getElementById('map').appendChild(btn);
     }
 }
 
@@ -983,9 +1130,10 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
 
 // Patch: update info marker user setiap update posisi jika sudah pilih layanan
 // Ganti patching: deklarasikan enableLiveLocation sebagai function agar hoisted
-function enableLiveLocation() {
+function enableLiveLocation(onError) {
     if (!navigator.geolocation) {
         alert('Geolocation tidak didukung di browser ini.');
+        if (onError) onError();
         return;
     }
     if (window.geoWatchId) navigator.geolocation.clearWatch(window.geoWatchId);
@@ -1065,6 +1213,7 @@ function enableLiveLocation() {
         err => {
             alert('Gagal mendapatkan lokasi: ' + err.message);
             setLiveBtnState(false);
+            if (onError) onError();
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
     );
@@ -1203,6 +1352,7 @@ window.addEventListener('DOMContentLoaded', function() {
     const resetBtn = document.getElementById('resetRouteBtn');
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
+            
             selectedRouteId = null;
             window.selectedRouteIdForUser = null;
             window.selectedCurrentStopForUser = null;
@@ -1232,12 +1382,8 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 // Tambahkan fitur tampilkan halte radius 300m dari center peta saat zoom cukup besar
-let radiusHalteMarkers = [];
-let radiusHalteBtn = null;
-let radiusHalteListenerAdded = false;
+
 let radiusHalteActive = false;
-let lastRadiusPopupMarker = null;
-let lastRadiusPopupStopId = null;
 function showHalteRadius(centerLat, centerLon, radius = 300) {
     radiusHalteMarkers.forEach(m => map.removeLayer(m));
     radiusHalteMarkers = [];
@@ -1317,57 +1463,4 @@ function removeHalteRadiusMarkers() {
     lastRadiusPopupMarker = null;
     lastRadiusPopupStopId = null;
 }
-function ensureRadiusBtn() {
-    if (!radiusHalteBtn) {
-        radiusHalteBtn = document.createElement('button');
-        radiusHalteBtn.id = 'radiusHalteBtn';
-        radiusHalteBtn.className = 'btn btn-primary rounded-5 btn-sm position-absolute';
-        radiusHalteBtn.style.top = '12px';
-        radiusHalteBtn.style.right = '12px';
-        radiusHalteBtn.style.zIndex = 1000;
-        radiusHalteBtn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon> Tampilkan Halte';
-        radiusHalteBtn.onclick = function() {
-            if (!radiusHalteActive) {
-                const center = map.getCenter();
-                showHalteRadius(center.lat, center.lng, 300);
-                radiusHalteActive = true;
-                radiusHalteBtn.classList.remove('btn-outline-primary');
-                radiusHalteBtn.classList.add('btn-warning');
-                radiusHalteBtn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon> Sembunyikan Halte';
-            } else {
-                removeHalteRadiusMarkers();
-                radiusHalteActive = false;
-                radiusHalteBtn.classList.remove('btn-warning');
-                radiusHalteBtn.classList.add('btn-primary');
-                radiusHalteBtn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon> Tampilkan Halte';
-            }
-        };
-        document.getElementById('map').appendChild(radiusHalteBtn);
-    }
-    radiusHalteBtn.style.display = '';
-}
-function hideRadiusBtn() {
-    if (radiusHalteBtn) radiusHalteBtn.style.display = 'none';
-    removeHalteRadiusMarkers();
-    
-}
-function setupRadiusHalteButton() {
-    if (!map || radiusHalteListenerAdded) return;
-    map.on('moveend zoomend', function() {
-        if (map.getZoom() >= 16) {
-            ensureRadiusBtn();
-            if (radiusHalteActive) {
-                const center = map.getCenter();
-                showHalteRadius(center.lat, center.lng, 300);
-                // Pastikan tombol tetap bertuliskan 'Sembunyikan Halte'
-                radiusHalteBtn.classList.remove('btn-primary');
-                radiusHalteBtn.classList.add('btn-warning');
-                radiusHalteBtn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon> Sembunyikan Halte';
-            }
-        } else {
-            hideRadiusBtn();
-        }
-    });
-    hideRadiusBtn();
-    radiusHalteListenerAdded = true;
-}
+
