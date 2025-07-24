@@ -204,13 +204,27 @@ function ensureCustomMapButtons() {
             if (window.nearestStopsMarkers) { window.nearestStopsMarkers.forEach(m => map.removeLayer(m)); window.nearestStopsMarkers = []; }
             // Hapus marker hasil pencarian jika ada
             if (window.searchResultMarker) { map.removeLayer(window.searchResultMarker); window.searchResultMarker = null; }
-            if (polylineLayers && polylineLayers.length) { polylineLayers.forEach(pl => map.removeLayer(pl)); polylineLayers = []; }
+            if (polylineLayers && polylineLayers.length) {
+                polylineLayers.forEach(pl => map.removeLayer(pl));
+                polylineLayers = [];
+            }
+            // Hapus semua polyline multi shape jika ada
+            if (window._multiPolylineLayers) {
+                window._multiPolylineLayers.forEach(pl => map.removeLayer(pl));
+                window._multiPolylineLayers = [];
+            }
+            // Hapus semua marker halte
+            if (markersLayer) { map.removeLayer(markersLayer); markersLayer = null; }
             renderRoutes();
-            const isLiveActive = window.userMarker != null;
+            showStopsByRoute(null, null);
+            // Jika live location tidak aktif, reset view ke Jakarta dan hapus userMarker
+            const btn = document.getElementById('liveLocationBtn');
+            const isLiveActive = btn && btn.getAttribute('data-active') === 'on';
             if (!isLiveActive) {
                 if (window.userMarker) { map.removeLayer(window.userMarker); window.userMarker = null; }
                 map.setView([-6.2, 106.8], 11);
             } else {
+                // Jika live location aktif, info marker user kembali ke 'Posisi Anda'
                 if (window.userMarker) window.userMarker.bindPopup('Posisi Anda');
             }
         };
@@ -412,11 +426,111 @@ function renderRoutes() {
 }
 
 function showStopsByRoute(route_id, routeObj, highlightStopId) {
+    // Jika reset (route_id null), kosongkan UI tanpa pesan error
+    if (!route_id) {
+        const ul = document.getElementById('stopsByRoute');
+        const title = document.getElementById('stopsTitle');
+        const directionTabs = document.getElementById('directionTabs');
+        if (ul) ul.innerHTML = '';
+        if (title) title.textContent = '';
+        if (directionTabs) directionTabs.innerHTML = '';
+        // Hapus dropdown varian jika ada
+        let old = document.getElementById('routeVariantDropdown');
+        if (old) {
+            old.previousSibling && old.previousSibling.remove();
+            old.remove();
+        }
+        return;
+    }
+    // Reset dropdown varian ke Default jika ganti koridor
+    if (window.lastRouteId !== route_id) {
+        window.selectedRouteVariant = null;
+        window.lastRouteId = route_id;
+    }
     const ul = document.getElementById('stopsByRoute');
     const title = document.getElementById('stopsTitle');
     const directionTabs = document.getElementById('directionTabs');
     ul.innerHTML = '';
     directionTabs.innerHTML = '';
+    // --- Tambahan: Dropdown varian trip jika ada ---
+    // Ambil semua trip untuk rute ini
+    const tripsForRoute = trips.filter(t => t.route_id === route_id);
+    // Deteksi varian dari trip_id, misal 12-L01, 12-R01, dst
+    const variantRegex = /^(.*?)-(\w+)$/;
+    // Buat map varian -> trip utama (untuk label jurusan)
+    let variantInfo = {};
+    tripsForRoute.forEach(t => {
+        const m = t.trip_id.match(variantRegex);
+        if (m) {
+            const varKey = m[2];
+            // Pilih trip pertama untuk varian ini
+            if (!variantInfo[varKey]) variantInfo[varKey] = t;
+        }
+    });
+    let variants = Object.keys(variantInfo);
+    // Dropdown hanya jika varian > 1
+    let variantDropdown = null;
+    if (variants.length > 1) {
+        // Tambahkan label judul di atas dropdown
+        let label = document.createElement('label');
+        label.textContent = 'Pilih Varian Trayek:';
+        label.setAttribute('for', 'routeVariantDropdown');
+        label.style.fontWeight = 'bold';
+        label.style.marginBottom = '4px';
+        label.style.display = 'block';
+        // Ambil default varian dari localStorage jika ada
+        let localVarKey = 'selectedRouteVariant_' + route_id;
+        let localVar = localStorage.getItem(localVarKey);
+        if (localVar && !window.selectedRouteVariant) {
+            window.selectedRouteVariant = localVar;
+        }
+        // Dropdown dengan style lebih menarik
+        variantDropdown = document.createElement('select');
+        variantDropdown.className = 'form-select form-select-lg shadow-sm border-primary mb-3 plus-jakarta-sans';
+        variantDropdown.style.maxWidth = '340px';
+        variantDropdown.style.display = 'inline-block';
+        variantDropdown.style.fontSize = '1.1em';
+        variantDropdown.style.fontWeight = '500';
+        variantDropdown.style.padding = '0.7em 1.2em';
+        variantDropdown.style.marginBottom = '10px';
+        // Opsi default
+        let defaultLabel = 'Default (Semua Varian)';
+        variantDropdown.innerHTML = `<option value="">${defaultLabel}</option>` +
+            variants.map(v => {
+                let trip = variantInfo[v];
+                let jurusan = trip.trip_headsign || trip.trip_long_name || '';
+                let label = v + (jurusan ? ' - ' + jurusan : '');
+                return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
+            }).join('');
+        variantDropdown.onchange = function() {
+            window.selectedRouteVariant = this.value || null;
+            // Simpan ke localStorage
+            localStorage.setItem(localVarKey, window.selectedRouteVariant || '');
+            showStopsByRoute(route_id, routeObj);
+        };
+        // Sisipkan label dan dropdown sebelum ul
+        if (ul.parentNode && !document.getElementById('routeVariantDropdown')) {
+            variantDropdown.id = 'routeVariantDropdown';
+            ul.parentNode.insertBefore(label, ul);
+            ul.parentNode.insertBefore(variantDropdown, ul);
+        } else if (document.getElementById('routeVariantDropdown')) {
+            // Update jika sudah ada
+            let old = document.getElementById('routeVariantDropdown');
+            old.previousSibling && old.previousSibling.remove(); // remove old label
+            old.replaceWith(variantDropdown);
+            variantDropdown.id = 'routeVariantDropdown';
+            ul.parentNode.insertBefore(label, variantDropdown);
+        }
+    } else {
+        // Hapus dropdown jika tidak ada varian atau hanya satu varian
+        let old = document.getElementById('routeVariantDropdown');
+        if (old) {
+            old.previousSibling && old.previousSibling.remove(); // remove label
+            old.remove();
+        }
+        window.selectedRouteVariant = null;
+    }
+    // --- END Tambahan dropdown varian ---
     if (routeObj) {
         let minHeadway = null;
         let badgeText = routeObj.route_short_name || routeObj.route_id || '';
@@ -445,12 +559,18 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         }
         // --- Tambahan: Jam Operasi ---
         let jamOperasiInfo = '';
-        // Ambil semua trip_id untuk route_id ini
-        const tripsForRoute = trips.filter(t => t.route_id === routeObj.route_id);
-        let tripIds = tripsForRoute.map(t => t.trip_id);
-        // Ambil semua baris frequencies yang trip_id-nya ada di tripIds
-        let freqsForRoute = frequencies.filter(f => tripIds.includes(f.trip_id));
-        let startTimes = [], endTimes = [];
+        let tripIds, freqsForRoute, startTimes, endTimes;
+        // Filter tripsForRoute sesuai varian jika ada
+        let filteredTrips = tripsForRoute;
+        if (window.selectedRouteVariant) {
+            filteredTrips = tripsForRoute.filter(t => {
+                const m = t.trip_id.match(variantRegex);
+                return m && m[2] === window.selectedRouteVariant;
+            });
+        }
+        tripIds = filteredTrips.map(t => t.trip_id);
+        freqsForRoute = frequencies.filter(f => tripIds.includes(f.trip_id));
+        startTimes = [], endTimes = [];
         if (freqsForRoute.length > 0) {
             freqsForRoute.forEach(f => {
                 if (f.start_time && f.end_time) {
@@ -624,7 +744,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         // --- Panjang Trayek ---
         let panjangTrayekLabel = '';
         // Ambil shape_id utama dari trip pertama
-        let mainShapeId = tripsForRoute.length > 0 ? tripsForRoute[0].shape_id : null;
+        let mainShapeId = filteredTrips.length > 0 ? filteredTrips[0].shape_id : null;
         let totalLength = 0;
         if (mainShapeId) {
             const shapePoints = shapes.filter(s => s.shape_id === mainShapeId)
@@ -703,103 +823,242 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         `;
         title.className = 'mb-3 fs-3 fw-bold plus-jakarta-sans';
         title.style.color = '#264697';
+        // --- Render daftar halte dan polyline ---
+        let allStops = [];
+        let polylineShapeIds = [];
+        if (!window.selectedRouteVariant) {
+            // Gabungkan semua halte dari semua trip (tanpa duplikat)
+            let halteMap = new Map();
+            tripsForRoute.forEach(trip => {
+                const stopsForTrip = stop_times.filter(st => st.trip_id === trip.trip_id)
+                    .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
+                stopsForTrip.forEach(st => {
+                    const stop = stops.find(s => s.stop_id === st.stop_id);
+                    if (stop) {
+                        const key = stop.stop_id;
+                        if (!halteMap.has(key)) halteMap.set(key, stop);
+                    }
+                });
+            });
+            allStops = Array.from(halteMap.values());
+            // Gabungkan semua shape_id unik dari semua trip
+            polylineShapeIds = Array.from(new Set(tripsForRoute.map(t => t.shape_id)));
+        } else {
+            // Hanya varian terpilih
+            allStops = [];
+            filteredTrips.forEach(trip => {
+                const stopsForTrip = stop_times.filter(st => st.trip_id === trip.trip_id)
+                    .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
+                stopsForTrip.forEach(st => {
+                    const stop = stops.find(s => s.stop_id === st.stop_id);
+                    if (stop) allStops.push(stop);
+                });
+            });
+            // Hanya shape_id dari filteredTrips
+            polylineShapeIds = filteredTrips.map(t => t.shape_id).filter(Boolean);
+        }
+        // --- Render daftar halte ---
+        if (allStops.length === 0) {
+            if (window.selectedRouteVariant) {
+                ul.innerHTML = '<li class="list-group-item">Data trip tidak ditemukan untuk varian ini</li>';
+            } else if (tripsForRoute.length === 0) {
+                ul.innerHTML = '<li class="list-group-item">Data trip tidak ditemukan</li>';
+            } else {
+                ul.innerHTML = '<li class="list-group-item">Tidak ada halte ditemukan</li>';
+            }
+            return;
+        }
+        ul.innerHTML = '';
+        allStops.forEach((stop, idx) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex flex-column bg-light align-items-start gap-1 py-3';
+            // Nama halte dan icon lokasi dalam satu baris (inline)
+            const halteRow = document.createElement('span');
+            halteRow.style.display = 'flex';
+            halteRow.style.flexDirection = 'row';
+            halteRow.style.alignItems = 'center';
+            // Nama halte
+            const halteName = document.createElement('span');
+            halteName.className = 'fw-bold';
+            halteName.textContent = stop.stop_name;
+            halteRow.appendChild(halteName);
+            // Icon lokasi (link ke Google Maps)
+            if (stop.stop_lat && stop.stop_lon) {
+                const locLink = document.createElement('a');
+                locLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
+                locLink.target = '_blank';
+                locLink.rel = 'noopener';
+                locLink.style.marginLeft = '8px';
+                locLink.title = 'Lihat di Google Maps';
+                locLink.innerHTML = `<iconify-icon icon="mdi:map-marker" inline style="color:#d9534f;font-size:1.2em;vertical-align:middle;"></iconify-icon>`;
+                halteRow.appendChild(locLink);
+            }
+            li.appendChild(halteRow);
+            if (stopToRoutes[stop.stop_id]) {
+                const badgesDiv = document.createElement('div');
+                Array.from(stopToRoutes[stop.stop_id]).forEach(rid => {
+                    if (rid !== selectedRouteId) {
+                        const route = routes.find(r => r.route_id === rid);
+                        if (route) {
+                            let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
+                            const badgeEl = document.createElement('span');
+                            badgeEl.className = 'badge badge-koridor-interaktif rounded-pill me-2';
+                            badgeEl.style.background = badgeColor;
+                            badgeEl.style.color = '#fff';
+                            badgeEl.style.cursor = 'pointer';
+                            badgeEl.style.fontWeight = 'bold';
+                            badgeEl.textContent = route.route_short_name;
+                            badgeEl.title = route.route_long_name;
+                            badgeEl.onclick = (e) => {
+                                e.stopPropagation();
+                                selectedRouteId = route.route_id;
+                                saveActiveRouteId(selectedRouteId);
+                                renderRoutes();
+                                showStopsByRoute(route.route_id, route);
+                            };
+                            badgesDiv.appendChild(badgeEl);
+                        }
+                    }
+                });
+                li.appendChild(badgesDiv);
+            }
+            li.onclick = function(e) {
+                // Jika klik pada link, jangan jalankan event ini
+                if (e.target.tagName === 'A') return;
+                window.lastStopId = stop.stop_id;
+                saveUserProgress();
+            };
+            if (highlightStopId && stop.stop_id === highlightStopId) {
+                li.classList.add('bg-warning');
+                setTimeout(() => { li.scrollIntoView({behavior:'smooth', block:'center'}); }, 200);
+            }
+            ul.appendChild(li);
+        });
+        // --- Render polyline di peta ---
+        if (allStops.some(s => s.stop_lat && s.stop_lon)) {
+            // Gabungkan semua polyline dari polylineShapeIds
+            let allLatlngs = polylineShapeIds.map(shape_id => {
+                return shapes.filter(s => s.shape_id === shape_id)
+                    .sort((a, b) => parseInt(a.shape_pt_sequence) - parseInt(b.shape_pt_sequence))
+                    .map(s => [parseFloat(s.shape_pt_lat), parseFloat(s.shape_pt_lon)]);
+            }).filter(arr => arr.length > 0);
+            // showHalteOnMap menerima array halte dan shape_id utama (pakai shape_id pertama)
+            // Untuk menampilkan semua polyline, modifikasi showHalteOnMap agar bisa menerima array shape_id (atau panggil polyline manual di sini jika perlu)
+            // Untuk sekarang, tetap panggil showHalteOnMap dengan shape_id pertama (agar marker tetap muncul), lalu render polyline manual
+            showHalteOnMap(allStops, polylineShapeIds[0]);
+            // Render polyline tambahan jika lebih dari satu shape_id
+            if (typeof map !== 'undefined' && typeof L !== 'undefined') {
+                if (window._multiPolylineLayers) {
+                    window._multiPolylineLayers.forEach(pl => map.removeLayer(pl));
+                }
+                window._multiPolylineLayers = [];
+                allLatlngs.forEach((latlngs, idx) => {
+                    if (latlngs.length > 0) {
+                        let color = '#264697';
+                        if (routeObj.route_color) color = '#' + routeObj.route_color;
+                        let pl = L.polyline(latlngs, {color, weight: 4, opacity: 0.7}).addTo(map);
+                        window._multiPolylineLayers.push(pl);
+                    }
+                });
+            }
+        }
     } else {
         title.textContent = 'Jalur Trayek';
         title.className = 'mb-3 fs-3 fw-bold plus-jakarta-sans';
         title.style.color = '#264697';
-    }
-    const tripsForRoute = trips.filter(t => t.route_id === route_id);
-    if (tripsForRoute.length === 0) {
-        ul.innerHTML = '<li class="list-group-item">Data trip tidak ditemukan</li>';
-        return;
-    }
-    let halteMap = new Map();
-    tripsForRoute.forEach(trip => {
-        const stopsForTrip = stop_times.filter(st => st.trip_id === trip.trip_id)
-            .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
-        stopsForTrip.forEach(st => {
-            const stop = stops.find(s => s.stop_id === st.stop_id);
-            if (stop) {
-                const normName = stop.stop_name.trim().toLowerCase();
-                const lat = parseFloat(stop.stop_lat).toFixed(5);
-                const lon = parseFloat(stop.stop_lon).toFixed(5);
-                const key = `${normName}|${lat}|${lon}`;
-                if (!halteMap.has(key)) {
-                    halteMap.set(key, {...stop, koridors: new Set()});
-                }
-                halteMap.get(key).koridors.add(trip.route_id);
-            }
-        });
-    });
-    let allStops = Array.from(halteMap.values());
-    ul.innerHTML = '';
-    allStops.forEach((stop, idx) => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex flex-column bg-light align-items-start gap-1 py-3';
-        // Nama halte dan icon lokasi dalam satu baris (inline)
-        const halteRow = document.createElement('span');
-        halteRow.style.display = 'flex';
-        halteRow.style.flexDirection = 'row';
-        halteRow.style.alignItems = 'center';
-        // Nama halte
-        const halteName = document.createElement('span');
-        halteName.className = 'fw-bold';
-        halteName.textContent = stop.stop_name;
-        halteRow.appendChild(halteName);
-        // Icon lokasi (link ke Google Maps)
-        if (stop.stop_lat && stop.stop_lon) {
-            const locLink = document.createElement('a');
-            locLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
-            locLink.target = '_blank';
-            locLink.rel = 'noopener';
-            locLink.style.marginLeft = '8px';
-            locLink.title = 'Lihat di Google Maps';
-            locLink.innerHTML = `<iconify-icon icon="mdi:map-marker" inline style="color:#d9534f;font-size:1.2em;vertical-align:middle;"></iconify-icon>`;
-            halteRow.appendChild(locLink);
+        // fallback: tampilkan semua trip
+        if (tripsForRoute.length === 0) {
+            ul.innerHTML = '<li class="list-group-item">Data trip tidak ditemukan</li>';
+            return;
         }
-        li.appendChild(halteRow);
-        if (stopToRoutes[stop.stop_id]) {
-            const badgesDiv = document.createElement('div');
-            Array.from(stopToRoutes[stop.stop_id]).forEach(rid => {
-                if (rid !== selectedRouteId) {
-                    const route = routes.find(r => r.route_id === rid);
-                    if (route) {
-                        let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
-                        const badgeEl = document.createElement('span');
-                        badgeEl.className = 'badge badge-koridor-interaktif rounded-pill me-2';
-                        badgeEl.style.background = badgeColor;
-                        badgeEl.style.color = '#fff';
-                        badgeEl.style.cursor = 'pointer';
-                        badgeEl.style.fontWeight = 'bold';
-                        badgeEl.textContent = route.route_short_name;
-                        badgeEl.title = route.route_long_name;
-                        badgeEl.onclick = (e) => {
-                            e.stopPropagation();
-                            selectedRouteId = route.route_id;
-                            saveActiveRouteId(selectedRouteId);
-                            renderRoutes();
-                            showStopsByRoute(route.route_id, route);
-                        };
-                        badgesDiv.appendChild(badgeEl);
+        let halteMap = new Map();
+        tripsForRoute.forEach(trip => {
+            const stopsForTrip = stop_times.filter(st => st.trip_id === trip.trip_id)
+                .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
+            stopsForTrip.forEach(st => {
+                const stop = stops.find(s => s.stop_id === st.stop_id);
+                if (stop) {
+                    const normName = stop.stop_name.trim().toLowerCase();
+                    const lat = parseFloat(stop.stop_lat).toFixed(5);
+                    const lon = parseFloat(stop.stop_lon).toFixed(5);
+                    const key = `${normName}|${lat}|${lon}`;
+                    if (!halteMap.has(key)) {
+                        halteMap.set(key, {...stop, koridors: new Set()});
                     }
+                    halteMap.get(key).koridors.add(trip.route_id);
                 }
             });
-            li.appendChild(badgesDiv);
+        });
+        let allStops = Array.from(halteMap.values());
+        ul.innerHTML = '';
+        allStops.forEach((stop, idx) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex flex-column bg-light align-items-start gap-1 py-3';
+            // Nama halte dan icon lokasi dalam satu baris (inline)
+            const halteRow = document.createElement('span');
+            halteRow.style.display = 'flex';
+            halteRow.style.flexDirection = 'row';
+            halteRow.style.alignItems = 'center';
+            // Nama halte
+            const halteName = document.createElement('span');
+            halteName.className = 'fw-bold';
+            halteName.textContent = stop.stop_name;
+            halteRow.appendChild(halteName);
+            // Icon lokasi (link ke Google Maps)
+            if (stop.stop_lat && stop.stop_lon) {
+                const locLink = document.createElement('a');
+                locLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
+                locLink.target = '_blank';
+                locLink.rel = 'noopener';
+                locLink.style.marginLeft = '8px';
+                locLink.title = 'Lihat di Google Maps';
+                locLink.innerHTML = `<iconify-icon icon="mdi:map-marker" inline style="color:#d9534f;font-size:1.2em;vertical-align:middle;"></iconify-icon>`;
+                halteRow.appendChild(locLink);
+            }
+            li.appendChild(halteRow);
+            if (stopToRoutes[stop.stop_id]) {
+                const badgesDiv = document.createElement('div');
+                Array.from(stopToRoutes[stop.stop_id]).forEach(rid => {
+                    if (rid !== selectedRouteId) {
+                        const route = routes.find(r => r.route_id === rid);
+                        if (route) {
+                            let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
+                            const badgeEl = document.createElement('span');
+                            badgeEl.className = 'badge badge-koridor-interaktif rounded-pill me-2';
+                            badgeEl.style.background = badgeColor;
+                            badgeEl.style.color = '#fff';
+                            badgeEl.style.cursor = 'pointer';
+                            badgeEl.style.fontWeight = 'bold';
+                            badgeEl.textContent = route.route_short_name;
+                            badgeEl.title = route.route_long_name;
+                            badgeEl.onclick = (e) => {
+                                e.stopPropagation();
+                                selectedRouteId = route.route_id;
+                                saveActiveRouteId(selectedRouteId);
+                                renderRoutes();
+                                showStopsByRoute(route.route_id, route);
+                            };
+                            badgesDiv.appendChild(badgeEl);
+                        }
+                    }
+                });
+                li.appendChild(badgesDiv);
+            }
+            li.onclick = function(e) {
+                // Jika klik pada link, jangan jalankan event ini
+                if (e.target.tagName === 'A') return;
+                window.lastStopId = stop.stop_id;
+                saveUserProgress();
+            };
+            if (highlightStopId && stop.stop_id === highlightStopId) {
+                li.classList.add('bg-warning');
+                setTimeout(() => { li.scrollIntoView({behavior:'smooth', block:'center'}); }, 200);
+            }
+            ul.appendChild(li);
+        });
+        if (allStops.some(s => s.stop_lat && s.stop_lon)) {
+            showHalteOnMap(allStops, tripsForRoute[0] && tripsForRoute[0].shape_id);
         }
-        li.onclick = function(e) {
-            // Jika klik pada link, jangan jalankan event ini
-            if (e.target.tagName === 'A') return;
-            window.lastStopId = stop.stop_id;
-            saveUserProgress();
-        };
-        if (highlightStopId && stop.stop_id === highlightStopId) {
-            li.classList.add('bg-warning');
-            setTimeout(() => { li.scrollIntoView({behavior:'smooth', block:'center'}); }, 200);
-        }
-        ul.appendChild(li);
-    });
-    if (allStops.some(s => s.stop_lat && s.stop_lon)) {
-        showHalteOnMap(allStops, tripsForRoute[0] && tripsForRoute[0].shape_id);
     }
 }
 
@@ -1387,6 +1646,11 @@ window.addEventListener('DOMContentLoaded', function() {
             window.selectedRouteIdForUser = null;
             window.selectedCurrentStopForUser = null;
             saveActiveRouteId(null); // Hapus activeRouteId dari localStorage
+            // Reset varian trayek dan hapus localStorage varian trayek
+            window.selectedRouteVariant = null;
+            window.lastRouteId = null;
+            // Hapus localStorage varian trayek untuk semua koridor (opsional: hanya koridor terakhir)
+            Object.keys(localStorage).forEach(k => { if (k.startsWith('selectedRouteVariant_')) localStorage.removeItem(k); });
             // Hapus marker halte terdekat, marker simulasi, dan polylineLayers (jalur trayek)
             if (window.nearestStopMarker) { map.removeLayer(window.nearestStopMarker); window.nearestStopMarker = null; }
             if (window.userToStopLine) { map.removeLayer(window.userToStopLine); window.userToStopLine = null; }
@@ -1398,7 +1662,15 @@ window.addEventListener('DOMContentLoaded', function() {
                 polylineLayers.forEach(pl => map.removeLayer(pl));
                 polylineLayers = [];
             }
+            // Hapus semua polyline multi shape jika ada
+            if (window._multiPolylineLayers) {
+                window._multiPolylineLayers.forEach(pl => map.removeLayer(pl));
+                window._multiPolylineLayers = [];
+            }
+            // Hapus semua marker halte
+            if (markersLayer) { map.removeLayer(markersLayer); markersLayer = null; }
             renderRoutes();
+            showStopsByRoute(null, null);
             // Jika live location tidak aktif, reset view ke Jakarta dan hapus userMarker
             const btn = document.getElementById('liveLocationBtn');
             const isLiveActive = btn && btn.getAttribute('data-active') === 'on';
