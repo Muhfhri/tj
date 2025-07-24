@@ -4,31 +4,188 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transjakarta GTFS Map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="css/dark-mode.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        body { background: #f8f9fa; }
-        #map { height: 400px; margin-bottom: 1.5rem; border-radius: 1rem; }
-        .badge-koridor-interaktif { cursor:pointer; margin-right:4px; margin-bottom:4px; }
+       @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+        body { font-family: 'PT Sans Narrow', sans-serif; background: #f8f9fa; letter-spacing: 0.6px; }
+        .badge { font-family: 'PT Sans Narrow', sans-serif; }
+        .plus-jakarta-sans { font-family: 'Plus Jakarta Sans', sans-serif !important; letter-spacing: 0px; }
+        .pt-sans { font-family: 'PT Sans Narrow', sans-serif; letter-spacing: 0.6px; }
+        .bg-2 { background-color:#264697 !important; }
+        .bg-2a { background-color:#4FA8DE !important; }
+        .bg-7F { background-color:#ff326b !important; }
+        .title { font-size: 2rem; font-weight: bold; margin-top: 1rem; }
+        .rounded-input { border-radius: 1rem; padding: 0.75rem 1.25rem; }
+        .section-box { padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); margin-bottom: 2rem; }
+        .form-label { font-weight: 700; }
+        #map { height: 400px; margin-bottom: 1.5rem; border-radius: 1.5rem; }
+        .badge-koridor-interaktif {
+            border-radius: 50% !important;
+            width: 32px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1em;
+            margin-right: 6px; margin-bottom: 4px;
+            box-shadow: 0 2px 8px #0001;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .badge-koridor-interaktif:hover {
+            box-shadow: 0 0 0 2px #26469744;
+            transform: scale(1.08);
+            filter: brightness(1.1);
+        }
+        .badge.bg-2a[onclick], .badge.bg-7F[onclick] { transition: box-shadow 0.2s, transform 0.2s; }
+        .badge.bg-2a[onclick]:hover, .badge.bg-7F[onclick]:hover { box-shadow: 0 0 0 2px #26469744; transform: scale(1.08); filter: brightness(1.1); }
+        .badge-koridor-interaktif, .badge-trayek-utama {
+            border-radius: 50% !important;
+            width: 32px; height: 32px;
+            display: inline-flex !important;
+            align-items: center; justify-content: center;
+            font-size: inherit !important;
+            line-height: 1 !important;
+            padding: 0 !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle !important;
+        }
+        @media (max-width: 600px) {
+            .section-box { padding: 1.2rem 0.7rem; }
+            .badge { font-size: 1.3em !important; }
+            .badge-koridor-interaktif, .badge-trayek-utama {
+                width: 28px; height: 28px;
+                font-size: 0.8em !important;
+                display: inline-flex !important;
+                vertical-align: middle !important;
+            }
+        }
+        .dark-mode-bg { transition: background 0.3s; }
+        body.dark-mode .dark-mode-bg { background: #232a36 !important; color: #f4f6fa !important; }
+        body.dark-mode #unifiedSearchInput, body.dark-mode .form-control, body.dark-mode .form-select { background: #232a36 !important; color: #f4f6fa !important; border: none !important; }
+        /* Popup transparan dan rounded ala index.html */
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: rgba(255,255,255,0.85) !important;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 24px 0 #0002 !important;
+            border-radius: 1em !important;
+            color: #232a36 !important;
+        }
+        body.dark-mode .leaflet-popup-content-wrapper, body.dark-mode .leaflet-popup-tip {
+            background: rgba(35,42,54,0.92) !important;
+            color: #f4f6fa !important;
+        }
     </style>
 </head>
 <body class="container py-4">
-    <h1 class="mb-4 text-center">Transjakarta GTFS Map</h1>
-    <div class="mb-3 d-flex gap-2 align-items-center">
-        <button id="liveLocationBtn" class="btn btn-outline-primary">Live Location: OFF</button>
-        <button id="resetRouteBtn" class="btn btn-outline-danger">Reset Koridor</button>
+    <div class="text-end mb-3">
+        <input type="checkbox" class="btn-check" id="darkSwitch" checked autocomplete="off">
+        <label class="btn btn-dark btn-sm rounded-pill" for="darkSwitch">
+            <iconify-icon id="darkmode"></iconify-icon>
+        </label>
     </div>
-    <div id="map"></div>
-    <div class="mb-3">
-        <input type="text" id="searchStop" class="form-control" placeholder="Cari Halte atau Koridor...">
+    <div class="text-center mb-4 plus-jakarta-sans">
+        <img src="image/tije.png" width="200" alt="Logo Transjakarta & JakLingko">
+        <div class="text-slider-container">
+          <span class="title text-slider-inner" id="serviceTextSlider">Transjakarta</span>
+        </div>
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+            <span id="liveClock" class="fw-bold" style="min-width:70px"></span>
+            <marquee class="text-muted small flex-grow-1">Klik nama halte untuk mengetahui lokasi halte di Google Maps</marquee>
+        </div>
+    </div>
+    <div class="text-slider-motivasi mb-3 plus-jakarta-sans" style="height:60px;">
+      
+    </div>
+    <div class="section-box mb-4">
+        <div id="map"></div>
+        <div class="mb-3 d-flex gap-2 align-items-center">
+            <button id="liveLocationBtn" class="btn btn-outline-primary rounded-5">Live Location: OFF</button>
+            <button id="resetRouteBtn" class="btn btn-outline-danger rounded-5">Reset Koridor</button>
+        </div>
+        <input type="text" id="searchStop" class="form-control rounded-pill mb-2" placeholder="Cari Halte atau Koridor...">
         <div id="searchResults" class="mt-2"></div>
+        <select id="routesDropdown" class="form-select mb-4 rounded-pill"></select>
+        <h2 class="mb-3" id="stopsTitle">Jalur Trayek</h2>
+        <div id="directionTabs" class="mb-3"></div>
+        <ul id="stopsByRoute" class="list-group"></ul>
     </div>
-    <select id="routesDropdown" class="form-select mb-4"></select>
-    <h2 class="mb-3" id="stopsTitle">Jalur Trayek</h2>
-    <div id="directionTabs" class="mb-3"></div>
-    <ul id="stopsByRoute" class="list-group"></ul>
+    <div class="container text-center text-muted mt-5 plus-jakarta-sans">
+        <h5 class="fw-bold">Sumber Informasi</h5>
+        <a href="https://transjakarta.co.id/" class="link-none text-muted">Transjakarta</a> |
+        <a href="https://jaklingkoindonesia.co.id/" class="link-none text-muted">JakLingko</a> |
+        <a href="https://wikipedia.org" class="link-none text-muted">Wikipedia</a> |
+        <a href="https://maps.google.com" class="link-none text-muted">Google Maps</a>
+    </div>
+    <div class="footer mt-2 plus-jakarta-sans">
+        <div class="text-center fw-bold">
+            Dibuat oleh <a href="index"><img id="light" class="img-fluid" src="image/tije.png" alt="Logo Transjakarta & JakLingko" width="80"></a>
+            <br>2025, Free to Use & Open Source
+        </div>
+    </div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="gtfs.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.2/iconify-icon.min.js"></script>
+    <script src="js/dark-mode-switch.js"></script>
+    <script>
+    (function() {
+      const slides = document.querySelectorAll('.text-slider-motivasi h2');
+      let idx = 0;
+      function showSlide(i, prevIdx) {
+        slides.forEach((el, j) => {
+          el.classList.remove('active', 'out');
+          if (j === i) el.classList.add('active');
+          if (j === prevIdx) el.classList.add('out');
+        });
+      }
+      setInterval(() => {
+        const prevIdx = idx;
+        idx = (idx + 1) % slides.length;
+        showSlide(idx, prevIdx);
+      }, 2000);
+      showSlide(idx, null);
+    })();
+    </script>
+    <script>
+    (function() {
+      const texts = [
+        "Transjakarta",
+        "MetroTrans",
+        "MiniTrans",
+        "MikroTrans",
+        "Bus Wisata",
+        "Royal Trans",
+        "24 Jam Koridor Utama",
+      ];
+      let idx = 0;
+      const el = document.getElementById('serviceTextSlider');
+      function slideToNext() {
+        el.style.transform = 'translateX(120%)';
+        setTimeout(() => {
+          idx = (idx + 1) % texts.length;
+          el.textContent = texts[idx];
+          el.style.transition = 'none';
+          el.style.transform = 'translateX(-120%)';
+          void el.offsetWidth;
+          el.style.transition = 'transform 0.5s cubic-bezier(.77,0,.18,1)';
+          el.style.transform = 'translateX(0)';
+        }, 400);
+      }
+      setInterval(slideToNext, 5000);
+    })();
+    </script>
+    <script>
+    function updateLiveClock() {
+      const el = document.getElementById('liveClock');
+      if (!el) return;
+      const now = new Date();
+      el.textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    setInterval(updateLiveClock, 1000);
+    updateLiveClock();
+    </script>
 </body>
 </html>
