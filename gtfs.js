@@ -593,9 +593,21 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         // Headway/Frekuensi
         let infoTooltipFreq = `Lihat data mentah frequencies.txt untuk trip_id: ${tripIds && tripIds.length ? tripIds.join(',') : '-'}`;
         let infoIconLinkFreq = `<a href='gtfs-raw-viewer.html?file=frequencies&trip_id=${encodeURIComponent(tripIds && tripIds.length ? tripIds.join(',') : '-')}' target='_blank' title='${infoTooltipFreq}' style='text-decoration:none;'><iconify-icon icon="mdi:information-outline" inline></iconify-icon></a>`;
-        if (minHeadway !== null && !isNaN(minHeadway)) {
-            let minHeadwayMin = Math.round(minHeadway / 60);
-            headwayLabel = `<div class='mb-1'><iconify-icon icon="mdi:repeat" inline></iconify-icon> <b>Frekuensi:</b> Setiap ${minHeadwayMin} menit ${infoIconLinkFreq}</div>`;
+        if (freqsForRoute.length > 0) {
+            // Ambil semua nilai headway (min, max, headway_secs), konversi ke menit, urutkan, dan ambil unik
+            let headwaySeconds = [];
+            freqsForRoute.forEach(f => {
+                if (f.min_headway_secs) headwaySeconds.push(parseInt(f.min_headway_secs));
+                if (f.max_headway_secs) headwaySeconds.push(parseInt(f.max_headway_secs));
+                if (f.headway_secs) headwaySeconds.push(parseInt(f.headway_secs));
+            });
+            let headwayMinutes = headwaySeconds
+                .filter(v => !isNaN(v))
+                .map(v => Math.round(v/60))
+                .filter((v, i, arr) => arr.indexOf(v) === i) // unik
+                .sort((a, b) => a - b);
+            let headwayText = headwayMinutes.length > 0 ? headwayMinutes.map(v => `${v} menit`).join(', ') : '-';
+            headwayLabel = `<div class='mb-1'><iconify-icon icon="mdi:repeat" inline></iconify-icon> <b>Frekuensi:</b> ${headwayText} ${infoIconLinkFreq}</div>`;
         } else {
             headwayLabel = `<div class='mb-1'><iconify-icon icon="mdi:repeat" inline></iconify-icon> <b>Frekuensi:</b> - ${infoIconLinkFreq}</div>`;
         }
