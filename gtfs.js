@@ -83,6 +83,7 @@ function initMap() {
     }
 }
 
+// 1. Restore marker halte (showHalteOnMap) ke versi sederhana tanpa badge layanan lain
 function showHalteOnMap(stopsArr, shape_id) {
     initMap();
     if (polylineLayers && polylineLayers.length) {
@@ -117,36 +118,9 @@ function showHalteOnMap(stopsArr, shape_id) {
         if (stop.stop_lat && stop.stop_lon) {
             const lat = parseFloat(stop.stop_lat);
             const lon = parseFloat(stop.stop_lon);
-            // Badge layanan lain di popup marker halte
-            let koridorBadges = '';
-            if (stopToRoutes[stop.stop_id]) {
-                koridorBadges = Array.from(stopToRoutes[stop.stop_id]).map(rid => {
-                    const route = routes.find(r => r.route_id === rid);
-                    if (route) {
-                        let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
-                        return `<span class='badge badge-koridor-interaktif me-1' style='background:${badgeColor};color:#fff;cursor:pointer;' data-routeid='${route.route_id}'>${route.route_short_name}</span>`;
-                    }
-                    return '';
-                }).join('');
-            }
-            let layananInfo = koridorBadges ? `<div class='mt-2'>Layanan: ${koridorBadges}</div>` : '';
-            let popupContent = `<b>${stop.stop_name}</b>${layananInfo}`;
+            let popupContent = `<b>${stop.stop_name}</b>`;
             const marker = L.marker([lat, lon]).bindPopup(popupContent);
             markersLayer.addLayer(marker);
-            // Event listener badge di popup marker halte
-            marker.on('popupopen', function() {
-                setTimeout(() => {
-                    document.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
-                        badge.onclick = function(e) {
-                            e.stopPropagation();
-                            const routeId = this.getAttribute('data-routeid');
-                            selectedRouteId = routeId;
-                            renderRoutes();
-                            showStopsByRoute(routeId, routes.find(r => r.route_id === routeId));
-                        };
-                    });
-                }, 100);
-            });
         }
     });
     markersLayer.addTo(map);
@@ -521,6 +495,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let minSeq = Infinity;
     let tripUsed = null;
     let stopTimes = [];
+    // Cari trip yang lewat halte ini dan halte berikutnya
     for (const trip of tripsForRoute) {
         const stTimes = stop_times.filter(st => st.trip_id === trip.trip_id)
             .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
@@ -540,7 +515,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let userOnShape = false;
     let userShapeIdx = 0;
     let shapePoints = [];
-    let nextStopShapeIdx = null;
     if (tripUsed && tripUsed.shape_id) {
         shapePoints = shapes.filter(s => s.shape_id === tripUsed.shape_id)
             .sort((a, b) => parseInt(a.shape_pt_sequence) - parseInt(b.shape_pt_sequence));
@@ -566,31 +540,25 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             });
             return {st, halteShapeIdx};
         });
-        // Cari shapeIdx untuk nextStop
-        if (nextStop) {
-            const found = halteIdxs.find(h => h.st.stop_id === nextStop.stop_id);
-            if (found) nextStopShapeIdx = found.halteShapeIdx;
-        }
-        // Filter halte yang shapeIdx > userShapeIdx (ke depan)
         upcomingHaltes = halteIdxs.filter(h => h.halteShapeIdx > userShapeIdx).map(h => stops.find(s => s.stop_id === h.st.stop_id));
-        // Jika user sudah melewati halte (userShapeIdx >= nextStopShapeIdx), skip ke halte berikutnya
-        if (nextStopShapeIdx !== null && userShapeIdx >= nextStopShapeIdx) {
-            if (upcomingHaltes.length > 0) {
-                nextStop = upcomingHaltes[0];
-                // update jarak dan info
-                jarakNext = haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
-                nextStopInfo = `<b>Halte Selanjutnya:</b> ${nextStop.stop_name}`;
-                jarakInfo = `<br><b>Jarak ke Halte Selanjutnya:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}`;
-            } else {
-                nextStop = null;
-                nextStopInfo = 'Tidak ada halte berikutnya.';
-                jarakInfo = '';
-            }
-        }
     }
     let nextStopInfo = nextStop ? `<b>Halte Selanjutnya:</b> ${nextStop.stop_name}` : 'Tidak ada halte berikutnya.';
     let jarakNext = nextStop ? haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon)) : null;
     let jarakInfo = nextStop ? `<br><b>Jarak ke Halte Selanjutnya:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}` : '';
+    // Notifikasi tiba di halte berikutnya (hanya sekali per halte)
+    let arrivalMsg = '';
+    if (nextStop && jarakNext !== null && jarakNext < 30) {
+        if (window.lastArrivedStopId !== nextStop.stop_id) {
+            arrivalMsg = `<div style='color:green;font-weight:bold;'>Anda sudah tiba di <u>${nextStop.stop_name}</u>!</div>`;
+            window.lastArrivedStopId = nextStop.stop_id;
+        }
+    } else if (nextStop && jarakNext !== null && jarakNext >= 30) {
+        // Reset agar bisa notifikasi lagi untuk halte berikutnya
+        if (window.lastArrivedStopId === nextStop.stop_id) {
+            window.lastArrivedStopId = null;
+        }
+    }
+    // Kecepatan real time di sepanjang shape
     let speed = null;
     if (userOnShape && window.lastShapeIdx !== undefined && window.lastShapeTime !== undefined && window.lastShapeIdx !== null) {
         const dt = (Date.now() - window.lastShapeTime) / 1000; // detik
@@ -623,15 +591,12 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         upcomingInfo = `<br><b>Halte Berikutnya:</b><ul style='margin-bottom:0'>` + upcomingHaltes.map(h => `<li>${h.stop_name}</li>`).join('') + '</ul>';
     }
     if (window.userMarker) {
-        window.userMarker.bindPopup(`<b>Info Layanan ${routeId}</b><br>${nextStopInfo}${jarakInfo}${speedInfo}${upcomingInfo}`).openPopup();
+        window.userMarker.bindPopup(`${arrivalMsg}<b>Info Layanan ${routeId}</b><br>${nextStopInfo}${jarakInfo}${speedInfo}${upcomingInfo}`).openPopup();
     }
 }
 
 // Patch: update info marker user setiap update posisi jika sudah pilih layanan
 // Ganti patching: deklarasikan enableLiveLocation sebagai function agar hoisted
-// Tambahkan debounce untuk update halte terdekat
-let nearestStopDebounceTimeout = null;
-
 function enableLiveLocation() {
     if (!navigator.geolocation) {
         alert('Geolocation tidak didukung di browser ini.');
@@ -643,13 +608,12 @@ function enableLiveLocation() {
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
             if (!map) return;
-            // Marker user sekarang pakai icon merah custom
             if (window.userMarker) {
                 window.userMarker.setLatLng([lat, lon]);
             } else {
                 window.userMarker = L.marker([lat, lon], {
                     icon: L.icon({
-                        iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // merah custom
+                        iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
                         iconSize: [40, 40],
                         iconAnchor: [20, 40],
                         popupAnchor: [1, -34]
@@ -660,15 +624,33 @@ function enableLiveLocation() {
                 map.setView([lat, lon], 16);
                 window.userCentered = true;
             }
-            // Jika user sudah pilih layanan, update popup marker user saja
             if (window.selectedRouteIdForUser && window.selectedCurrentStopForUser) {
+                // Deteksi jika user sudah berada di halte (jarak < 30m), update ke halte berikutnya
+                const tripsForRoute = trips.filter(t => t.route_id === window.selectedRouteIdForUser);
+                let stopTimes = [];
+                let tripUsed = null;
+                for (const trip of tripsForRoute) {
+                    const stTimes = stop_times.filter(st => st.trip_id === trip.trip_id)
+                        .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
+                    const idx = stTimes.findIndex(st => st.stop_id === window.selectedCurrentStopForUser.stop_id);
+                    if (idx !== -1 && idx < stTimes.length - 1) {
+                        stopTimes = stTimes;
+                        tripUsed = trip;
+                        break;
+                    }
+                }
+                if (tripUsed && stopTimes.length > 0) {
+                    const idx = stopTimes.findIndex(st => st.stop_id === window.selectedCurrentStopForUser.stop_id);
+                    const nextSt = stopTimes[idx + 1];
+                    const nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
+                    if (nextStop) {
+                        const distToNext = haversine(lat, lon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
+                        if (distToNext < 30) {
+                            window.selectedCurrentStopForUser = nextStop;
+                        }
+                    }
+                }
                 showUserRouteInfo(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
-            } else {
-                // Debounce update halte terdekat
-                if (nearestStopDebounceTimeout) clearTimeout(nearestStopDebounceTimeout);
-                nearestStopDebounceTimeout = setTimeout(() => {
-                    showNearestStopFromUser(lat, lon);
-                }, 1000); // 1 detik
             }
         },
         err => {
@@ -688,32 +670,97 @@ function disableLiveLocation() {
         map.removeLayer(window.userMarker);
         window.userMarker = null;
     }
-    if (window.nearestStopMarker) {
-        map.removeLayer(window.nearestStopMarker);
-        window.nearestStopMarker = null;
-    }
-    if (window.userToStopLine) {
-        map.removeLayer(window.userToStopLine);
-        window.userToStopLine = null;
-    }
     window.userCentered = false;
 }
 
+// 2. Tambahkan tombol 'Halte Terdekat' hanya saat live location aktif
 function setLiveBtnState(active) {
     const btn = document.getElementById('liveLocationBtn');
+    let nearestBtn = document.getElementById('nearestStopsBtn');
     if (active) {
         btn.classList.remove('btn-outline-primary');
         btn.classList.add('btn-primary');
         btn.setAttribute('data-active', 'on');
         btn.innerHTML = '<span id="liveLocationIcon" class="bi bi-geo-alt-fill"></span> Live Location: ON';
+        // Tampilkan tombol halte terdekat
+        if (!nearestBtn) {
+            nearestBtn = document.createElement('button');
+            nearestBtn.id = 'nearestStopsBtn';
+            nearestBtn.className = 'btn btn-outline-success ms-2';
+            nearestBtn.innerHTML = 'Halte Terdekat';
+            btn.parentNode.insertBefore(nearestBtn, btn.nextSibling);
+        }
+        nearestBtn.style.display = '';
     } else {
         btn.classList.remove('btn-primary');
         btn.classList.add('btn-outline-primary');
         btn.setAttribute('data-active', 'off');
         btn.innerHTML = '<span id="liveLocationIcon" class="bi bi-geo-alt"></span> Live Location: OFF';
+        // Sembunyikan tombol halte terdekat
+        if (nearestBtn) nearestBtn.style.display = 'none';
     }
 }
 
+// 3. Logika tombol halte terdekat: tampilkan max 2 halte terdekat dari posisi user
+let nearestStopsMarkers = [];
+function showMultipleNearestStops(userLat, userLon, maxStops = 2) {
+    // Hapus marker halte terdekat sebelumnya
+    nearestStopsMarkers.forEach(m => map.removeLayer(m));
+    nearestStopsMarkers = [];
+    // Urutkan halte terdekat
+    const sortedStops = stops
+        .filter(s => s.stop_lat && s.stop_lon)
+        .map(s => ({...s, dist: haversine(userLat, userLon, parseFloat(s.stop_lat), parseFloat(s.stop_lon))}))
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, maxStops);
+    sortedStops.forEach(stop => {
+        const lat = parseFloat(stop.stop_lat);
+        const lon = parseFloat(stop.stop_lon);
+        // Badge layanan lain di popup marker halte terdekat
+        let koridorBadges = '';
+        if (stopToRoutes[stop.stop_id]) {
+            koridorBadges = Array.from(stopToRoutes[stop.stop_id]).map(rid => {
+                const route = routes.find(r => r.route_id === rid);
+                if (route) {
+                    let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
+                    return `<span class='badge badge-koridor-interaktif me-1' style='background:${badgeColor};color:#fff;cursor:pointer;' data-routeid='${route.route_id}'>${route.route_short_name}</span>`;
+                }
+                return '';
+            }).join('');
+        }
+        let layananInfo = koridorBadges ? `<div class='mt-2'>Layanan: ${koridorBadges}</div>` : '';
+        let popupContent = `<b>${stop.stop_name}</b><br>Jarak: ${stop.dist < 1000 ? Math.round(stop.dist) + ' m' : (stop.dist/1000).toFixed(2) + ' km'}${layananInfo}`;
+        const marker = L.marker([lat, lon], {
+            icon: L.icon({
+                iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/images/marker-icon.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+            })
+        }).addTo(map).bindPopup(popupContent);
+        marker.on('popupopen', function() {
+            setTimeout(() => {
+                const popupEl = marker.getPopup().getElement();
+                if (!popupEl) return;
+                popupEl.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
+                    badge.onclick = function(e) {
+                        e.stopPropagation();
+                        const routeId = this.getAttribute('data-routeid');
+                        window.selectedRouteIdForUser = routeId;
+                        window.selectedCurrentStopForUser = stop;
+                        showUserRouteInfo(userLat, userLon, stop, routeId);
+                        selectedRouteId = routeId;
+                        renderRoutes();
+                        showStopsByRoute(routeId, routes.find(r => r.route_id === routeId));
+                    };
+                });
+            }, 50);
+        });
+        nearestStopsMarkers.push(marker);
+    });
+}
+
+// 4. Event tombol halte terdekat
 window.addEventListener('DOMContentLoaded', function() {
     setLiveBtnState(false);
     const btn = document.getElementById('liveLocationBtn');
@@ -725,6 +772,21 @@ window.addEventListener('DOMContentLoaded', function() {
         } else {
             setLiveBtnState(false);
             disableLiveLocation();
+            // Hapus marker halte terdekat jika ada
+            nearestStopsMarkers.forEach(m => map.removeLayer(m));
+            nearestStopsMarkers = [];
+        }
+    });
+    // Event tombol halte terdekat
+    document.body.addEventListener('click', function(e) {
+        const nearestBtn = document.getElementById('nearestStopsBtn');
+        if (nearestBtn && e.target === nearestBtn) {
+            if (window.userMarker) {
+                const latlng = window.userMarker.getLatLng();
+                showMultipleNearestStops(latlng.lat, latlng.lng, 2);
+            } else {
+                alert('Aktifkan live location terlebih dahulu!');
+            }
         }
     });
 });
