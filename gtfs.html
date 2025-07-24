@@ -38,6 +38,23 @@
             background: rgba(35,42,54,0.92) !important;
             color: #f4f6fa !important;
         }
+        .text-slider-container {
+          width: 100%;
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 2.2em;
+          position: relative;
+        }
+        .text-slider-inner {
+          display: inline-block;
+          white-space: nowrap;
+          transition: transform 0.5s cubic-bezier(.77,0,.18,1);
+          will-change: transform;
+          font-size: 2em;
+          font-weight: bold;
+        }
     </style>
 </head>
 <body class="container py-4">
@@ -87,25 +104,6 @@
     <script src="gtfs.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.2/iconify-icon.min.js"></script>
     <script src="js/dark-mode-switch.js"></script>
-    <script>
-    (function() {
-      const slides = document.querySelectorAll('.text-slider-motivasi h2');
-      let idx = 0;
-      function showSlide(i, prevIdx) {
-        slides.forEach((el, j) => {
-          el.classList.remove('active', 'out');
-          if (j === i) el.classList.add('active');
-          if (j === prevIdx) el.classList.add('out');
-        });
-      }
-      setInterval(() => {
-        const prevIdx = idx;
-        idx = (idx + 1) % slides.length;
-        showSlide(idx, prevIdx);
-      }, 2000);
-      showSlide(idx, null);
-    })();
-    </script>
     <script>
     (function() {
       const texts = [
