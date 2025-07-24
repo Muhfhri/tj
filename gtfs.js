@@ -84,6 +84,7 @@ let radiusHalteMarkers = [];
 let lastRadiusPopupMarker = null;
 let lastRadiusPopupStopId = null;
 window.radiusHalteActive = false;
+window.searchResultMarker = null;
 // Simpan ke localStorage setiap kali user memilih koridor
 function saveActiveRouteId(routeId) {
     if (routeId) {
@@ -113,7 +114,7 @@ function initMap() {
         // Daftarkan event handler radius hanya sekali setelah map dibuat
         if (!window._radiusZoomHandlerAdded) {
             map.on('zoomend moveend', function() {
-                if (window.radiusHalteActive && map.getZoom() >= 16) {
+                if (window.radiusHalteActive && map.getZoom() >= 14) {
                     const center = map.getCenter();
                     showHalteRadius(center.lat, center.lng, 300);
                 } else {
@@ -175,6 +176,11 @@ function ensureCustomMapButtons() {
                 btn.classList.remove('btn-success', 'btn-danger');
                 btn.classList.add('btn-primary');
                 if (nearestBtn) nearestBtn.style.display = 'none';
+                // Hapus marker halte terdekat saat live location dimatikan
+                if (window.nearestStopsMarkers && window.nearestStopsMarkers.length > 0) {
+                    window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
+                    window.nearestStopsMarkers = [];
+                }
             }
         };
         mapDiv.appendChild(btn);
@@ -196,6 +202,8 @@ function ensureCustomMapButtons() {
             if (window.nearestStopMarker) { map.removeLayer(window.nearestStopMarker); window.nearestStopMarker = null; }
             if (window.userToStopLine) { map.removeLayer(window.userToStopLine); window.userToStopLine = null; }
             if (window.nearestStopsMarkers) { window.nearestStopsMarkers.forEach(m => map.removeLayer(m)); window.nearestStopsMarkers = []; }
+            // Hapus marker hasil pencarian jika ada
+            if (window.searchResultMarker) { map.removeLayer(window.searchResultMarker); window.searchResultMarker = null; }
             if (polylineLayers && polylineLayers.length) { polylineLayers.forEach(pl => map.removeLayer(pl)); polylineLayers = []; }
             renderRoutes();
             const isLiveActive = window.userMarker != null;
@@ -891,7 +899,18 @@ function setupSearch() {
                 }
                 li.onclick = function() {
                     if (stop.stop_lat && stop.stop_lon) {
+                        // Hapus marker hasil pencarian sebelumnya
+                        if (window.searchResultMarker) { map.removeLayer(window.searchResultMarker); window.searchResultMarker = null; }
                         map.setView([parseFloat(stop.stop_lat), parseFloat(stop.stop_lon)], 17);
+                        // Tambahkan marker hasil pencarian
+                        window.searchResultMarker = L.marker([parseFloat(stop.stop_lat), parseFloat(stop.stop_lon)], {
+                            icon: L.icon({
+                                iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/images/marker-icon.png',
+                                iconSize: [18, 30],
+                                iconAnchor: [9, 30],
+                                popupAnchor: [1, -24]
+                            })
+                        }).addTo(map).bindPopup(stop.stop_name).openPopup();
                     }
                     resultsDiv.innerHTML = '';
                 };
@@ -1260,11 +1279,11 @@ function setLiveBtnState(active) {
 }
 
 // 3. Logika tombol halte terdekat: tampilkan max 2 halte terdekat dari posisi user
-let nearestStopsMarkers = [];
+window.nearestStopsMarkers = [];
 function showMultipleNearestStops(userLat, userLon, maxStops = 2) {
     // Hapus marker halte terdekat sebelumnya
-    nearestStopsMarkers.forEach(m => map.removeLayer(m));
-    nearestStopsMarkers = [];
+    window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
+    window.nearestStopsMarkers = [];
     // Urutkan halte terdekat
     const sortedStops = stops
         .filter(s => s.stop_lat && s.stop_lon)
@@ -1316,7 +1335,7 @@ function showMultipleNearestStops(userLat, userLon, maxStops = 2) {
                 });
             }, 50);
         });
-        nearestStopsMarkers.push(marker);
+        window.nearestStopsMarkers.push(marker);
     });
 }
 
@@ -1332,8 +1351,8 @@ window.addEventListener('DOMContentLoaded', function() {
         } else {
             setLiveBtnState(false);
             disableLiveLocation();
-            nearestStopsMarkers.forEach(m => map.removeLayer(m));
-            nearestStopsMarkers = [];
+            window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
+            window.nearestStopsMarkers = [];
         }
     });
     // Event tombol halte terdekat
@@ -1352,7 +1371,6 @@ window.addEventListener('DOMContentLoaded', function() {
     const resetBtn = document.getElementById('resetRouteBtn');
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
-            
             selectedRouteId = null;
             window.selectedRouteIdForUser = null;
             window.selectedCurrentStopForUser = null;
@@ -1360,8 +1378,10 @@ window.addEventListener('DOMContentLoaded', function() {
             // Hapus marker halte terdekat, marker simulasi, dan polylineLayers (jalur trayek)
             if (window.nearestStopMarker) { map.removeLayer(window.nearestStopMarker); window.nearestStopMarker = null; }
             if (window.userToStopLine) { map.removeLayer(window.userToStopLine); window.userToStopLine = null; }
-            nearestStopsMarkers.forEach(m => map.removeLayer(m));
-            nearestStopsMarkers = [];
+            window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
+            window.nearestStopsMarkers = [];
+            // Hapus marker hasil pencarian jika ada
+            if (window.searchResultMarker) { map.removeLayer(window.searchResultMarker); window.searchResultMarker = null; }
             if (polylineLayers && polylineLayers.length) {
                 polylineLayers.forEach(pl => map.removeLayer(pl));
                 polylineLayers = [];
