@@ -1243,7 +1243,9 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
     radiusHalteMarkers = [];
     let markerToOpen = null;
     let markerToOpenStillExists = false;
-    const nearbyStops = stops.filter(s => s.stop_lat && s.stop_lon && haversine(centerLat, centerLon, parseFloat(s.stop_lat), parseFloat(s.stop_lon)) <= radius);
+    const nearbyStops = stops
+  .filter(s => s.stop_lat && s.stop_lon && haversine(centerLat, centerLon, parseFloat(s.stop_lat), parseFloat(s.stop_lon)) <= radius)
+  .filter(s => stopToRoutes[s.stop_id] && stopToRoutes[s.stop_id].size > 0); // hanya halte dengan layanan
     nearbyStops.forEach((stop, idx) => {
         // Info layanan (koridor) di popup
         let koridorBadges = '';
@@ -1289,7 +1291,9 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
             marker.openPopup();
             lastRadiusPopupMarker = marker;
             lastRadiusPopupStopId = stop.stop_id;
+            map.panTo([parseFloat(stop.stop_lat), parseFloat(stop.stop_lon)]);
         });
+        
         if (stop.stop_id === lastRadiusPopupStopId) {
             markerToOpen = marker;
             markerToOpenStillExists = true;
@@ -1345,7 +1349,7 @@ function ensureRadiusBtn() {
 function hideRadiusBtn() {
     if (radiusHalteBtn) radiusHalteBtn.style.display = 'none';
     removeHalteRadiusMarkers();
-    radiusHalteActive = false;
+    
 }
 function setupRadiusHalteButton() {
     if (!map || radiusHalteListenerAdded) return;
@@ -1355,6 +1359,10 @@ function setupRadiusHalteButton() {
             if (radiusHalteActive) {
                 const center = map.getCenter();
                 showHalteRadius(center.lat, center.lng, 300);
+                // Pastikan tombol tetap bertuliskan 'Sembunyikan Halte'
+                radiusHalteBtn.classList.remove('btn-primary');
+                radiusHalteBtn.classList.add('btn-warning');
+                radiusHalteBtn.innerHTML = '<iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon> Sembunyikan Halte';
             }
         } else {
             hideRadiusBtn();
