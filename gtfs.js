@@ -117,9 +117,36 @@ function showHalteOnMap(stopsArr, shape_id) {
         if (stop.stop_lat && stop.stop_lon) {
             const lat = parseFloat(stop.stop_lat);
             const lon = parseFloat(stop.stop_lon);
-            let popupContent = `<b>${stop.stop_name}</b>`;
+            // Badge layanan lain di popup marker halte
+            let koridorBadges = '';
+            if (stopToRoutes[stop.stop_id]) {
+                koridorBadges = Array.from(stopToRoutes[stop.stop_id]).map(rid => {
+                    const route = routes.find(r => r.route_id === rid);
+                    if (route) {
+                        let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
+                        return `<span class='badge badge-koridor-interaktif me-1' style='background:${badgeColor};color:#fff;cursor:pointer;' data-routeid='${route.route_id}'>${route.route_short_name}</span>`;
+                    }
+                    return '';
+                }).join('');
+            }
+            let layananInfo = koridorBadges ? `<div class='mt-2'>Layanan: ${koridorBadges}</div>` : '';
+            let popupContent = `<b>${stop.stop_name}</b>${layananInfo}`;
             const marker = L.marker([lat, lon]).bindPopup(popupContent);
             markersLayer.addLayer(marker);
+            // Event listener badge di popup marker halte
+            marker.on('popupopen', function() {
+                setTimeout(() => {
+                    document.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
+                        badge.onclick = function(e) {
+                            e.stopPropagation();
+                            const routeId = this.getAttribute('data-routeid');
+                            selectedRouteId = routeId;
+                            renderRoutes();
+                            showStopsByRoute(routeId, routes.find(r => r.route_id === routeId));
+                        };
+                    });
+                }, 100);
+            });
         }
     });
     markersLayer.addTo(map);
