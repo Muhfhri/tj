@@ -61,7 +61,7 @@ route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_
 3F,Tije,3F,Kalideres - Senayan Bank DKI,BRT,3,,FDCB1C,000000,
 3H,Tije,3H,St. Pesing - Kota,BRT,3,,FDCB1C,000000,
 4B,Tije,4B,Stasiun Manggarai - UI,Angkutan Umum Integrasi,3,,553C62,FFFFFF,
-4C,Tije,4C,Pemuda Merdeka - Bundaran Senayan,Angkutan Umum Integrasi,3,,553C62,FFFFFF,
+4C,Tije,4C,JIEP - Bundaran Senayan,Angkutan Umum Integrasi,3,,553C62,FFFFFF,
 4D,Tije,4D,Pulo Gadung - Kuningan,BRT,3,,512C62,FFFFFF,
 4E,Tije,4E,Rusun Jatinegara Kaum - Pulo Gadung,Rusun,3,,5C5062,FFFFFF,
 4F,Tije,4F,Pinang Ranti - Pulo Gadung,Angkutan Umum Integrasi,3,,553C62,FFFFFF,
