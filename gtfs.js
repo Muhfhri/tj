@@ -1546,7 +1546,7 @@ function enableLiveLocation(onError) {
                 window.userMarker.bindPopup('Posisi Anda');
             }
             if (window.selectedRouteIdForUser && window.selectedCurrentStopForUser) {
-                // Deteksi jika user sudah berada di halte (jarak < 30m), update ke halte berikutnya
+                // --- PATCH: Sinkronisasi threshold 20m/15m ---
                 const tripsForRoute = trips.filter(t => t.route_id === window.selectedRouteIdForUser);
                 let stopTimes = [];
                 let tripUsed = null;
@@ -1566,8 +1566,12 @@ function enableLiveLocation(onError) {
                     const nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
                     if (nextStop) {
                         const distToNext = haversine(lat, lon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
-                        if (distToNext < 30) {
-                            window.selectedCurrentStopForUser = nextStop;
+                        // Jika sudah tiba (<20m), jangan langsung pindah ke halte berikutnya
+                        // Pindah ke halte berikutnya hanya jika sudah menjauh >15m dari halte tersebut
+                        if (window.lastArrivedStopId === nextStop.stop_id) {
+                            if (distToNext > 15) {
+                                window.selectedCurrentStopForUser = nextStop;
+                            }
                         }
                     }
                 }
