@@ -365,6 +365,7 @@ function showHalteOnMap(stopsArr, shape_id) {
                         badge.onclick = function(e) {
                             e.stopPropagation();
                             const routeId = this.getAttribute('data-routeid');
+                            window.lastStopId = stop.stop_id;
                             selectedRouteId = routeId;
                             saveActiveRouteId(selectedRouteId);
                             renderRoutes();
@@ -940,6 +941,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
                             badgeEl.title = route.route_long_name;
                             badgeEl.onclick = (e) => {
                                 e.stopPropagation();
+                                window.lastStopId = stop.stop_id;
                                 selectedRouteId = route.route_id;
                                 saveActiveRouteId(selectedRouteId);
                                 renderRoutes();
@@ -1076,6 +1078,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
                         badgeEl.title = route.route_long_name;
                         badgeEl.onclick = (e) => {
                             e.stopPropagation();
+                            window.lastStopId = stop.stop_id;
                             selectedRouteId = route.route_id;
                             saveActiveRouteId(selectedRouteId);
                             renderRoutes();
@@ -1337,6 +1340,7 @@ function showNearestStopFromUser(userLat, userLon) {
             badge.onclick = function(e) {
                 e.stopPropagation();
                 const routeId = this.getAttribute('data-routeid');
+                window.lastStopId = stop.stop_id;
                 window.selectedRouteIdForUser = routeId;
                 window.selectedCurrentStopForUser = stop;
                 showUserRouteInfo(userLat, userLon, stop, routeId);
@@ -1434,11 +1438,15 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let hr = `<hr style='margin:6px 0 4px 0;border-top:1.5px solid #e5e7eb;'>`;
     // --- Halte Sebelumnya ---
     let prevStopBlock = '';
-    if (prevStop) {
-        prevStopBlock = `
-            <div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;color:#dc3545;'>Halte Sebelumnya</div>
-            <div style='color:#dc3545;font-weight:bold;'>${prevStop.stop_name}</div>
-        `;
+    let prevStopName = '';
+    if (window.lastStopId) {
+        const prevStopObj = stops.find(s => s.stop_id === window.lastStopId) || currentStop;
+        if (prevStopObj) {
+            prevStopBlock = `
+                <div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;color:#dc3545;'>Halte Sebelumnya</div>
+                <div style='color:#dc3545;font-weight:bold;'>${prevStopObj.stop_name}</div>
+            `;
+        }
     }
     let popupContent = `
         <div class='plus-jakarta-sans' style='min-width:180px;line-height:1.35;'>
@@ -1463,6 +1471,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                     e.stopPropagation();
                     const newRouteId = this.getAttribute('data-routeid');
                     if (newRouteId && newRouteId !== routeId) {
+                        window.lastStopId = stop.stop_id;
                         window.selectedRouteIdForUser = newRouteId;
                         window.selectedCurrentStopForUser = nextStop;
                         showUserRouteInfo(userLat, userLon, nextStop, newRouteId);
@@ -1673,6 +1682,7 @@ function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
                     badge.onclick = function(e) {
                         e.stopPropagation();
                         const routeId = this.getAttribute('data-routeid');
+                        window.lastStopId = stop.stop_id;
                         window.selectedRouteIdForUser = routeId;
                         window.selectedCurrentStopForUser = stop;
                         showUserRouteInfo(userLat, userLon, stop, routeId);
@@ -1832,6 +1842,7 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
                     badge.onclick = function(e) {
                         e.stopPropagation();
                         const routeId = this.getAttribute('data-routeid');
+                        window.lastStopId = stop.stop_id;
                         selectedRouteId = routeId;
                         saveActiveRouteId(selectedRouteId);
                         renderRoutes();
