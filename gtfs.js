@@ -735,7 +735,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         let fareId = '';
         if (fareRule) fareId = fareRule.fare_id;
         let infoTooltipTarif = `Lihat data mentah fare_attributes.txt untuk fare_id: ${fareId}`;
-        let infoIconLinkTarif = `<a href='gtfs-raw-viewer.html?file=fare_attributes&fare_id=${encodeURIComponent(fareId)}' target='_blank' title='${infoTooltipTarif}' style='text-decoration:none;'><iconify-icon icon="mdi:information-outline" inline></iconify-icon></a>`;
+        let infoIconLinkTarif = `<a href='gtfs-raw-viewer.html?file=fare_attributes&fare_id=${encodeURIComponent(fareId)}&route_id=${encodeURIComponent(routeObj.route_id)}&show_rules=1' target='_blank' title='${infoTooltipTarif}' style='text-decoration:none;'><iconify-icon icon="mdi:information-outline" inline></iconify-icon></a>`;
         if (fareInfo) {
             tarifLabel = `<div class='mb-1'><iconify-icon icon="mdi:ticket-percent" inline></iconify-icon> <b>Tarif:</b> ${fareInfo.replace('<div class=\'mt-1 plus-jakarta-sans\'><b>Tarif:</b> ','').replace('</div>','')} ${infoIconLinkTarif}</div>`;
         } else {
