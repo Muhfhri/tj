@@ -1368,14 +1368,14 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         const idx = stTimes.findIndex(st => st.stop_id === currentStop.stop_id);
         if (idx !== -1) {
             if (idx < stTimes.length - 1) {
-                const nextSt = stTimes[idx + 1];
-                if (parseInt(nextSt.stop_sequence) < minSeq) {
-                    minSeq = parseInt(nextSt.stop_sequence);
-                    nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
+            const nextSt = stTimes[idx + 1];
+            if (parseInt(nextSt.stop_sequence) < minSeq) {
+                minSeq = parseInt(nextSt.stop_sequence);
+                nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
                     prevStop = idx > 0 ? stops.find(s => s.stop_id === stTimes[idx - 1].stop_id) : null;
-                    tripUsed = trip;
-                    stopTimes = stTimes;
-                }
+                tripUsed = trip;
+                stopTimes = stTimes;
+            }
             } else if (idx > 0 && !nextStop) {
                 prevStop = stops.find(s => s.stop_id === stTimes[idx - 1].stop_id);
                 tripUsed = trip;
@@ -1510,7 +1510,6 @@ function enableLiveLocation(onError) {
                 map.setView([lat, lon], 16);
                 window.userCentered = true;
             }
-            // Update popup halte terdekat jika ada
             if (window.nearestStopMarker && window.nearestStopMarker._popup && window.nearestStopMarker.stopData) {
                 const stop = window.nearestStopMarker.stopData;
                 const distance = haversine(lat, lon, parseFloat(stop.stop_lat), parseFloat(stop.stop_lon));
@@ -1520,7 +1519,6 @@ function enableLiveLocation(onError) {
                         const route = routes.find(r => r.route_id === rid);
                         if (route) {
                             let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
-                            let badgeFontSize = '1em'; // Hapus font-size dinamis
                             return `<span class='badge badge-koridor-interaktif rounded-pill me-2' style='background:${badgeColor};color:#fff;cursor:pointer;font-weight:bold;' data-routeid='${route.route_id}'>${route.route_short_name}</span>`;
                         }
                         return '';
@@ -1534,7 +1532,6 @@ function enableLiveLocation(onError) {
                 window.userMarker.bindPopup('Posisi Anda');
             }
             if (window.selectedRouteIdForUser && window.selectedCurrentStopForUser) {
-                // --- PATCH: Sinkronisasi threshold 20m/15m ---
                 const tripsForRoute = trips.filter(t => t.route_id === window.selectedRouteIdForUser);
                 let stopTimes = [];
                 let tripUsed = null;
@@ -1554,11 +1551,11 @@ function enableLiveLocation(onError) {
                     const nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
                     if (nextStop) {
                         const distToNext = haversine(lat, lon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
-                        // Jika sudah tiba (<20m), jangan langsung pindah ke halte berikutnya
-                        // Pindah ke halte berikutnya hanya jika sudah menjauh >15m dari halte tersebut
+                        // Arrival jika <30m, pindah ke halte berikutnya jika sudah menjauh >20m
                         if (window.lastArrivedStopId === nextStop.stop_id) {
-                            if (distToNext > 15) {
-                            window.selectedCurrentStopForUser = nextStop;
+                            if (distToNext > 20) {
+                                window.lastStopId = window.selectedCurrentStopForUser.stop_id;
+                                window.selectedCurrentStopForUser = nextStop;
                             }
                         }
                     }
@@ -1873,4 +1870,7 @@ function removeHalteRadiusMarkers() {
     lastRadiusPopupMarker = null;
     lastRadiusPopupStopId = null;
 }
+
+// Tambahkan global untuk lastStopId
+if (typeof window.lastStopId === 'undefined') window.lastStopId = null;
 
