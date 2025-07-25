@@ -674,7 +674,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         }
         // --- END Tambahan jam operasi ---
         // --- Hari Operasi (penjelasan service_id) ---
-        let serviceIds = Array.from(new Set(tripsForRoute.map(t => t.service_id)));
+        let serviceIds = Array.from(new Set(filteredTrips.map(t => t.service_id)));
         const serviceIdMap = {
             'SH': 'Setiap Hari',
             'HK': 'Hari Kerja',
