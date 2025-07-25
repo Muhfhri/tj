@@ -1551,7 +1551,7 @@ function setLiveBtnState(active) {
 
 // 3. Logika tombol halte terdekat: tampilkan max 2 halte terdekat dari posisi user
 window.nearestStopsMarkers = [];
-function showMultipleNearestStops(userLat, userLon, maxStops = 2) {
+function showMultipleNearestStops(userLat, userLon, maxStops = 5) {
     // Hapus marker halte terdekat sebelumnya
     window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
     window.nearestStopsMarkers = [];
