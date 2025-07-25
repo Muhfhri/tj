@@ -246,7 +246,7 @@ function ensureCustomMapButtons() {
             } else {
                 if (window.userMarker) {
                     const latlng = window.userMarker.getLatLng();
-                    showMultipleNearestStops(latlng.lat, latlng.lng, 2);
+                    showMultipleNearestStops(latlng.lat, latlng.lng, 6);
                 } else {
                     alert('Aktifkan live location terlebih dahulu!');
                 }
@@ -1358,6 +1358,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     // Cari trip yang sesuai dengan routeId dan halte ini
     const tripsForRoute = trips.filter(t => t.route_id === routeId);
     let nextStop = null;
+    let prevStop = null;
     let minSeq = Infinity;
     let tripUsed = null;
     let stopTimes = [];
@@ -1366,98 +1367,128 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         const stTimes = stop_times.filter(st => st.trip_id === trip.trip_id)
             .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
         const idx = stTimes.findIndex(st => st.stop_id === currentStop.stop_id);
-        if (idx !== -1 && idx < stTimes.length - 1) {
-            const nextSt = stTimes[idx + 1];
-            if (parseInt(nextSt.stop_sequence) < minSeq) {
-                minSeq = parseInt(nextSt.stop_sequence);
-                nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
+        if (idx !== -1) {
+            // Cari next stop
+            if (idx < stTimes.length - 1) {
+                const nextSt = stTimes[idx + 1];
+                if (parseInt(nextSt.stop_sequence) < minSeq) {
+                    minSeq = parseInt(nextSt.stop_sequence);
+                    nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
+                    // Cari prev stop juga
+                    prevStop = idx > 0 ? stops.find(s => s.stop_id === stTimes[idx - 1].stop_id) : null;
+                    tripUsed = trip;
+                    stopTimes = stTimes;
+                }
+            } else if (idx > 0 && !nextStop) {
+                // Kalau tidak ada next, tetap simpan prev
+                prevStop = stops.find(s => s.stop_id === stTimes[idx - 1].stop_id);
                 tripUsed = trip;
                 stopTimes = stTimes;
             }
         }
     }
-    // Deteksi halte-halte berikutnya berdasarkan posisi user di shape
-    let upcomingHaltes = [];
-    let userOnShape = false;
-    let userShapeIdx = 0;
-    let shapePoints = [];
-    if (tripUsed && tripUsed.shape_id) {
-        shapePoints = shapes.filter(s => s.shape_id === tripUsed.shape_id)
-            .sort((a, b) => parseInt(a.shape_pt_sequence) - parseInt(b.shape_pt_sequence));
-        let minShapeDist = Infinity;
-        userShapeIdx = 0;
-        shapePoints.forEach((pt, idx) => {
-            const d = haversine(userLat, userLon, parseFloat(pt.shape_pt_lat), parseFloat(pt.shape_pt_lon));
-            if (d < minShapeDist) {
-                minShapeDist = d;
-                userShapeIdx = idx;
-            }
-        });
-        userOnShape = minShapeDist < 50;
-        const halteIdxs = stopTimes.map(st => {
-            let halteShapeIdx = 0;
-            let halteMinDist = Infinity;
-            shapePoints.forEach((pt, idx) => {
-                const d = haversine(parseFloat(st.stop_lat), parseFloat(st.stop_lon), parseFloat(pt.shape_pt_lat), parseFloat(pt.shape_pt_lon));
-                if (d < halteMinDist) {
-                    halteMinDist = d;
-                    halteShapeIdx = idx;
-                }
-            });
-            return {st, halteShapeIdx};
-        });
-        upcomingHaltes = halteIdxs.filter(h => h.halteShapeIdx > userShapeIdx).map(h => stops.find(s => s.stop_id === h.st.stop_id));
-    }
-    let nextStopInfo = nextStop ? `<b>Halte Selanjutnya:</b> ${nextStop.stop_name}` : 'Tidak ada halte berikutnya.';
+    // Jarak ke halte selanjutnya
     let jarakNext = nextStop ? haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon)) : null;
-    let jarakInfo = nextStop ? `<br><b>Jarak ke Halte Selanjutnya:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}` : '';
-    // Notifikasi tiba di halte berikutnya (hanya sekali per halte)
+    // Notifikasi tiba di halte berikutnya (hanya sekali per halte, threshold 20m)
     let arrivalMsg = '';
-    if (nextStop && jarakNext !== null && jarakNext < 30) {
+    if (nextStop && jarakNext !== null && jarakNext < 20) {
         if (window.lastArrivedStopId !== nextStop.stop_id) {
-            arrivalMsg = `<div style='color:green;font-weight:bold;'>Anda sudah tiba di <u>${nextStop.stop_name}</u>!</div>`;
+            arrivalMsg = `<div style='color:green;font-weight:bold;'>Tiba di <u>${nextStop.stop_name}</u>!</div>`;
             window.lastArrivedStopId = nextStop.stop_id;
         }
-    } else if (nextStop && jarakNext !== null && jarakNext >= 30) {
-        // Reset agar bisa notifikasi lagi untuk halte berikutnya
-        if (window.lastArrivedStopId === nextStop.stop_id) {
+    } else if (nextStop && jarakNext !== null && window.lastArrivedStopId === nextStop.stop_id) {
+        // Jika sudah menjauh minimal 15 meter, reset status tiba
+        if (jarakNext > 15) {
             window.lastArrivedStopId = null;
         }
     }
-    // Kecepatan real time di sepanjang shape
-    let speed = null;
-    if (userOnShape && window.lastShapeIdx !== undefined && window.lastShapeTime !== undefined && window.lastShapeIdx !== null) {
-        const dt = (Date.now() - window.lastShapeTime) / 1000; // detik
-        let d = 0;
-        if (userShapeIdx > window.lastShapeIdx) {
-            for (let i = window.lastShapeIdx; i < userShapeIdx; i++) {
-                const pt1 = shapePoints[i];
-                const pt2 = shapePoints[i+1];
-                d += haversine(parseFloat(pt1.shape_pt_lat), parseFloat(pt1.shape_pt_lon), parseFloat(pt2.shape_pt_lat), parseFloat(pt2.shape_pt_lon));
-            }
-        } else if (userShapeIdx < window.lastShapeIdx) {
-            for (let i = window.lastShapeIdx; i > userShapeIdx; i--) {
-                const pt1 = shapePoints[i];
-                const pt2 = shapePoints[i-1];
-                d += haversine(parseFloat(pt1.shape_pt_lat), parseFloat(pt1.shape_pt_lon), parseFloat(pt2.shape_pt_lat), parseFloat(pt2.shape_pt_lon));
-            }
+    // Badge logo layanan aktif
+    let route = routes.find(r => r.route_id === routeId);
+    let badgeColor = route && route.route_color ? ('#' + route.route_color) : '#264697';
+    let badgeText = route && route.route_short_name ? route.route_short_name : routeId;
+    let badgeLayanan = `<span class='badge badge-koridor-interaktif rounded-pill me-2' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:1.2em;'>${badgeText}</span>`;
+    // Label tipe halte untuk nextStop
+    let labelTipeNext = '';
+    if (nextStop) {
+        const nameLower = nextStop.stop_name ? nextStop.stop_name.toLowerCase() : '';
+        if (nextStop.stop_id && nextStop.stop_id.startsWith('B') && !nameLower.includes('pengumpan')) {
+            labelTipeNext = ` <span style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</span>`;
+        } else if (nextStop.stop_id && nextStop.stop_id.startsWith('G') && nextStop.platform_code && !nameLower.includes('platform')) {
+            labelTipeNext = ` <span class='text-muted' style='font-size:0.97em;'>Platform: ${nextStop.platform_code}</span>`;
+        } else if (nextStop.stop_id && (nextStop.stop_id.startsWith('E') || nextStop.stop_id.startsWith('H')) && !nameLower.includes('akses masuk')) {
+            labelTipeNext = ` <span style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</span>`;
         }
-        if (dt > 0 && d > 0) speed = d / dt;
     }
-    if (userOnShape) {
-        window.lastShapeIdx = userShapeIdx;
-        window.lastShapeTime = Date.now();
-    } else {
-        window.lastShapeIdx = null;
-        window.lastShapeTime = null;
+    // Label tipe halte untuk prevStop
+    let labelTipePrev = '';
+    if (prevStop) {
+        const nameLower = prevStop.stop_name ? prevStop.stop_name.toLowerCase() : '';
+        if (prevStop.stop_id && prevStop.stop_id.startsWith('B') && !nameLower.includes('pengumpan')) {
+            labelTipePrev = ` <span style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</span>`;
+        } else if (prevStop.stop_id && prevStop.stop_id.startsWith('G') && prevStop.platform_code && !nameLower.includes('platform')) {
+            labelTipePrev = ` <span class='text-muted' style='font-size:0.97em;'>Platform: ${prevStop.platform_code}</span>`;
+        } else if (prevStop.stop_id && (prevStop.stop_id.startsWith('E') || prevStop.stop_id.startsWith('H')) && !nameLower.includes('akses masuk')) {
+            labelTipePrev = ` <span style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</span>`;
+        }
     }
-    let speedInfo = (userOnShape && speed) ? `<br><b>Kecepatan di Jalur:</b> ${(speed * 3.6).toFixed(2)} km/jam` : '';
-    let upcomingInfo = '';
-    if (upcomingHaltes.length > 0) {
-        upcomingInfo = `<br><b>Halte Berikutnya:</b><ul style='margin-bottom:0'>` + upcomingHaltes.map(h => `<li>${h.stop_name}</li>`).join('') + '</ul>';
+    // Halte selanjutnya
+    let nextStopInfo = nextStop ? `<b>Halte Selanjutnya:</b> ${nextStop.stop_name}${labelTipeNext}` : 'Tidak ada halte berikutnya.';
+    // Halte sebelumnya
+    let prevStopInfo = prevStop ? `<div class='text-muted' style='color:#dc3545;'><b>Halte Sebelumnya:</b> ${prevStop.stop_name}</div>` : '';
+    // Jarak ke halte selanjutnya
+    let jarakInfo = nextStop ? `<div>Jarak ke Halte Selanjutnya: ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}</div>` : '';
+    // Badge layanan lain di halte selanjutnya
+    let layananLainBadges = '';
+    if (nextStop && stopToRoutes[nextStop.stop_id]) {
+        layananLainBadges = Array.from(stopToRoutes[nextStop.stop_id])
+            .filter(rid => rid !== routeId)
+            .map(rid => {
+                const r = routes.find(rt => rt.route_id === rid);
+                if (r) {
+                    let color = r.route_color ? ('#' + r.route_color) : '#6c757d';
+                    return `<span class='badge badge-koridor-interaktif rounded-pill me-2' style='background:${color};color:#fff;cursor:pointer;font-weight:bold;' data-routeid='${r.route_id}'>${r.route_short_name}</span>`;
+                }
+                return '';
+            }).join('');
     }
+    let layananLainBlock = layananLainBadges ? `<div class='mt-2'>Layanan lain di halte ini: ${layananLainBadges}</div>` : '';
+    // Gabungkan semua ke popupContent
+    let popupContent = `
+        <div class='plus-jakarta-sans' style='min-width:220px;'>
+            <div class='mb-2'>${badgeLayanan}</div>
+            ${nextStop ? `<div>${nextStopInfo}</div>` : ''}
+            ${prevStopInfo}
+            ${jarakInfo}
+            ${layananLainBlock}
+            ${arrivalMsg}
+        </div>
+    `;
     if (window.userMarker) {
-        window.userMarker.bindPopup(`${arrivalMsg}<b>Info Layanan ${routeId}</b><br>${nextStopInfo}${jarakInfo}${speedInfo}${upcomingInfo}`).openPopup();
+        window.userMarker.bindPopup(popupContent).openPopup();
+        // Event listener badge layanan lain
+        setTimeout(() => {
+            const popupEl = window.userMarker.getPopup().getElement();
+            if (!popupEl) return;
+            popupEl.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
+                badge.onclick = function(e) {
+                    e.stopPropagation();
+                    const newRouteId = this.getAttribute('data-routeid');
+                    if (newRouteId && newRouteId !== routeId) {
+                        window.selectedRouteIdForUser = newRouteId;
+                        window.selectedCurrentStopForUser = nextStop;
+                        showUserRouteInfo(userLat, userLon, nextStop, newRouteId);
+                        // Tampilkan jalur trayek dan halte untuk layanan ini
+                        const newRoute = routes.find(r => r.route_id === newRouteId);
+                        if (newRoute) {
+                            selectedRouteId = newRouteId;
+                            saveActiveRouteId(selectedRouteId);
+                            renderRoutes();
+                            showStopsByRoute(newRouteId, newRoute);
+                        }
+                    }
+                };
+            });
+        }, 100);
     }
 }
 
@@ -1594,7 +1625,7 @@ function setLiveBtnState(active) {
 
 // 3. Logika tombol halte terdekat: tampilkan max 2 halte terdekat dari posisi user
 window.nearestStopsMarkers = [];
-function showMultipleNearestStops(userLat, userLon, maxStops = 5) {
+function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
     // Hapus marker halte terdekat sebelumnya
     window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
     window.nearestStopsMarkers = [];
@@ -1690,7 +1721,7 @@ window.addEventListener('DOMContentLoaded', function() {
         if (nearestBtn && e.target === nearestBtn) {
             if (window.userMarker) {
                 const latlng = window.userMarker.getLatLng();
-                showMultipleNearestStops(latlng.lat, latlng.lng, 2);
+                showMultipleNearestStops(latlng.lat, latlng.lng, 6);
             } else {
                 alert('Aktifkan live location terlebih dahulu!');
             }
