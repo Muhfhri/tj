@@ -332,7 +332,22 @@ function showHalteOnMap(stopsArr, shape_id) {
                 }).join('');
             }
             let layananInfo = koridorBadges ? `<div class='mt-2 plus-jakarta-sans'>Layanan: ${koridorBadges}</div>` : '';
-            let popupContent = `<b class='plus-jakarta-sans'>${stop.stop_name}</b>${layananInfo}`;
+            // Label tipe halte
+            let labelTipe = '';
+            if (stop.stop_id && stop.stop_id.startsWith('B')) {
+                labelTipe = `<div class="plus-jakarta-sans" style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+            } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
+                labelTipe = `<div class='plus-jakarta-sans text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
+            } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
+                labelTipe = `<div class="plus-jakarta-sans" style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
+            }
+            let layananInfoPlus = layananInfo ? layananInfo.replace('mt-2 plus-jakarta-sans', 'mt-2 plus-jakarta-sans') : '';
+            let popupContent = `
+                <b class='plus-jakarta-sans'>${stop.stop_name}</b><br>
+                <span class='plus-jakarta-sans text-muted'>(${stop.stop_id})</span>
+                ${labelTipe}
+                ${layananInfoPlus}
+            `;
             const marker = L.marker([lat, lon], {
                 icon: L.icon({
                     iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/images/marker-icon.png',
@@ -873,7 +888,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex flex-column bg-light align-items-start gap-1 py-3';
             // Nama halte dan icon lokasi dalam satu baris (inline)
-            const halteRow = document.createElement('span');
+            const halteRow = document.createElement('div');
             halteRow.style.display = 'flex';
             halteRow.style.flexDirection = 'row';
             halteRow.style.alignItems = 'center';
@@ -882,7 +897,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
             halteName.className = 'fw-bold';
             halteName.textContent = stop.stop_name;
             halteRow.appendChild(halteName);
-            // Icon lokasi (link ke Google Maps)
+            // Icon lokasi (link ke Google Maps) di kanan nama halte
             if (stop.stop_lat && stop.stop_lon) {
                 const locLink = document.createElement('a');
                 locLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
@@ -894,6 +909,20 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
                 halteRow.appendChild(locLink);
             }
             li.appendChild(halteRow);
+            // Label tipe halte di bawah nama
+            let labelTipe = '';
+            if (stop.stop_id && stop.stop_id.startsWith('B')) {
+                labelTipe = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+            } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
+                labelTipe = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
+            } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
+                labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
+            }
+            if (labelTipe) {
+                const labelDiv = document.createElement('div');
+                labelDiv.innerHTML = labelTipe;
+                li.appendChild(labelDiv);
+            }
             if (stopToRoutes[stop.stop_id]) {
                 const badgesDiv = document.createElement('div');
                 Array.from(stopToRoutes[stop.stop_id]).forEach(rid => {
@@ -995,7 +1024,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex flex-column bg-light align-items-start gap-1 py-3';
             // Nama halte dan icon lokasi dalam satu baris (inline)
-            const halteRow = document.createElement('span');
+            const halteRow = document.createElement('div');
             halteRow.style.display = 'flex';
             halteRow.style.flexDirection = 'row';
             halteRow.style.alignItems = 'center';
@@ -1004,7 +1033,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
             halteName.className = 'fw-bold';
             halteName.textContent = stop.stop_name;
             halteRow.appendChild(halteName);
-            // Icon lokasi (link ke Google Maps)
+            // Icon lokasi (link ke Google Maps) di kanan nama halte
             if (stop.stop_lat && stop.stop_lon) {
                 const locLink = document.createElement('a');
                 locLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
@@ -1016,6 +1045,20 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
                 halteRow.appendChild(locLink);
             }
             li.appendChild(halteRow);
+            // Label tipe halte di bawah nama
+            let labelTipe = '';
+            if (stop.stop_id && stop.stop_id.startsWith('B')) {
+                labelTipe = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+            } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
+                labelTipe = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
+            } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
+                labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
+            }
+            if (labelTipe) {
+                const labelDiv = document.createElement('div');
+                labelDiv.innerHTML = labelTipe;
+                li.appendChild(labelDiv);
+            }
             if (stopToRoutes[stop.stop_id]) {
                 const badgesDiv = document.createElement('div');
                 Array.from(stopToRoutes[stop.stop_id]).forEach(rid => {
@@ -1578,15 +1621,30 @@ function showMultipleNearestStops(userLat, userLon, maxStops = 5) {
             }).join('');
         }
         let layananInfo = koridorBadges ? `<div class='mt-2 plus-jakarta-sans'>Layanan: ${koridorBadges}</div>` : '';
-        let popupContent = `<b class='plus-jakarta-sans'>${stop.stop_name}</b><br><span class='plus-jakarta-sans'>Jarak: ${stop.dist < 1000 ? Math.round(stop.dist) + ' m' : (stop.dist/1000).toFixed(2) + ' km'}</span>${layananInfo}`;
+        // Label tipe halte
+        let labelTipe = '';
+        if (stop.stop_id && stop.stop_id.startsWith('B')) {
+            labelTipe = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+        } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
+            labelTipe = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
+        } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
+            labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
+        }
+        let popupContent = `
+            <b class='plus-jakarta-sans'>${stop.stop_name}</b><br>
+            <span class='text-muted'>(${stop.stop_id})</span>
+            ${labelTipe}
+            ${layananInfo}
+            <br><span class='plus-jakarta-sans text-primary'>Jarak ke Anda: ${stop.dist < 1000 ? Math.round(stop.dist) + ' m' : (stop.dist/1000).toFixed(2) + ' km'}</span>
+        `;
         const marker = L.marker([lat, lon], {
             icon: L.icon({
                 iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/images/marker-icon.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34]
+                iconSize: [18, 30],
+                iconAnchor: [9, 30],
+                popupAnchor: [1, -24]
             })
-        }).addTo(map).bindPopup(popupContent);
+        }).addTo(map).bindPopup(`<div class='plus-jakarta-sans'>${popupContent}</div>`);
         marker.on('popupopen', function() {
             setTimeout(() => {
                 const popupEl = marker.getPopup().getElement();
@@ -1725,7 +1783,24 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
             const d = haversine(userLatLng.lat, userLatLng.lng, parseFloat(stop.stop_lat), parseFloat(stop.stop_lon));
             jarakUser = `<br><span class='plus-jakarta-sans text-primary'>Jarak ke Anda: ${d < 1000 ? Math.round(d) + ' m' : (d/1000).toFixed(2) + ' km'}</span>`;
         }
-        marker.bindPopup(`<div class='plus-jakarta-sans'><b>${stop.stop_name}</b><br>(${stop.stop_id})${jarakUser}${layananInfo}</div>`);
+        // Label tipe halte
+        let labelTipe = '';
+        if (stop.stop_id && stop.stop_id.startsWith('B')) {
+            labelTipe = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+        } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
+            labelTipe = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
+        } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
+            labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
+        }
+        marker.bindPopup(
+            `<div class='plus-jakarta-sans'>
+                <b>${stop.stop_name}</b><br>
+                <span class='text-muted'>(${stop.stop_id})</span>
+                ${labelTipe}
+                ${layananInfo}
+                ${jarakUser}
+            </div>`
+        );
         marker.addTo(map);
         marker.on('popupopen', function() {
             lastRadiusPopupMarker = marker;
@@ -1747,12 +1822,11 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
             }, 50);
         });
         marker.on('click', function() {
-            marker.openPopup();
+            if (marker._map) marker.openPopup();
             lastRadiusPopupMarker = marker;
             lastRadiusPopupStopId = stop.stop_id;
             map.panTo([parseFloat(stop.stop_lat), parseFloat(stop.stop_lon)]);
         });
-        
         if (stop.stop_id === lastRadiusPopupStopId) {
             markerToOpen = marker;
             markerToOpenStillExists = true;
@@ -1767,7 +1841,7 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
     }
     // Setelah semua marker dibuat, buka popup jika ada marker yang sama
     if (markerToOpen) {
-        setTimeout(() => markerToOpen.openPopup(), 100);
+        setTimeout(() => { if (markerToOpen._map) markerToOpen.openPopup(); }, 100);
     }
 }
 function removeHalteRadiusMarkers() {
