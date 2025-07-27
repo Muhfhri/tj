@@ -1254,6 +1254,24 @@ function haversine(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
+// Function: Mendapatkan halte sebelumnya dari currentStopId dan routeId
+function getPreviousStop(currentStopId, routeId) {
+    // Cari semua trip untuk rute ini
+    const tripsForRoute = trips.filter(t => t.route_id === routeId);
+    for (const trip of tripsForRoute) {
+        // Urutkan stop_times berdasarkan stop_sequence
+        const stTimes = stop_times.filter(st => st.trip_id === trip.trip_id)
+            .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
+        const idx = stTimes.findIndex(st => st.stop_id === currentStopId);
+        if (idx > 0) {
+            // Ambil stop_id sebelumnya
+            const prevStopId = stTimes[idx - 1].stop_id;
+            return stops.find(s => s.stop_id === prevStopId) || null;
+        }
+    }
+    return null; // Tidak ditemukan
+}
+
 let nearestStopMarker = null;
 let userToStopLine = null;
 
@@ -1413,14 +1431,9 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     
     // Pastikan global untuk riwayat halte sudah terdefinisi
     if (typeof window.currentStopId === 'undefined') window.currentStopId = null;
-    // Update halte sebelumnya agar tidak longkap 1
-    // lastStopId harus selalu jadi halte yang benar-benar terakhir dilewati
     if (typeof window.currentStopId === 'undefined' || window.currentStopId === null) {
         window.currentStopId = currentStop.stop_id;
     }
-    // Jika user tiba di halte baru (setelah timer selesai), lastStopId di-set ke halte sebelumnya
-    // Untuk kasus normal (bukan arrival), update currentStopId saja
-    // Jangan update lastStopId di sini, hanya update currentStopId
     if (window.currentStopId !== currentStop.stop_id) {
         window.currentStopId = currentStop.stop_id;
     }
@@ -1430,15 +1443,11 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             // Mulai timer 10 detik
             console.log(`Timer dimulai untuk halte: ${nextStop.stop_name}`);
             window.arrivalTimer = setTimeout(() => {
-                // Setelah 10 detik, pindah ke halte berikutnya
                 console.log(`Timer selesai, pindah dari ${currentStop.stop_name} ke ${nextStop.stop_name}`);
-                // Update halte sebelumnya ke halte yang baru saja dilewati (currentStop)
-                window.lastStopId = currentStop.stop_id;
-                // Update currentStopId ke halte yang baru
+                // Tidak perlu update lastStopId, fitur halte sebelumnya dihapus
                 window.currentStopId = nextStop.stop_id;
                 window.selectedCurrentStopForUser = nextStop;
                 window.lastArrivedStopId = null;
-                // Refresh popup dengan halte baru
                 if (window.userMarker) {
                     showUserRouteInfo(userLat, userLon, nextStop, routeId);
                 }
@@ -1479,6 +1488,11 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         jurusanInfo = `<div style='margin-bottom:4px;font-size:0.95em;font-weight:600;color:#374151;'>${route.route_long_name}</div>`;
     }
     
+    // --- Halte Sebelumnya (text merah) ---
+    let prevStopBlock = '';
+    if (prevStop) {
+        prevStopBlock = `<div style='color:#dc2626;font-size:0.97em;font-weight:600;margin-bottom:2px;'>Halte Sebelumnya: ${prevStop.stop_name}</div>`;
+    }
     // --- Halte Selanjutnya ---
     let nextStopTitle = nextStop ? `<div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;'>Halte Selanjutnya</div>` : '';
     let nextStopName = nextStop ? `<div style='font-size:1.1em;font-weight:bold;'>${nextStop.stop_name}</div>` : '';
@@ -1511,17 +1525,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let jarakInfo = nextStop ? `<div style='margin-bottom:2px;'><b>Jarak:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}</div>` : '';
     // --- Garis pemisah ---
     let hr = `<hr style='margin:6px 0 4px 0;border-top:1.5px solid #e5e7eb;'>`;
-    // --- Halte Sebelumnya (diperbaiki) ---
-    let prevStopBlock = '';
-    if (window.lastStopId) {
-        const prevStopObj = stops.find(s => s.stop_id === window.lastStopId);
-        if (prevStopObj) {
-            prevStopBlock = `
-                <div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;color:#dc3545;'>Halte Sebelumnya</div>
-                <div style='color:#dc3545;font-weight:bold;'>${prevStopObj.stop_name}</div>
-            `;
-        }
-    }
     let popupContent = `
         <div class='plus-jakarta-sans' style='min-width:180px;line-height:1.35;'>
             <div style='margin-bottom:4px;'>${badgeLayanan}</div>
@@ -1533,6 +1536,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             ${jarakInfo}
             ${hr}
             ${prevStopBlock}
+            ${hr}
             ${arrivalMsg}
         </div>
     `;
@@ -1726,10 +1730,11 @@ function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
     // Hapus marker halte terdekat sebelumnya
     window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
     window.nearestStopsMarkers = [];
-    // Urutkan halte terdekat
+    // Urutkan halte terdekat tanpa filter radius
     const sortedStops = stops
         .filter(s => s.stop_lat && s.stop_lon)
         .map(s => ({...s, dist: haversine(userLat, userLon, parseFloat(s.stop_lat), parseFloat(s.stop_lon))}))
+        .filter(s => stopToRoutes[s.stop_id] && stopToRoutes[s.stop_id].size > 0)
         .sort((a, b) => a.dist - b.dist)
         .slice(0, maxStops);
     sortedStops.forEach(stop => {
