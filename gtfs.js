@@ -1389,21 +1389,38 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     }
     let jarakNext = nextStop ? haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon)) : null;
     let arrivalMsg = '';
-    // Tiba di halte jika <30m, lanjut ke halte berikutnya jika sudah menjauh >15m
+    
+    // Sistem arrival dengan timer 10 detik (tanpa pembatalan)
     if (nextStop && jarakNext !== null && jarakNext < 30) {
         if (window.lastArrivedStopId !== nextStop.stop_id) {
+            // Mulai timer 10 detik
+            window.arrivalTimer = setTimeout(() => {
+                // Setelah 10 detik, pindah ke halte berikutnya
+                window.lastStopId = currentStop.stop_id;
+                window.selectedCurrentStopForUser = nextStop;
+                window.lastArrivedStopId = null;
+                // Refresh popup dengan halte baru
+                if (window.userMarker) {
+                    showUserRouteInfo(userLat, userLon, nextStop, routeId);
+                }
+            }, 10000);
+            
             arrivalMsg = `<div style='color:green;font-weight:bold;margin-top:4px;'>Tiba di <u>${nextStop.stop_name}</u>!</div>`;
             window.lastArrivedStopId = nextStop.stop_id;
         }
-    } else if (nextStop && jarakNext !== null && window.lastArrivedStopId === nextStop.stop_id) {
-        if (jarakNext > 15) {
-            window.lastArrivedStopId = null;
-        }
     }
+    
     let route = routes.find(r => r.route_id === routeId);
     let badgeColor = route && route.route_color ? ('#' + route.route_color) : '#264697';
     let badgeText = route && route.route_short_name ? route.route_short_name : routeId;
     let badgeLayanan = `<span class='badge badge-koridor-interaktif rounded-pill' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:1.2em;padding:0.5em 1.1em;'>${badgeText}</span>`;
+    
+    // --- Informasi Jurusan ---
+    let jurusanInfo = '';
+    if (route && route.route_long_name) {
+        jurusanInfo = `<div style='margin-bottom:4px;font-size:0.95em;font-weight:600;color:#374151;'>${route.route_long_name}</div>`;
+    }
+    
     // --- Halte Selanjutnya ---
     let nextStopTitle = nextStop ? `<div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;'>Halte Selanjutnya</div>` : '';
     let nextStopName = nextStop ? `<div style='font-size:1.1em;font-weight:bold;'>${nextStop.stop_name}</div>` : '';
@@ -1436,21 +1453,18 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let jarakInfo = nextStop ? `<div style='margin-bottom:2px;'><b>Jarak:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}</div>` : '';
     // --- Garis pemisah ---
     let hr = `<hr style='margin:6px 0 4px 0;border-top:1.5px solid #e5e7eb;'>`;
-    // --- Halte Sebelumnya ---
+    // --- Halte Sebelumnya (diperbaiki) ---
     let prevStopBlock = '';
-    let prevStopName = '';
-    if (window.lastStopId) {
-        const prevStopObj = stops.find(s => s.stop_id === window.lastStopId) || currentStop;
-        if (prevStopObj) {
-            prevStopBlock = `
-                <div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;color:#dc3545;'>Halte Sebelumnya</div>
-                <div style='color:#dc3545;font-weight:bold;'>${prevStopObj.stop_name}</div>
-            `;
-        }
+    if (prevStop) {
+        prevStopBlock = `
+            <div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;color:#dc3545;'>Halte Sebelumnya</div>
+            <div style='color:#dc3545;font-weight:bold;'>${prevStop.stop_name}</div>
+        `;
     }
     let popupContent = `
         <div class='plus-jakarta-sans' style='min-width:180px;line-height:1.35;'>
             <div style='margin-bottom:4px;'>${badgeLayanan}</div>
+            ${jurusanInfo}
             ${nextStopTitle}
             ${nextStopName}
             ${labelTipeNext}
@@ -1471,7 +1485,12 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                     e.stopPropagation();
                     const newRouteId = this.getAttribute('data-routeid');
                     if (newRouteId && newRouteId !== routeId) {
-                        window.lastStopId = stop.stop_id;
+                        // Reset timer jika ada
+                        if (window.arrivalTimer) {
+                            clearTimeout(window.arrivalTimer);
+                            window.arrivalTimer = null;
+                        }
+                        window.lastStopId = currentStop.stop_id;
                         window.selectedRouteIdForUser = newRouteId;
                         window.selectedCurrentStopForUser = nextStop;
                         showUserRouteInfo(userLat, userLon, nextStop, newRouteId);
@@ -1559,14 +1578,8 @@ function enableLiveLocation(onError) {
                     const nextSt = stopTimes[idx + 1];
                     const nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
                     if (nextStop) {
-                        const distToNext = haversine(lat, lon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
-                        // Arrival jika <30m, pindah ke halte berikutnya jika sudah menjauh >20m
-                        if (window.lastArrivedStopId === nextStop.stop_id) {
-                            if (distToNext > 20) {
-                                window.lastStopId = window.selectedCurrentStopForUser.stop_id;
-                                window.selectedCurrentStopForUser = nextStop;
-                            }
-                        }
+                        // Hanya deteksi arrival, timer akan ditangani di showUserRouteInfo
+                        // Tidak ada pembatalan timer saat menjauh
                     }
                 }
                 showUserRouteInfo(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
@@ -1590,6 +1603,12 @@ function disableLiveLocation() {
         map.removeLayer(window.userMarker);
         window.userMarker = null;
     }
+    // Bersihkan timer arrival
+    if (window.arrivalTimer) {
+        clearTimeout(window.arrivalTimer);
+        window.arrivalTimer = null;
+    }
+    window.lastArrivedStopId = null;
     window.userCentered = false;
 }
 
@@ -1884,4 +1903,7 @@ function removeHalteRadiusMarkers() {
 
 // Tambahkan global untuk lastStopId
 if (typeof window.lastStopId === 'undefined') window.lastStopId = null;
+// Tambahkan global untuk arrival timer
+if (typeof window.arrivalTimer === 'undefined') window.arrivalTimer = null;
+if (typeof window.lastArrivedStopId === 'undefined') window.lastArrivedStopId = null;
 
