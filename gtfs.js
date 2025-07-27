@@ -1354,9 +1354,12 @@ function showNearestStopFromUser(userLat, userLon) {
                     }
                 }
                 
-                // Set lastStopId ke halte sebelumnya dalam sequence
+                // Set lastStopId ke halte sebelumnya dalam sequence (jika ada)
                 if (prevStopInSequence) {
                     window.lastStopId = prevStopInSequence.stop_id;
+                } else {
+                    // Jika tidak ada halte sebelumnya, set ke null
+                    window.lastStopId = null;
                 }
                 
                 window.selectedRouteIdForUser = routeId;
@@ -1416,6 +1419,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             window.arrivalTimer = setTimeout(() => {
                 // Setelah 10 detik, pindah ke halte berikutnya
                 console.log(`Timer selesai, pindah dari ${currentStop.stop_name} ke ${nextStop.stop_name}`);
+                // Set lastStopId ke halte yang kita baru saja tinggalkan (currentStop)
                 window.lastStopId = currentStop.stop_id;
                 window.selectedCurrentStopForUser = nextStop;
                 window.lastArrivedStopId = null;
