@@ -1411,7 +1411,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let jarakNext = nextStop ? haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon)) : null;
     let arrivalMsg = '';
     
-    // Sistem arrival dengan timer 10 detik (diperbaiki)
+    // Sistem arrival dengan timer 10 detik (tanpa pembatalan)
     if (nextStop && jarakNext !== null && jarakNext < 30) {
         if (window.lastArrivedStopId !== nextStop.stop_id) {
             // Mulai timer 10 detik
@@ -1419,8 +1419,8 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             window.arrivalTimer = setTimeout(() => {
                 // Setelah 10 detik, pindah ke halte berikutnya
                 console.log(`Timer selesai, pindah dari ${currentStop.stop_name} ke ${nextStop.stop_name}`);
-                // Set lastStopId ke halte yang kita baru saja tinggalkan (currentStop)
-                window.lastStopId = currentStop.stop_id;
+                // Set lastStopId ke halte yang baru saja tiba (nextStop), bukan halte yang ditinggalkan
+                window.lastStopId = nextStop.stop_id;
                 window.selectedCurrentStopForUser = nextStop;
                 window.lastArrivedStopId = null;
                 // Refresh popup dengan halte baru
@@ -1450,14 +1450,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                     </div>
                 </div>
             </div>`;
-        }
-    } else if (nextStop && jarakNext !== null && jarakNext >= 30 && window.lastArrivedStopId === nextStop.stop_id) {
-        // Jika menjauh dari halte yang sedang dalam status arrival, reset status
-        console.log(`Menjauh dari halte, reset timer`);
-        window.lastArrivedStopId = null;
-        if (window.arrivalTimer) {
-            clearTimeout(window.arrivalTimer);
-            window.arrivalTimer = null;
         }
     }
     
