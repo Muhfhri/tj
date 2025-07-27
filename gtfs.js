@@ -1413,12 +1413,15 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     
     // Pastikan global untuk riwayat halte sudah terdefinisi
     if (typeof window.currentStopId === 'undefined') window.currentStopId = null;
-    // Update halte sebelumnya secara konsisten
-    // Jika user baru saja pindah halte (currentStop berbeda dari window.currentStopId dan bukan arrival), update lastStopId
-    if (window.currentStopId && currentStop.stop_id !== window.currentStopId && (!nextStop || jarakNext === null || jarakNext >= 30)) {
-        window.lastStopId = window.currentStopId;
+    // Update halte sebelumnya agar tidak longkap 1
+    // lastStopId harus selalu jadi halte yang benar-benar terakhir dilewati
+    if (typeof window.currentStopId === 'undefined' || window.currentStopId === null) {
         window.currentStopId = currentStop.stop_id;
-    } else if (!window.currentStopId) {
+    }
+    // Jika user tiba di halte baru (setelah timer selesai), lastStopId di-set ke halte sebelumnya
+    // Untuk kasus normal (bukan arrival), update currentStopId saja
+    // Jangan update lastStopId di sini, hanya update currentStopId
+    if (window.currentStopId !== currentStop.stop_id) {
         window.currentStopId = currentStop.stop_id;
     }
     // Sistem arrival dengan timer 10 detik (tanpa pembatalan)
@@ -1429,7 +1432,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             window.arrivalTimer = setTimeout(() => {
                 // Setelah 10 detik, pindah ke halte berikutnya
                 console.log(`Timer selesai, pindah dari ${currentStop.stop_name} ke ${nextStop.stop_name}`);
-                // Update halte sebelumnya langsung saat card hilang
+                // Update halte sebelumnya ke halte yang baru saja dilewati (currentStop)
                 window.lastStopId = currentStop.stop_id;
                 // Update currentStopId ke halte yang baru
                 window.currentStopId = nextStop.stop_id;
