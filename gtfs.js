@@ -1490,8 +1490,16 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     
     // --- Halte Sebelumnya (text merah) ---
     let prevStopBlock = '';
-    if (prevStop) {
-        prevStopBlock = `<div style='color:#dc2626;font-size:0.97em;font-weight:600;margin-bottom:2px;'>Halte Sebelumnya: ${prevStop.stop_name}</div>`;
+    // Perbaiki: halte sebelumnya harus selalu yang terakhir benar-benar didatangi
+    // Simpan id halte terakhir yang sudah tiba di window.lastArrivedStopId
+    let prevStopObj = null;
+    if (window.lastArrivedStopId) {
+        prevStopObj = stops.find(s => s.stop_id === window.lastArrivedStopId);
+    } else {
+        prevStopObj = getPreviousStop(currentStop.stop_id, routeId);
+    }
+    if (prevStopObj) {
+        prevStopBlock = `<div style='color:#dc2626;font-size:0.97em;font-weight:600;margin-bottom:2px;'>Halte Sebelumnya: ${prevStopObj.stop_name}</div>`;
     }
     // --- Halte Selanjutnya ---
     let nextStopTitle = nextStop ? `<div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;'>Halte Selanjutnya</div>` : '';
