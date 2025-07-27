@@ -1438,13 +1438,13 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         window.currentStopId = currentStop.stop_id;
     }
     // Sistem arrival dengan timer 10 detik (tanpa pembatalan)
-    if (nextStop && jarakNext !== null && jarakNext < 30) {
-        if (window.lastArrivedStopId !== nextStop.stop_id) {
+    if (nextStop && jarakNext !== null) {
+        // Arrival card hanya muncul jika user sudah < 30m dari halte berikutnya dan belum pernah arrival di halte itu
+        if (jarakNext < 30 && window.lastArrivedStopId !== nextStop.stop_id) {
             // Mulai timer 10 detik
             console.log(`Timer dimulai untuk halte: ${nextStop.stop_name}`);
             window.arrivalTimer = setTimeout(() => {
                 console.log(`Timer selesai, pindah dari ${currentStop.stop_name} ke ${nextStop.stop_name}`);
-                // Tidak perlu update lastStopId, fitur halte sebelumnya dihapus
                 window.currentStopId = nextStop.stop_id;
                 window.selectedCurrentStopForUser = nextStop;
                 window.lastArrivedStopId = null;
@@ -1452,7 +1452,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                     showUserRouteInfo(userLat, userLon, nextStop, routeId);
                 }
             }, 10000);
-            
             arrivalMsg = `<div style='background:linear-gradient(135deg, #10b981, #059669);color:white;padding:12px;border-radius:8px;margin-top:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);border-left:4px solid #047857;'>
                 <div style='display:flex;align-items:center;gap:8px;'>
                     <div style='font-size:1.2em;'>🎉</div>
@@ -1464,7 +1463,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             </div>`;
             window.lastArrivedStopId = nextStop.stop_id;
         } else if (window.lastArrivedStopId === nextStop.stop_id) {
-            // Jika sudah dalam status arrival, tampilkan pesan
+            // Jika sudah arrival, card tetap tampil sampai timeout selesai, meskipun user menjauh > 30m
             arrivalMsg = `<div style='background:linear-gradient(135deg, #10b981, #059669);color:white;padding:12px;border-radius:8px;margin-top:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);border-left:4px solid #047857;'>
                 <div style='display:flex;align-items:center;gap:8px;'>
                     <div style='font-size:1.2em;'>🎉</div>
@@ -1488,19 +1487,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         jurusanInfo = `<div style='margin-bottom:4px;font-size:0.95em;font-weight:600;color:#374151;'>${route.route_long_name}</div>`;
     }
     
-    // --- Halte Sebelumnya (text merah) ---
-    let prevStopBlock = '';
-    // Perbaiki: halte sebelumnya harus selalu yang terakhir benar-benar didatangi
-    // Simpan id halte terakhir yang sudah tiba di window.lastArrivedStopId
-    let prevStopObj = null;
-    if (window.lastArrivedStopId) {
-        prevStopObj = stops.find(s => s.stop_id === window.lastArrivedStopId);
-    } else {
-        prevStopObj = getPreviousStop(currentStop.stop_id, routeId);
-    }
-    if (prevStopObj) {
-        prevStopBlock = `<div style='color:#dc2626;font-size:0.97em;font-weight:600;margin-bottom:2px;'>Halte Sebelumnya: ${prevStopObj.stop_name}</div>`;
-    }
     // --- Halte Selanjutnya ---
     let nextStopTitle = nextStop ? `<div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;'>Halte Selanjutnya</div>` : '';
     let nextStopName = nextStop ? `<div style='font-size:1.1em;font-weight:bold;'>${nextStop.stop_name}</div>` : '';
@@ -1516,37 +1502,68 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         }
     }
     // --- Layanan lain di halte selanjutnya ---
-    let layananLainBadges = '';
+    let layananSemuaBadges = '';
     if (nextStop && stopToRoutes[nextStop.stop_id]) {
-        layananLainBadges = Array.from(stopToRoutes[nextStop.stop_id])
-            .filter(rid => rid !== routeId)
+        layananSemuaBadges = Array.from(stopToRoutes[nextStop.stop_id])
             .map(rid => {
                 const r = routes.find(rt => rt.route_id === rid);
                 if (r) {
                     let color = r.route_color ? ('#' + r.route_color) : '#6c757d';
-                    return `<span class='badge badge-koridor-interaktif rounded-pill me-1' style='background:${color};color:#fff;cursor:pointer;font-weight:bold;font-size:0.95em;' data-routeid='${r.route_id}'>${r.route_short_name}</span>`;
+                    let isActive = rid === routeId;
+                    return `<span class='badge badge-koridor-interaktif rounded-pill me-1' style='background:${color};color:#fff;cursor:pointer;font-weight:bold;font-size:0.95em;${isActive ? 'border:2px solid #264697;' : ''}' data-routeid='${r.route_id}'>${r.route_short_name}</span>`;
                 }
                 return '';
             }).join('');
     }
-    let layananLainBlock = layananLainBadges ? `<div style='margin-bottom:2px;'><b>Layanan lain:</b> ${layananLainBadges}</div>` : '';
+    let layananSemuaBlock = layananSemuaBadges ? `<div style='margin-bottom:2px;'><b>Layanan di halte ini:</b> ${layananSemuaBadges}</div>` : '';
     let jarakInfo = nextStop ? `<div style='margin-bottom:2px;'><b>Jarak:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}</div>` : '';
     // --- Garis pemisah ---
     let hr = `<hr style='margin:6px 0 4px 0;border-top:1.5px solid #e5e7eb;'>`;
     let popupContent = `
-        <div class='plus-jakarta-sans' style='min-width:180px;line-height:1.35;'>
-            <div style='margin-bottom:4px;'>${badgeLayanan}</div>
-            ${jurusanInfo}
+    <div class='plus-jakarta-sans popup-card-friendly' style='min-width:220px;max-width:340px;line-height:1.45;background:rgba(248,250,252,0.95);border-radius:18px;box-shadow:none;padding:18px 18px 12px 18px;position:relative;'>
+        <div style='display:flex;align-items:center;gap:12px;margin-bottom:8px;'>
+            <div style='font-size:2.1em;'><iconify-icon icon="mdi:bus" inline style="color:#264697;"></iconify-icon></div>
+            <div style='flex:1;'>${badgeLayanan}</div>
+            <button class='btn btn-outline-primary btn-sm rounded-4 px-2 py-1' style='font-weight:600;font-size:0.97em;' onclick="window.open('https://www.google.com/maps/search/?api=1&query=${currentStop.stop_lat},${currentStop.stop_lon}')">
+                <iconify-icon icon="mdi:map-marker" inline style="color:#264697;font-size:1.1em;vertical-align:middle;"></iconify-icon> Maps
+            </button>
+        </div>
+        ${jurusanInfo}
+        <div style='margin-bottom:6px;'>
             ${nextStopTitle}
             ${nextStopName}
             ${labelTipeNext}
-            ${layananLainBlock}
-            ${jarakInfo}
-            ${hr}
-            ${prevStopBlock}
-            ${hr}
-            ${arrivalMsg}
+            ${layananSemuaBlock}
         </div>
+        ${jarakInfo}
+        ${hr}
+        ${arrivalMsg}
+
+        <div style='position:absolute;bottom:0;right:0;opacity:0.09;font-size:6em;pointer-events:none;'>🚌</div>
+    </div>
+    <style>
+    .popup-card-friendly .btn { transition:box-shadow 0.2s,background 0.2s; }
+    .popup-card-friendly .btn:hover { box-shadow:0 2px 8px rgba(38,70,151,0.13); background:#e0e7ff; }
+    .popup-card-friendly { animation: fadeInUp 0.7s; }
+    @keyframes fadeInUp {
+        0% { opacity:0; transform:translateY(30px); }
+        100% { opacity:1; transform:translateY(0); }
+    }
+    /* Custom Leaflet popup style */
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    .leaflet-popup-content {
+        margin:0 !important;
+        padding:0 !important;
+        background: transparent !important;
+    }
+    .leaflet-popup-tip {
+        display: none !important;
+    }
+    </style>
     `;
     if (window.userMarker) {
         window.userMarker.bindPopup(popupContent).openPopup();
@@ -1738,11 +1755,10 @@ function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
     // Hapus marker halte terdekat sebelumnya
     window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
     window.nearestStopsMarkers = [];
-    // Urutkan halte terdekat tanpa filter radius
+    // Urutkan halte terdekat
     const sortedStops = stops
         .filter(s => s.stop_lat && s.stop_lon)
         .map(s => ({...s, dist: haversine(userLat, userLon, parseFloat(s.stop_lat), parseFloat(s.stop_lon))}))
-        .filter(s => stopToRoutes[s.stop_id] && stopToRoutes[s.stop_id].size > 0)
         .sort((a, b) => a.dist - b.dist)
         .slice(0, maxStops);
     sortedStops.forEach(stop => {
