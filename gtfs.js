@@ -1340,7 +1340,25 @@ function showNearestStopFromUser(userLat, userLon) {
             badge.onclick = function(e) {
                 e.stopPropagation();
                 const routeId = this.getAttribute('data-routeid');
-                window.lastStopId = stop.stop_id;
+                
+                // Cari halte sebelumnya dalam sequence untuk route ini
+                const tripsForRoute = trips.filter(t => t.route_id === routeId);
+                let prevStopInSequence = null;
+                for (const trip of tripsForRoute) {
+                    const stTimes = stop_times.filter(st => st.trip_id === trip.trip_id)
+                        .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
+                    const idx = stTimes.findIndex(st => st.stop_id === stop.stop_id);
+                    if (idx > 0) {
+                        prevStopInSequence = stops.find(s => s.stop_id === stTimes[idx - 1].stop_id);
+                        break;
+                    }
+                }
+                
+                // Set lastStopId ke halte sebelumnya dalam sequence
+                if (prevStopInSequence) {
+                    window.lastStopId = prevStopInSequence.stop_id;
+                }
+                
                 window.selectedRouteIdForUser = routeId;
                 window.selectedCurrentStopForUser = stop;
                 showUserRouteInfo(userLat, userLon, stop, routeId);
@@ -1390,12 +1408,14 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let jarakNext = nextStop ? haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon)) : null;
     let arrivalMsg = '';
     
-    // Sistem arrival dengan timer 10 detik (tanpa pembatalan)
+    // Sistem arrival dengan timer 10 detik (diperbaiki)
     if (nextStop && jarakNext !== null && jarakNext < 30) {
         if (window.lastArrivedStopId !== nextStop.stop_id) {
             // Mulai timer 10 detik
+            console.log(`Timer dimulai untuk halte: ${nextStop.stop_name}`);
             window.arrivalTimer = setTimeout(() => {
                 // Setelah 10 detik, pindah ke halte berikutnya
+                console.log(`Timer selesai, pindah dari ${currentStop.stop_name} ke ${nextStop.stop_name}`);
                 window.lastStopId = currentStop.stop_id;
                 window.selectedCurrentStopForUser = nextStop;
                 window.lastArrivedStopId = null;
@@ -1407,6 +1427,17 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
             
             arrivalMsg = `<div style='color:green;font-weight:bold;margin-top:4px;'>Tiba di <u>${nextStop.stop_name}</u>!</div>`;
             window.lastArrivedStopId = nextStop.stop_id;
+        } else if (window.lastArrivedStopId === nextStop.stop_id) {
+            // Jika sudah dalam status arrival, tampilkan pesan
+            arrivalMsg = `<div style='color:green;font-weight:bold;margin-top:4px;'>Tiba di <u>${nextStop.stop_name}</u>!</div>`;
+        }
+    } else if (nextStop && jarakNext !== null && jarakNext >= 30 && window.lastArrivedStopId === nextStop.stop_id) {
+        // Jika menjauh dari halte yang sedang dalam status arrival, reset status
+        console.log(`Menjauh dari halte, reset timer`);
+        window.lastArrivedStopId = null;
+        if (window.arrivalTimer) {
+            clearTimeout(window.arrivalTimer);
+            window.arrivalTimer = null;
         }
     }
     
@@ -1455,11 +1486,14 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let hr = `<hr style='margin:6px 0 4px 0;border-top:1.5px solid #e5e7eb;'>`;
     // --- Halte Sebelumnya (diperbaiki) ---
     let prevStopBlock = '';
-    if (prevStop) {
-        prevStopBlock = `
-            <div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;color:#dc3545;'>Halte Sebelumnya</div>
-            <div style='color:#dc3545;font-weight:bold;'>${prevStop.stop_name}</div>
-        `;
+    if (window.lastStopId) {
+        const prevStopObj = stops.find(s => s.stop_id === window.lastStopId);
+        if (prevStopObj) {
+            prevStopBlock = `
+                <div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;color:#dc3545;'>Halte Sebelumnya</div>
+                <div style='color:#dc3545;font-weight:bold;'>${prevStopObj.stop_name}</div>
+            `;
+        }
     }
     let popupContent = `
         <div class='plus-jakarta-sans' style='min-width:180px;line-height:1.35;'>
@@ -1490,7 +1524,9 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                             clearTimeout(window.arrivalTimer);
                             window.arrivalTimer = null;
                         }
-                        window.lastStopId = currentStop.stop_id;
+                        // Reset status arrival
+                        window.lastArrivedStopId = null;
+                        // Jangan set lastStopId saat berganti rute
                         window.selectedRouteIdForUser = newRouteId;
                         window.selectedCurrentStopForUser = nextStop;
                         showUserRouteInfo(userLat, userLon, nextStop, newRouteId);
@@ -1582,7 +1618,13 @@ function enableLiveLocation(onError) {
                         // Tidak ada pembatalan timer saat menjauh
                     }
                 }
-                showUserRouteInfo(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
+                // Hanya panggil showUserRouteInfo jika tidak sedang dalam status arrival
+                if (!window.lastArrivedStopId) {
+                    showUserRouteInfo(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
+                } else {
+                    // Jika sedang dalam status arrival, hanya update popup tanpa memulai timer baru
+                    updatePopupOnly(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
+                }
             }
         },
         err => {
@@ -1906,4 +1948,113 @@ if (typeof window.lastStopId === 'undefined') window.lastStopId = null;
 // Tambahkan global untuk arrival timer
 if (typeof window.arrivalTimer === 'undefined') window.arrivalTimer = null;
 if (typeof window.lastArrivedStopId === 'undefined') window.lastArrivedStopId = null;
+
+// Fungsi untuk update popup saja tanpa memulai timer
+function updatePopupOnly(userLat, userLon, currentStop, routeId) {
+    // Cari trip yang sesuai dengan routeId dan halte ini
+    const tripsForRoute = trips.filter(t => t.route_id === routeId);
+    let nextStop = null;
+    let minSeq = Infinity;
+    let tripUsed = null;
+    let stopTimes = [];
+    for (const trip of tripsForRoute) {
+        const stTimes = stop_times.filter(st => st.trip_id === trip.trip_id)
+            .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
+        const idx = stTimes.findIndex(st => st.stop_id === currentStop.stop_id);
+        if (idx !== -1 && idx < stTimes.length - 1) {
+            const nextSt = stTimes[idx + 1];
+            if (parseInt(nextSt.stop_sequence) < minSeq) {
+                minSeq = parseInt(nextSt.stop_sequence);
+                nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
+                tripUsed = trip;
+                stopTimes = stTimes;
+            }
+        }
+    }
+    
+    let jarakNext = nextStop ? haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon)) : null;
+    let arrivalMsg = '';
+    
+    // Tampilkan pesan arrival jika sedang dalam status arrival
+    if (window.lastArrivedStopId === nextStop?.stop_id) {
+        arrivalMsg = `<div style='color:green;font-weight:bold;margin-top:4px;'>Tiba di <u>${nextStop.stop_name}</u>!</div>`;
+    }
+    
+    let route = routes.find(r => r.route_id === routeId);
+    let badgeColor = route && route.route_color ? ('#' + route.route_color) : '#264697';
+    let badgeText = route && route.route_short_name ? route.route_short_name : routeId;
+    let badgeLayanan = `<span class='badge badge-koridor-interaktif rounded-pill' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:1.2em;padding:0.5em 1.1em;'>${badgeText}</span>`;
+    
+    // --- Informasi Jurusan ---
+    let jurusanInfo = '';
+    if (route && route.route_long_name) {
+        jurusanInfo = `<div style='margin-bottom:4px;font-size:0.95em;font-weight:600;color:#374151;'>${route.route_long_name}</div>`;
+    }
+    
+    // --- Halte Selanjutnya ---
+    let nextStopTitle = nextStop ? `<div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;'>Halte Selanjutnya</div>` : '';
+    let nextStopName = nextStop ? `<div style='font-size:1.1em;font-weight:bold;'>${nextStop.stop_name}</div>` : '';
+    let labelTipeNext = '';
+    if (nextStop) {
+        const nameLower = nextStop.stop_name ? nextStop.stop_name.toLowerCase() : '';
+        if (nextStop.stop_id && nextStop.stop_id.startsWith('B') && !nameLower.includes('pengumpan')) {
+            labelTipeNext = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+        } else if (nextStop.stop_id && nextStop.stop_id.startsWith('G') && nextStop.platform_code && !nameLower.includes('platform')) {
+            labelTipeNext = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${nextStop.platform_code}</div>`;
+        } else if (nextStop.stop_id && (nextStop.stop_id.startsWith('E') || nextStop.stop_id.startsWith('H')) && !nameLower.includes('akses masuk')) {
+            labelTipeNext = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
+        }
+    }
+    
+    // --- Layanan lain di halte selanjutnya ---
+    let layananLainBadges = '';
+    if (nextStop && stopToRoutes[nextStop.stop_id]) {
+        layananLainBadges = Array.from(stopToRoutes[nextStop.stop_id])
+            .filter(rid => rid !== routeId)
+            .map(rid => {
+                const r = routes.find(rt => rt.route_id === rid);
+                if (r) {
+                    let color = r.route_color ? ('#' + r.route_color) : '#6c757d';
+                    return `<span class='badge badge-koridor-interaktif rounded-pill me-1' style='background:${color};color:#fff;cursor:pointer;font-weight:bold;font-size:0.95em;' data-routeid='${r.route_id}'>${r.route_short_name}</span>`;
+                }
+                return '';
+            }).join('');
+    }
+    let layananLainBlock = layananLainBadges ? `<div style='margin-bottom:2px;'><b>Layanan lain:</b> ${layananLainBadges}</div>` : '';
+    let jarakInfo = nextStop ? `<div style='margin-bottom:2px;'><b>Jarak:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}</div>` : '';
+    
+    // --- Garis pemisah ---
+    let hr = `<hr style='margin:6px 0 4px 0;border-top:1.5px solid #e5e7eb;'>`;
+    
+    // --- Halte Sebelumnya ---
+    let prevStopBlock = '';
+    if (window.lastStopId) {
+        const prevStopObj = stops.find(s => s.stop_id === window.lastStopId);
+        if (prevStopObj) {
+            prevStopBlock = `
+                <div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;color:#dc3545;'>Halte Sebelumnya</div>
+                <div style='color:#dc3545;font-weight:bold;'>${prevStopObj.stop_name}</div>
+            `;
+        }
+    }
+    
+    let popupContent = `
+        <div class='plus-jakarta-sans' style='min-width:180px;line-height:1.35;'>
+            <div style='margin-bottom:4px;'>${badgeLayanan}</div>
+            ${jurusanInfo}
+            ${nextStopTitle}
+            ${nextStopName}
+            ${labelTipeNext}
+            ${layananLainBlock}
+            ${jarakInfo}
+            ${hr}
+            ${prevStopBlock}
+            ${arrivalMsg}
+        </div>
+    `;
+    
+    if (window.userMarker) {
+        window.userMarker.bindPopup(popupContent).openPopup();
+    }
+}
 
