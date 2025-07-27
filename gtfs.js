@@ -1429,11 +1429,27 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                 }
             }, 10000);
             
-            arrivalMsg = `<div style='color:green;font-weight:bold;margin-top:4px;'>Tiba di <u>${nextStop.stop_name}</u>!</div>`;
+            arrivalMsg = `<div style='background:linear-gradient(135deg, #10b981, #059669);color:white;padding:12px;border-radius:8px;margin-top:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);border-left:4px solid #047857;'>
+                <div style='display:flex;align-items:center;gap:8px;'>
+                    <div style='font-size:1.2em;'>🎉</div>
+                    <div style='flex:1;'>
+                        <div style='font-weight:bold;font-size:1.1em;margin-bottom:2px;'>Tiba di Halte!</div>
+                        <div style='font-size:0.95em;opacity:0.9;'>${nextStop.stop_name}</div>
+                    </div>
+                </div>
+            </div>`;
             window.lastArrivedStopId = nextStop.stop_id;
         } else if (window.lastArrivedStopId === nextStop.stop_id) {
             // Jika sudah dalam status arrival, tampilkan pesan
-            arrivalMsg = `<div style='color:green;font-weight:bold;margin-top:4px;'>Tiba di <u>${nextStop.stop_name}</u>!</div>`;
+            arrivalMsg = `<div style='background:linear-gradient(135deg, #10b981, #059669);color:white;padding:12px;border-radius:8px;margin-top:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);border-left:4px solid #047857;'>
+                <div style='display:flex;align-items:center;gap:8px;'>
+                    <div style='font-size:1.2em;'>🎉</div>
+                    <div style='flex:1;'>
+                        <div style='font-weight:bold;font-size:1.1em;margin-bottom:2px;'>Tiba di Halte!</div>
+                        <div style='font-size:0.95em;opacity:0.9;'>${nextStop.stop_name}</div>
+                    </div>
+                </div>
+            </div>`;
         }
     } else if (nextStop && jarakNext !== null && jarakNext >= 30 && window.lastArrivedStopId === nextStop.stop_id) {
         // Jika menjauh dari halte yang sedang dalam status arrival, reset status
@@ -1981,7 +1997,15 @@ function updatePopupOnly(userLat, userLon, currentStop, routeId) {
     
     // Tampilkan pesan arrival jika sedang dalam status arrival
     if (window.lastArrivedStopId === nextStop?.stop_id) {
-        arrivalMsg = `<div style='color:green;font-weight:bold;margin-top:4px;'>Tiba di <u>${nextStop.stop_name}</u>!</div>`;
+        arrivalMsg = `<div style='background:linear-gradient(135deg, #10b981, #059669);color:white;padding:12px;border-radius:8px;margin-top:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);border-left:4px solid #047857;'>
+                <div style='display:flex;align-items:center;gap:8px;'>
+                    <div style='font-size:1.2em;'>🎉</div>
+                    <div style='flex:1;'>
+                        <div style='font-weight:bold;font-size:1.1em;margin-bottom:2px;'>Tiba di Halte!</div>
+                        <div style='font-size:0.95em;opacity:0.9;'>${nextStop.stop_name}</div>
+                    </div>
+                </div>
+            </div>`;
     }
     
     let route = routes.find(r => r.route_id === routeId);
