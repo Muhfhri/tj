@@ -1609,7 +1609,18 @@ function enableLiveLocation(onError) {
                 window.nearestStopMarker.setPopupContent(popupContent);
             }
             if (window.userMarker) {
-                window.userMarker.bindPopup('Posisi Anda');
+                // Hanya tampilkan 'Posisi Anda' jika belum pilih layanan
+                if (!window.selectedRouteIdForUser || !window.selectedCurrentStopForUser) {
+                    window.userMarker.bindPopup('Posisi Anda');
+                } else {
+                    // Jika sudah pilih layanan, tampilkan info rute (termasuk saat arrival)
+                    showUserRouteInfo(
+                        window.userMarker.getLatLng().lat,
+                        window.userMarker.getLatLng().lng,
+                        window.selectedCurrentStopForUser,
+                        window.selectedRouteIdForUser
+                    );
+                }
             }
             if (window.selectedRouteIdForUser && window.selectedCurrentStopForUser) {
                 const tripsForRoute = trips.filter(t => t.route_id === window.selectedRouteIdForUser);
