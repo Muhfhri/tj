@@ -1,3 +1,4 @@
+
 // Ambil data GTFS dari folder gtfs/ untuk bus stop dan shapes
 Promise.all([
     fetch('gtfs/stops.txt').then(r => r.text()),
@@ -1544,11 +1545,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     <style>
     .popup-card-friendly .btn { transition:box-shadow 0.2s,background 0.2s; }
     .popup-card-friendly .btn:hover { box-shadow:0 2px 8px rgba(38,70,151,0.13); background:#e0e7ff; }
-    .popup-card-friendly { animation: fadeInUp 0.7s; }
-    @keyframes fadeInUp {
-        0% { opacity:0; transform:translateY(30px); }
-        100% { opacity:1; transform:translateY(0); }
-    }
     /* Custom Leaflet popup style */
     .leaflet-popup-content-wrapper, .leaflet-popup-tip {
         background: transparent !important;
@@ -1566,11 +1562,17 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     </style>
     `;
     if (window.userMarker) {
-        window.userMarker.bindPopup(popupContent).openPopup();
+        // Only animate on first open, not every update
+        const popupEl = window.userMarker.getPopup() && window.userMarker.getPopup().getElement();
+        if (!popupEl || !popupEl.classList.contains('popup-card-friendly')) {
+            window.userMarker.bindPopup(popupContent).openPopup();
+        } else {
+            window.userMarker.setPopupContent(popupContent);
+        }
         setTimeout(() => {
-            const popupEl = window.userMarker.getPopup().getElement();
-            if (!popupEl) return;
-            popupEl.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
+            const popupEl2 = window.userMarker.getPopup().getElement();
+            if (!popupEl2) return;
+            popupEl2.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
                 badge.onclick = function(e) {
                     e.stopPropagation();
                     const newRouteId = this.getAttribute('data-routeid');
