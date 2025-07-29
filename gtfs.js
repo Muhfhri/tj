@@ -1,4 +1,5 @@
 
+
 // Ambil data GTFS dari folder gtfs/ untuk bus stop dan shapes
 Promise.all([
     fetch('gtfs/stops.txt').then(r => r.text()),
@@ -133,6 +134,48 @@ function initMap() {
     }
     // Tambahkan tombol custom
     ensureCustomMapButtons();
+    // Tambahkan dropdown rute di atas map jika belum ada
+    setTimeout(() => {
+        if (!document.getElementById('mapRouteDropdown')) {
+            const container = document.createElement('div');
+            container.id = 'mapDropdownContainer';
+            container.style.position = 'absolute';
+            container.style.left = '50%';
+            container.style.transform = 'translateX(-50%)';
+            container.style.top = '18px';
+            container.style.zIndex = 1001;
+            container.innerHTML = `<select id="mapRouteDropdown" class="form-select form-select-sm plus-jakarta-sans" style="min-width:180px;font-size:1em;padding:4px 8px;"></select>`;
+            document.getElementById('map').appendChild(container);
+        }
+        // Isi dropdown dari data GTFS
+        const dropdown = document.getElementById('mapRouteDropdown');
+        if (dropdown) {
+            dropdown.innerHTML = '';
+            routes.forEach(route => {
+                const opt = document.createElement('option');
+                opt.value = route.route_id;
+                opt.textContent = (route.route_short_name ? route.route_short_name : route.route_id) + ' - ' + (route.route_long_name || '');
+                dropdown.appendChild(opt);
+            });
+            dropdown.value = selectedRouteId || (routes[0] && routes[0].route_id) || '';
+            dropdown.onchange = function() {
+                selectedRouteId = dropdown.value;
+                saveActiveRouteId(selectedRouteId);
+                renderRoutes();
+                showStopsByRoute(selectedRouteId, routes.find(r => r.route_id === selectedRouteId));
+                // Sync other dropdowns if present
+                const mainDropdown = document.getElementById('routesDropdown');
+                if (mainDropdown) mainDropdown.value = selectedRouteId;
+            };
+        }
+        // Helper: sync dropdown value if selectedRouteId changes elsewhere
+        window.updateMapRouteDropdown = function(routeId) {
+            const dropdown = document.getElementById('mapRouteDropdown');
+            if (dropdown && dropdown.value !== routeId) {
+                dropdown.value = routeId;
+            }
+        };
+    }, 300);
     // Tambahkan kembali kontrol geocoder (search box) di pojok kanan atas
     if (!map._geocoderControl && typeof L.Control.Geocoder !== 'undefined') {
         map._geocoderControl = L.Control.geocoder({
@@ -322,129 +365,86 @@ function showHalteOnMap(stopsArr, shape_id) {
             const lat = parseFloat(stop.stop_lat);
             const lon = parseFloat(stop.stop_lon);
             let koridorBadges = '';
-    nearbyStops.forEach((stop, idx) => {
-        // Info layanan (koridor) di popup
-        let koridorBadges = '';
-        let jurusanInfo = '';
-        let layananNama = '';
-        if (stopToRoutes[stop.stop_id]) {
-            koridorBadges = Array.from(stopToRoutes[stop.stop_id]).map(rid => {
-                const route = routes.find(r => r.route_id === rid);
-                if (route) {
-                    let badgeColor = route.route_color ? ('#' + route.route_color) : '#6c757d';
-                    return `<span class='badge badge-koridor-interaktif rounded-pill me-1' style='background:${badgeColor};color:#fff;cursor:pointer;font-weight:bold;font-size:1.05em;' data-routeid='${route.route_id}'>${route.route_short_name}</span>`;
-                }
-                return '';
-            }).join('');
-            // Nama layanan utama (pertama)
-            const firstRouteId = Array.from(stopToRoutes[stop.stop_id])[0];
-            const firstRoute = routes.find(r => r.route_id === firstRouteId);
-            if (firstRoute) {
-                layananNama = `<div style='font-size:1.15em;font-weight:bold;color:#264697;margin-bottom:2px;'>${firstRoute.route_long_name}</div>`;
-                jurusanInfo = firstRoute.route_long_name ? `<div style='font-size:0.97em;color:#374151;font-weight:500;margin-bottom:2px;'>${firstRoute.route_long_name}</div>` : '';
+            if (stopToRoutes[stop.stop_id]) {
+                koridorBadges = Array.from(stopToRoutes[stop.stop_id]).map(rid => {
+                    const route = routes.find(r => r.route_id === rid);
+                    if (route) {
+                        let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
+                        return `<span class='badge badge-koridor-interaktif rounded-pill me-2' style='background:${badgeColor};color:#fff;cursor:pointer;font-weight:bold;' data-routeid='${route.route_id}'>${route.route_short_name}</span>`;
+                    }
+                    return '';
+                }).join('');
             }
-        }
-        let layananInfo = koridorBadges ? `<div class='mt-2 plus-jakarta-sans'>Layanan: ${koridorBadges}</div>` : '';
-        // Label tipe halte
-        let labelTipe = '';
-        if (stop.stop_id && stop.stop_id.startsWith('B')) {
-            labelTipe = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
-        } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
-            labelTipe = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
-        } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
-            labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
-        }
-        // Tambahkan info jarak ke user jika userMarker aktif
-        let jarakUser = '';
-        if (window.userMarker) {
-            const userLat = window.userMarker.getLatLng().lat;
-            const userLon = window.userMarker.getLatLng().lng;
-            const dist = haversine(userLat, userLon, parseFloat(stop.stop_lat), parseFloat(stop.stop_lon));
-            jarakUser = `<div class='plus-jakarta-sans text-primary' style='margin-top:2px;'>Jarak ke Anda: ${dist < 1000 ? Math.round(dist) + ' m' : (dist/1000).toFixed(2) + ' km'}</div>`;
-        }
-        // Popup content mirip live layanan
-        let popupContent = `
-        <div class='plus-jakarta-sans popup-card-friendly' style='min-width:220px;max-width:340px;line-height:1.45;background:rgba(248,250,252,0.95);border-radius:18px;box-shadow:none;padding:18px 18px 12px 18px;position:relative;'>
-            <div style='display:flex;align-items:center;gap:12px;margin-bottom:8px;'>
-                <div style='font-size:2.1em;'><iconify-icon icon="mdi:bus" inline style="color:#264697;"></iconify-icon></div>
-                <div style='flex:1;'>${koridorBadges}</div>
-                <button class='btn btn-outline-primary btn-sm rounded-4 px-2 py-1' style='font-weight:600;font-size:0.97em;' onclick="window.open('https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}')">
-                    <iconify-icon icon="mdi:map-marker" inline style="color:#264697;font-size:1.1em;vertical-align:middle;"></iconify-icon> Maps
-                </button>
-            </div>
-            <div style='font-size:1.15em;font-weight:bold;color:#264697;margin-bottom:2px;'>${stop.stop_name}</div>
-            ${labelTipe}
-            ${layananNama}
-            ${jurusanInfo}
-            ${layananInfo}
-            ${jarakUser}
-            <div style='position:absolute;bottom:0;right:0;opacity:0.09;font-size:6em;pointer-events:none;'>🚌</div>
-        </div>
-        <style>
-        .popup-card-friendly .btn { transition:box-shadow 0.2s,background 0.2s; }
-        .popup-card-friendly .btn:hover { box-shadow:0 2px 8px rgba(38,70,151,0.13); background:#e0e7ff; }
-        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-            background: transparent !important;
-            box-shadow: none !important;
-            border: none !important;
-        }
-        .leaflet-popup-content {
-            margin:0 !important;
-            padding:0 !important;
-            background: transparent !important;
-        }
-        .leaflet-popup-tip {
-            display: none !important;
-        }
-        </style>
-        `;
-        const marker = L.marker([parseFloat(stop.stop_lat), parseFloat(stop.stop_lon)], {
-            icon: L.icon({
-                iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/images/marker-icon.png',
-                iconSize: [18, 30],
-                iconAnchor: [9, 30],
-                popupAnchor: [1, -24]
-            })
-        });
-        marker.bindPopup(popupContent);
-        marker.on('popupopen', function() {
-            setTimeout(() => {
-                const popupEl = marker.getPopup().getElement();
-                if (!popupEl) return;
-                popupEl.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
-                    badge.onclick = function(e) {
-                        e.stopPropagation();
-                        const routeId = this.getAttribute('data-routeid');
-                        if (routeId) {
-                            window.selectedRouteIdForUser = routeId;
-                            window.selectedCurrentStopForUser = stop;
-                            showUserRouteInfo(
-                                window.userMarker ? window.userMarker.getLatLng().lat : centerLat,
-                                window.userMarker ? window.userMarker.getLatLng().lng : centerLon,
-                                stop,
-                                routeId
-                            );
-                            const route = routes.find(r => r.route_id === routeId);
-                            if (route) {
-                                selectedRouteId = routeId;
-                                saveActiveRouteId(selectedRouteId);
-                                renderRoutes();
-                                showStopsByRoute(routeId, route);
-                            }
-                        }
-                    };
-                });
-            }, 100);
-        });
-        // Only add marker if not already on map
-        if (!map.hasLayer(marker)) {
-            marker.addTo(map);
-        }
-        // Only push marker if not already in radiusHalteMarkers
-        if (!radiusHalteMarkers.includes(marker)) {
-            radiusHalteMarkers.push(marker);
+            let layananInfo = koridorBadges ? `<div class='mt-2 plus-jakarta-sans'>Layanan: ${koridorBadges}</div>` : '';
+            // Label tipe halte
+            let labelTipe = '';
+            if (stop.stop_id && stop.stop_id.startsWith('B')) {
+                labelTipe = `<div class="plus-jakarta-sans" style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+            } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
+                labelTipe = `<div class='plus-jakarta-sans text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
+            } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
+                labelTipe = `<div class="plus-jakarta-sans" style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
+            }
+            let layananInfoPlus = layananInfo ? layananInfo.replace('mt-2 plus-jakarta-sans', 'mt-2 plus-jakarta-sans') : '';
+            let popupContent = `
+                <b class='plus-jakarta-sans'>${stop.stop_name}</b><br>
+                <span class='plus-jakarta-sans text-muted'>(${stop.stop_id})</span>
+                ${labelTipe}
+                ${layananInfoPlus}
+            `;
+            const marker = L.marker([lat, lon], {
+                icon: L.icon({
+                    iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/images/marker-icon.png',
+                    iconSize: [18, 30],
+                    iconAnchor: [9, 30],
+                    popupAnchor: [1, -24]
+                })
+            }).bindPopup(popupContent);
+            markersLayer.addLayer(marker);
+            marker.on('popupopen', function() {
+                setTimeout(() => {
+                    const popupEl = marker.getPopup().getElement();
+                    if (!popupEl) return;
+                    popupEl.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
+                        badge.onclick = function(e) {
+                            e.stopPropagation();
+                            const routeId = this.getAttribute('data-routeid');
+                            window.lastStopId = stop.stop_id;
+                            selectedRouteId = routeId;
+                            saveActiveRouteId(selectedRouteId);
+                            renderRoutes();
+                            showStopsByRoute(routeId, routes.find(r => r.route_id === routeId));
+                        };
+                    });
+                }, 50);
+            });
         }
     });
+    markersLayer.addTo(map);
+}
+
+function renderRoutes() {
+    const select = document.getElementById('routesDropdown');
+    select.innerHTML = '';
+    filteredRoutes.forEach(route => {
+        const opt = document.createElement('option');
+        opt.value = route.route_id;
+        opt.textContent = route.route_short_name + ' - ' + route.route_long_name;
+        if (route.route_id === selectedRouteId) opt.selected = true;
+        select.appendChild(opt);
+    });
+    select.onchange = function() {
+        const route = routes.find(r => r.route_id === select.value);
+        selectedRouteId = select.value;
+        saveActiveRouteId(selectedRouteId);
+        // Sync map dropdown if present
+        if (window.updateMapRouteDropdown) window.updateMapRouteDropdown(selectedRouteId);
+        const btn = document.getElementById('liveLocationBtn');
+        const isLiveActive = btn && btn.getAttribute('data-active') === 'on';
+        if (isLiveActive && window.userMarker) {
+            const latlng = window.userMarker.getLatLng();
+            const tripsForRoute = trips.filter(t => t.route_id === select.value);
+            let nearestStop = null;
             let minDist = Infinity;
             tripsForRoute.forEach(trip => {
                 const stopsForTrip = stop_times.filter(st => st.trip_id === trip.trip_id);
@@ -471,7 +471,9 @@ function showHalteOnMap(stopsArr, shape_id) {
         saveUserProgress();
         renderRoutes();
         showStopsByRoute(select.value, route);
-    });
+        // Sync map dropdown if present
+        if (window.updateMapRouteDropdown) window.updateMapRouteDropdown(selectedRouteId);
+    };
     if (selectedRouteId) {
         const route = routes.find(r => r.route_id === selectedRouteId);
         if (route) showStopsByRoute(selectedRouteId, route);
@@ -1525,7 +1527,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     let route = routes.find(r => r.route_id === routeId);
     let badgeColor = route && route.route_color ? ('#' + route.route_color) : '#264697';
     let badgeText = route && route.route_short_name ? route.route_short_name : routeId;
-    let badgeLayanan = `<span class='badge badge-koridor-interaktif rounded-pill' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:1.2em;padding:0.5em 1.1em;'>${badgeText}</span>`;
+    let badgeLayanan = `<span id='popup-badge-layanan' class='badge badge-koridor-interaktif rounded-pill' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:1.2em;padding:0.5em 1.1em;'>${badgeText}</span>`;
     
     // --- Informasi Jurusan ---
     let jurusanInfo = '';
@@ -1570,21 +1572,22 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         <div style='display:flex;align-items:center;gap:12px;margin-bottom:8px;'>
             <div style='font-size:2.1em;'><iconify-icon icon="mdi:bus" inline style="color:#264697;"></iconify-icon></div>
             <div style='flex:1;'>${badgeLayanan}</div>
-            <button class='btn btn-outline-primary btn-sm rounded-4 px-2 py-1' style='font-weight:600;font-size:0.97em;' onclick="window.open('https://www.google.com/maps/search/?api=1&query=${currentStop.stop_lat},${currentStop.stop_lon}')">
+            <button id='popup-maps-btn' class='btn btn-outline-primary btn-sm rounded-4 px-2 py-1' style='font-weight:600;font-size:0.97em;' onclick="window.open('https://www.google.com/maps/search/?api=1&query=${currentStop.stop_lat},${currentStop.stop_lon}')">
                 <iconify-icon icon="mdi:map-marker" inline style="color:#264697;font-size:1.1em;vertical-align:middle;"></iconify-icon> Maps
             </button>
         </div>
-        ${jurusanInfo}
-        <div style='margin-bottom:6px;'>
-            ${nextStopTitle}
-            ${nextStopName}
-            ${labelTipeNext}
-            ${layananSemuaBlock}
+        <div id='popup-dinamis-info'>
+            ${jurusanInfo}
+            <div style='margin-bottom:6px;'>
+                ${nextStopTitle}
+                ${nextStopName}
+                ${labelTipeNext}
+                ${layananSemuaBlock}
+            </div>
+            ${jarakInfo}
+            ${hr}
+            ${arrivalMsg}
         </div>
-        ${jarakInfo}
-        ${hr}
-        ${arrivalMsg}
-
         <div style='position:absolute;bottom:0;right:0;opacity:0.09;font-size:6em;pointer-events:none;'>🚌</div>
     </div>
     <style>
@@ -1608,42 +1611,58 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     `;
     if (window.userMarker) {
         // Only animate on first open, not every update
-        const popupEl = window.userMarker.getPopup() && window.userMarker.getPopup().getElement();
+        let popupEl = window.userMarker.getPopup() && window.userMarker.getPopup().getElement();
         if (!popupEl || !popupEl.classList.contains('popup-card-friendly')) {
             window.userMarker.bindPopup(popupContent).openPopup();
+            setTimeout(() => {
+                const popupEl2 = window.userMarker.getPopup().getElement();
+                if (!popupEl2) return;
+                popupEl2.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
+                    badge.onclick = function(e) {
+                        e.stopPropagation();
+                        const newRouteId = this.getAttribute('data-routeid');
+                        if (newRouteId && newRouteId !== routeId) {
+                            // Reset timer jika ada
+                            if (window.arrivalTimer) {
+                                clearTimeout(window.arrivalTimer);
+                                window.arrivalTimer = null;
+                            }
+                            // Reset status arrival
+                            window.lastArrivedStopId = null;
+                            // Jangan set lastStopId saat berganti rute
+                            window.selectedRouteIdForUser = newRouteId;
+                            window.selectedCurrentStopForUser = nextStop;
+                            showUserRouteInfo(userLat, userLon, nextStop, newRouteId);
+                            const newRoute = routes.find(r => r.route_id === newRouteId);
+                            if (newRoute) {
+                                selectedRouteId = newRouteId;
+                                saveActiveRouteId(selectedRouteId);
+                                renderRoutes();
+                                showStopsByRoute(newRouteId, newRoute);
+                            }
+                        }
+                    };
+                });
+            }, 100);
         } else {
-            window.userMarker.setPopupContent(popupContent);
+            // Update hanya bagian dinamis, badge dan tombol Maps tetap
+            // Hindari setPopupContent, update DOM langsung
+            const dinamis = popupEl.querySelector('#popup-dinamis-info');
+            if (dinamis) {
+                dinamis.innerHTML = `
+                    ${jurusanInfo}
+                    <div style='margin-bottom:6px;'>
+                        ${nextStopTitle}
+                        ${nextStopName}
+                        ${labelTipeNext}
+                        ${layananSemuaBlock}
+                    </div>
+                    ${jarakInfo}
+                    ${hr}
+                    ${arrivalMsg}
+                `;
+            }
         }
-        setTimeout(() => {
-            const popupEl2 = window.userMarker.getPopup().getElement();
-            if (!popupEl2) return;
-            popupEl2.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
-                badge.onclick = function(e) {
-                    e.stopPropagation();
-                    const newRouteId = this.getAttribute('data-routeid');
-                    if (newRouteId && newRouteId !== routeId) {
-                        // Reset timer jika ada
-                        if (window.arrivalTimer) {
-                            clearTimeout(window.arrivalTimer);
-                            window.arrivalTimer = null;
-                        }
-                        // Reset status arrival
-                        window.lastArrivedStopId = null;
-                        // Jangan set lastStopId saat berganti rute
-                        window.selectedRouteIdForUser = newRouteId;
-                        window.selectedCurrentStopForUser = nextStop;
-                        showUserRouteInfo(userLat, userLon, nextStop, newRouteId);
-                        const newRoute = routes.find(r => r.route_id === newRouteId);
-                        if (newRoute) {
-                            selectedRouteId = newRouteId;
-                            saveActiveRouteId(selectedRouteId);
-                            renderRoutes();
-                            showStopsByRoute(newRouteId, newRoute);
-                        }
-                    }
-                };
-            });
-        }, 100);
     }
 }
 
