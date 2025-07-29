@@ -139,13 +139,13 @@
     </div>
     <div class="section-box mb-4">
     <div id="map"></div>
-        <div class="mb-3 d-flex gap-2 align-items-center">
-            <button id="liveLocationBtn" class="btn btn-outline-primary rounded-5">Live Location: OFF</button>
-            <button id="resetRouteBtn" class="btn btn-outline-danger rounded-5">Reset Koridor</button>
-        </div>
-        <input type="text" id="searchStop" class="form-control rounded-pill mb-2" placeholder="Cari Halte atau Koridor...">
+    <div class="mb-3 d-flex gap-2 align-items-center">
+        <button id="liveLocationBtn" class="btn btn-outline-primary rounded-5">Live Location: OFF</button>
+        <button id="resetRouteBtn" class="btn btn-outline-danger rounded-5">Reset Koridor</button>
+    </div>
+        <select id="routesDropdown" class="form-select py-3 px-4 rounded-pill shadow-sm border-0 fs-5 plus-jakarta-sans mb-4"></select>
+        <input type="text" id="searchStop" class="form-control py-3 px-4 rounded-pill shadow-sm border-0 fs-5 plus-jakarta-sans" placeholder="Cari Halte atau Koridor...">
         <div id="searchResults" class="mt-2"></div>
-        <select id="routesDropdown" class="form-select mb-4 rounded-pill"></select>
     <h2 class="mb-3 text-center fw-bold plus-jakarta-sans" id="stopsTitle"></h2>
     <div id="directionTabs" class="mb-3"></div>
     <ul id="stopsByRoute" class="list-group"></ul>

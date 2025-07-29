@@ -1,5 +1,16 @@
 
 
+// Natural sort function for human-friendly sorting of route names
+function naturalSort(a, b) {
+    // Accepts either route objects or strings
+    let ax = (typeof a === 'object' && a.route_short_name) ? a.route_short_name : a;
+    let bx = (typeof b === 'object' && b.route_short_name) ? b.route_short_name : b;
+    // fallback to route_id if short_name not present
+    if (!ax && typeof a === 'object') ax = a.route_id;
+    if (!bx && typeof b === 'object') bx = b.route_id;
+    // Use Intl.Collator for numeric-aware sorting
+    return ax.localeCompare(bx, undefined, { numeric: true, sensitivity: 'base' });
+}
 // Ambil data GTFS dari folder gtfs/ untuk bus stop dan shapes
 Promise.all([
     fetch('gtfs/stops.txt').then(r => r.text()),
@@ -96,15 +107,7 @@ function saveActiveRouteId(routeId) {
     }
 }
 
-// Helper function untuk font-size badge koridor
-// Hapus fungsi getBadgeFontSize
-// function getBadgeFontSize(text) {
-//     if (!text) return '1em';
-//     if (text.length > 3) return '0.5em';
-//     if (text.length > 2) return '0.7em';
-//     if (text.length > 1) return '0.9em';
-//     return '1em';
-// }
+
 
 function initMap() {
     if (!map) {
@@ -142,22 +145,34 @@ function initMap() {
             container.style.position = 'absolute';
             container.style.left = '50%';
             container.style.transform = 'translateX(-50%)';
-            container.style.top = '18px';
-            container.style.zIndex = 1001;
-            container.innerHTML = `<select id="mapRouteDropdown" class="form-select form-select-sm plus-jakarta-sans" style="min-width:180px;font-size:1em;padding:4px 8px;"></select>`;
+            container.style.top = '20px';
+            container.style.zIndex = 999;
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.alignItems = 'center';
+            // Add the route dropdown (Layanan) on top
+            const routeDropdown = document.createElement('select');
+            routeDropdown.id = 'mapRouteDropdown';
+            routeDropdown.className = 'form-select form-select-sm plus-jakarta-sans';
+            routeDropdown.style.minWidth = '180px';
+            routeDropdown.style.fontSize = '1em';
+            routeDropdown.style.padding = '4px 8px';
+            container.appendChild(routeDropdown);
             document.getElementById('map').appendChild(container);
         }
         // Isi dropdown dari data GTFS
         const dropdown = document.getElementById('mapRouteDropdown');
         if (dropdown) {
             dropdown.innerHTML = '';
-            routes.forEach(route => {
+            // Sort routes naturally like outside dropdown
+            const sortedRoutes = [...routes].sort(naturalSort);
+            sortedRoutes.forEach(route => {
                 const opt = document.createElement('option');
                 opt.value = route.route_id;
                 opt.textContent = (route.route_short_name ? route.route_short_name : route.route_id) + ' - ' + (route.route_long_name || '');
                 dropdown.appendChild(opt);
             });
-            dropdown.value = selectedRouteId || (routes[0] && routes[0].route_id) || '';
+            dropdown.value = selectedRouteId || (sortedRoutes[0] && sortedRoutes[0].route_id) || '';
             dropdown.onchange = function() {
                 selectedRouteId = dropdown.value;
                 saveActiveRouteId(selectedRouteId);
@@ -166,6 +181,9 @@ function initMap() {
                 // Sync other dropdowns if present
                 const mainDropdown = document.getElementById('routesDropdown');
                 if (mainDropdown) mainDropdown.value = selectedRouteId;
+
+                // --- Tambahkan/Update dropdown varian trayek di map ---
+                addOrUpdateMapVariantDropdown(selectedRouteId);
             };
         }
         // Helper: sync dropdown value if selectedRouteId changes elsewhere
@@ -173,8 +191,70 @@ function initMap() {
             const dropdown = document.getElementById('mapRouteDropdown');
             if (dropdown && dropdown.value !== routeId) {
                 dropdown.value = routeId;
+                // Sync varian trayek juga
+                addOrUpdateMapVariantDropdown(routeId);
             }
         };
+        // Tambahkan dropdown varian trayek saat init jika ada selectedRouteId
+        addOrUpdateMapVariantDropdown(selectedRouteId || (routes[0] && routes[0].route_id));
+// Fungsi untuk menambah atau update dropdown varian trayek di map
+function addOrUpdateMapVariantDropdown(routeId) {
+    // Hapus dropdown lama jika ada
+    let old = document.getElementById('mapRouteVariantDropdown');
+    if (old) old.remove();
+    let oldLabel = document.getElementById('mapRouteVariantLabel');
+    if (oldLabel) oldLabel.remove();
+    // Cari trip untuk routeId
+    const tripsForRoute = trips.filter(t => t.route_id === routeId);
+    const variantRegex = /^(.*?)-(\w+)$/;
+    let variantInfo = {};
+    tripsForRoute.forEach(t => {
+        const m = t.trip_id.match(variantRegex);
+        if (m) {
+            const varKey = m[2];
+            if (!variantInfo[varKey]) variantInfo[varKey] = t;
+        }
+    });
+    let variants = Object.keys(variantInfo);
+    variants = variants.sort(naturalSort);
+    // Remove old variant dropdown if any
+    let oldDropdown = document.getElementById('mapRouteVariantDropdown');
+    if (oldDropdown) oldDropdown.remove();
+    // Only show if more than 1 variant
+    if (variants.length > 1) {
+        let variantDropdown = document.createElement('select');
+        variantDropdown.id = 'mapRouteVariantDropdown';
+        variantDropdown.className = 'form-select form-select-sm plus-jakarta-sans';
+        variantDropdown.style.maxWidth = '220px';
+        variantDropdown.style.display = 'block';
+        variantDropdown.style.fontSize = '1em';
+        variantDropdown.style.fontWeight = '500';
+        variantDropdown.style.padding = '4px 8px';
+        variantDropdown.style.marginTop = '8px';
+        variantDropdown.style.marginBottom = '0';
+        let defaultLabel = 'Default (Semua Varian)';
+        // Sort variants naturally like outside dropdown
+        const sortedVariants = [...variants].sort(naturalSort);
+        variantDropdown.innerHTML = `<option value="">${defaultLabel}</option>` +
+            sortedVariants.map(v => {
+                let trip = variantInfo[v];
+                let jurusan = trip.trip_headsign || trip.trip_long_name || '';
+                let label = v + (jurusan ? ' - ' + jurusan : '');
+                return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
+            }).join('');
+        variantDropdown.onchange = function() {
+            window.selectedRouteVariant = this.value || null;
+            localStorage.setItem('selectedRouteVariant_' + routeId, window.selectedRouteVariant || '');
+            renderRoutes();
+            showStopsByRoute(routeId, routes.find(r => r.route_id === routeId));
+        };
+        // Insert below route dropdown
+        const container = document.getElementById('mapDropdownContainer');
+        if (container) {
+            container.appendChild(variantDropdown);
+        }
+    }
+}
     }, 300);
     // Tambahkan kembali kontrol geocoder (search box) di pojok kanan atas
     if (!map._geocoderControl && typeof L.Control.Geocoder !== 'undefined') {
@@ -426,10 +506,13 @@ function showHalteOnMap(stopsArr, shape_id) {
 function renderRoutes() {
     const select = document.getElementById('routesDropdown');
     select.innerHTML = '';
-    filteredRoutes.forEach(route => {
+    // Urutkan filteredRoutes secara natural
+    const sortedRoutes = [...filteredRoutes].sort(naturalSort);
+    sortedRoutes.forEach(route => {
         const opt = document.createElement('option');
         opt.value = route.route_id;
-        opt.textContent = route.route_short_name + ' - ' + route.route_long_name;
+        // Format: tampilkan short_name dan long_name jika ada
+        opt.textContent = (route.route_short_name ? route.route_short_name : route.route_id) + (route.route_long_name ? ' - ' + route.route_long_name : '');
         if (route.route_id === selectedRouteId) opt.selected = true;
         select.appendChild(opt);
     });
@@ -532,6 +615,8 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         }
     });
     let variants = Object.keys(variantInfo);
+    // Urutkan varian secara natural (misal L01, L02, R01, dst)
+    variants = variants.sort(naturalSort);
     // Dropdown hanya jika varian > 1
     let variantDropdown = null;
     if (variants.length > 1) {
@@ -550,7 +635,7 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         }
         // Dropdown dengan style lebih menarik
         variantDropdown = document.createElement('select');
-        variantDropdown.className = 'form-select form-select-lg shadow-sm border-primary mb-3 plus-jakarta-sans';
+        variantDropdown.className = 'form-select form-select-lg shadow-sm border-primary rounded-pill mb-3 plus-jakarta-sans';
         variantDropdown.style.maxWidth = '340px';
         variantDropdown.style.display = 'inline-block';
         variantDropdown.style.fontSize = '1.1em';
@@ -886,7 +971,6 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
             ${panjangTrayekLabel}
         `;
         title.className = 'mb-3 fs-3 fw-bold plus-jakarta-sans';
-        title.style.color = '#264697';
         // --- Render daftar halte dan polyline ---
         let allStops = [];
         let polylineShapeIds = [];
@@ -1198,10 +1282,12 @@ function setupSearch() {
         }
         if (q.length < 2) return;
         const foundHalte = stops.filter(s => s.stop_name.toLowerCase().includes(q));
-        const foundKoridor = routes.filter(r =>
+        let foundKoridor = routes.filter(r =>
             (r.route_short_name && r.route_short_name.toLowerCase().includes(q)) ||
             (r.route_long_name && r.route_long_name.toLowerCase().includes(q))
         );
+        // Urutkan hasil pencarian koridor secara natural
+        foundKoridor = foundKoridor.sort(naturalSort);
         const ul = document.createElement('ul');
         ul.className = 'list-group mt-3 mb-3';
         ul.style.maxHeight = '250px';
@@ -1213,10 +1299,15 @@ function setupSearch() {
             ul.appendChild(layananHeader);
             foundKoridor.forEach(route => {
                 const li = document.createElement('li');
-                li.className = 'list-group-item d-flex align-items-center';
+                li.className = 'list-group-item d-flex align-items-center gap-2 py-3';
                 let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
-                li.innerHTML = `<span class='badge badge-koridor-interaktif rounded-pill me-2' style='background:${badgeColor};color:#fff;font-weight:bold;padding-left:1.1em;padding-right:1.1em;padding-top:0.35em;padding-bottom:0.35em;'>${route.route_short_name}</span> <span>${route.route_long_name}</span>`;
+                li.innerHTML = `
+                  <span class='badge badge-koridor-interaktif rounded-pill' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:1.1em;padding:0.6em 1.2em;'>${route.route_short_name}</span>
+                  <span class='fw-bold plus-jakarta-sans' style='font-size:1.1em;'>${route.route_long_name || ''}</span>
+                `;
                 li.style.cursor = 'pointer';
+                li.onmouseenter = () => li.style.background = '#f1f5f9';
+                li.onmouseleave = () => li.style.background = '';
                 li.onclick = function() {
                     selectedRouteId = route.route_id;
                     saveActiveRouteId(selectedRouteId);
