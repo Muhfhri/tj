@@ -1,5 +1,6 @@
 
 
+
 // Natural sort function for human-friendly sorting of route names
 function naturalSort(a, b) {
     // Accepts either route objects or strings
@@ -1661,12 +1662,25 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     }
     let layananSemuaBlock = layananSemuaBadges ? `<div style='margin-bottom:2px;'><b>Layanan di halte ini:</b> ${layananSemuaBadges}</div>` : '';
     let jarakInfo = nextStop ? `<div style='margin-bottom:2px;'><b>Jarak:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}</div>` : '';
+    // --- Kecepatan User ---
+    let speedInfo = '';
+    let speedVal = (typeof arguments[4] === 'number' && !isNaN(arguments[4])) ? arguments[4] : (typeof window._lastUserSpeed === 'number' ? window._lastUserSpeed : null);
+    let speedKmh = (speedVal !== null && speedVal >= 0) ? speedVal * 3.6 : 0;
+    // Jika speed null atau sangat kecil (<0.2 km/jam), anggap berhenti
+    if (speedVal === null || speedKmh < 0.2) {
+        speedInfo = `<div style='margin-bottom:2px;'><b>Kecepatan:</b> 0 km/jam</div>`;
+    } else if (speedKmh < 1) {
+        speedInfo = `<div style='margin-bottom:2px;'><b>Kecepatan:</b> ${(speedKmh*1000).toFixed(0)} m/jam</div>`;
+    } else {
+        speedInfo = `<div style='margin-bottom:2px;'><b>Kecepatan:</b> ${speedKmh.toFixed(1)} km/jam</div>`;
+    }
     // --- Garis pemisah ---
     let hr = `<hr style='margin:6px 0 4px 0;border-top:1.5px solid #e5e7eb;'>`;
+    // Tombol Maps dihapus sesuai permintaan
+    let mapsBtn = '';
     let popupContent = `
     <div class='plus-jakarta-sans popup-card-friendly' style='min-width:220px;max-width:340px;line-height:1.45;background:rgba(248,250,252,0.95);border-radius:18px;box-shadow:none;padding:18px 18px 12px 18px;position:relative;'>
         <div style='display:flex;align-items:center;gap:12px;margin-bottom:8px;'>
-            <div style='font-size:2.1em;'><iconify-icon icon="mdi:bus" inline style="color:#264697;"></iconify-icon></div>
             <div style='flex:1;'>${badgeLayanan}</div>
         </div>
         <div id='popup-dinamis-info'>
@@ -1678,6 +1692,7 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                 ${layananSemuaBlock}
             </div>
             ${jarakInfo}
+            ${speedInfo}
             ${hr}
             ${arrivalMsg}
         </div>
@@ -1768,10 +1783,27 @@ function enableLiveLocation(onError) {
         return;
     }
     if (window.geoWatchId) navigator.geolocation.clearWatch(window.geoWatchId);
+    // Variabel global untuk kecepatan user
+    if (!window._lastUserPos) window._lastUserPos = null;
+    if (!window._lastUserTime) window._lastUserTime = null;
+    if (!window._lastUserSpeed) window._lastUserSpeed = null;
     window.geoWatchId = navigator.geolocation.watchPosition(
         pos => {
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
+            const now = Date.now();
+            // Hitung kecepatan (m/s)
+            let speed = null;
+            if (window._lastUserPos && window._lastUserTime) {
+                const dist = haversine(window._lastUserPos.lat, window._lastUserPos.lon, lat, lon);
+                const dt = (now - window._lastUserTime) / 1000; // detik
+                if (dt > 0 && dist < 1000) { // abaikan loncatan jauh
+                    speed = dist / dt;
+                }
+            }
+            window._lastUserPos = { lat, lon };
+            window._lastUserTime = now;
+            window._lastUserSpeed = speed;
             if (!map) return;
             if (window.userMarker) {
                 window.userMarker.setLatLng([lat, lon]);
@@ -1817,7 +1849,8 @@ function enableLiveLocation(onError) {
                         window.userMarker.getLatLng().lat,
                         window.userMarker.getLatLng().lng,
                         window.selectedCurrentStopForUser,
-                        window.selectedRouteIdForUser
+                        window.selectedRouteIdForUser,
+                        window._lastUserSpeed
                     );
                 }
             }
