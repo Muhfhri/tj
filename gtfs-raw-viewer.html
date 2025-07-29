@@ -236,6 +236,40 @@
         }
       }
       document.getElementById('raw').innerHTML = outTable + extra;
+      // Tambahan: info kecocokan filter dan cross-file
+      let matchInfo = '';
+      if (filtered.length > 0) {
+        matchInfo += `<div class="alert alert-info mt-2" style="font-size:1em;">`;
+        matchInfo += `<b>Kecocokan:</b> Ditemukan <b>${filtered.length}</b> baris untuk <b>${idField} = ${idValue}</b> di <b>${file}.txt</b>.`;
+        // Cek kecocokan di file GTFS lain (cross-file)
+        const otherFiles = ['stops','routes','trips','stop_times','calendar','calendar_dates','fare_rules','fare_attributes','frequencies','transfers','shapes'];
+        const checkFiles = otherFiles.filter(f => f !== file);
+        let crossMatches = [];
+        await Promise.all(checkFiles.map(async f => {
+          try {
+            const resp = await fetch(`gtfs/${f}.txt`);
+            if (!resp.ok) return;
+            const txt = await resp.text();
+            const lines = txt.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 2) return;
+            const headers = lines[0].split(',').map(h => h.trim());
+            const idx = headers.indexOf(idField);
+            if (idx === -1) return;
+            const found = lines.slice(1).some(line => {
+              const vals = line.split(',').map(v => v.trim());
+              return vals[idx] && idValue.split(',').includes(vals[idx]);
+            });
+            if (found) crossMatches.push(f);
+          } catch(e) {}
+        }));
+        if (crossMatches.length > 0) {
+          matchInfo += `<br><b>Kecocokan juga ditemukan di file:</b> <span class='fw-bold text-success'>${crossMatches.map(f=>f+'.txt').join(', ')}</span>`;
+        } else {
+          matchInfo += `<br><span class='text-muted'>Tidak ditemukan kecocokan di file GTFS lain.</span>`;
+        }
+        matchInfo += `</div>`;
+      }
+      document.getElementById('raw').innerHTML = outTable + extra + matchInfo;
       // Download button
       document.getElementById('downloadBtn').onclick = function() {
         // Gabungkan hasil tabel ke format txt

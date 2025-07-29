@@ -145,7 +145,7 @@ function initMap() {
             container.style.position = 'absolute';
             container.style.left = '50%';
             container.style.transform = 'translateX(-50%)';
-            container.style.top = '20px';
+            container.style.top = '10px';
             container.style.zIndex = 999;
             container.style.display = 'flex';
             container.style.flexDirection = 'column';
@@ -704,7 +704,12 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         // Info tipe layanan dari route_desc
         let tipeLayananInfo = '';
         if (routeObj.route_desc) {
-            tipeLayananInfo = `<div class='mt-1 plus-jakarta-sans fw-bold text-success'>${routeObj.route_desc}</div>`;
+            let desc = routeObj.route_desc;
+            // Jika route_id diawali JAK., ganti Angkutan Umum Integrasi menjadi MikroTrans
+            if (routeObj.route_id && routeObj.route_id.startsWith('JAK.') && desc.trim() === 'Angkutan Umum Integrasi') {
+                desc = 'MikroTrans';
+            }
+            tipeLayananInfo = `<div class='mt-1 plus-jakarta-sans fw-bold text-success'>${desc}</div>`;
         }
         // --- Tambahan: Jam Operasi ---
         let jamOperasiInfo = '';
