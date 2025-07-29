@@ -1572,9 +1572,6 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
         <div style='display:flex;align-items:center;gap:12px;margin-bottom:8px;'>
             <div style='font-size:2.1em;'><iconify-icon icon="mdi:bus" inline style="color:#264697;"></iconify-icon></div>
             <div style='flex:1;'>${badgeLayanan}</div>
-            <button id='popup-maps-btn' class='btn btn-outline-primary btn-sm rounded-4 px-2 py-1' style='font-weight:600;font-size:0.97em;' onclick="window.open('https://www.google.com/maps/search/?api=1&query=${currentStop.stop_lat},${currentStop.stop_lon}')">
-                <iconify-icon icon="mdi:map-marker" inline style="color:#264697;font-size:1.1em;vertical-align:middle;"></iconify-icon> Maps
-            </button>
         </div>
         <div id='popup-dinamis-info'>
             ${jurusanInfo}
