@@ -1,6 +1,3 @@
-
-
-
 // Natural sort function for human-friendly sorting of route names
 function naturalSort(a, b) {
     // Accepts either route objects or strings
@@ -11,9 +8,9 @@ function naturalSort(a, b) {
     if (!bx && typeof b === 'object') bx = b.route_id;
     // Use Intl.Collator for numeric-aware sorting
     return ax.localeCompare(bx, undefined, { numeric: true, sensitivity: 'base' });
-}
-// Ambil data GTFS dari folder gtfs/ untuk bus stop dan shapes
-Promise.all([
+  }
+  // Ambil data GTFS dari folder gtfs/ untuk bus stop dan shapes
+  Promise.all([
     fetch('gtfs/stops.txt').then(r => r.text()),
     fetch('gtfs/routes.txt').then(r => r.text()),
     fetch('gtfs/trips.txt').then(r => r.text()),
@@ -22,7 +19,10 @@ Promise.all([
     fetch('gtfs/frequencies.txt').then(r => r.ok ? r.text() : ''),
     fetch('gtfs/fare_rules.txt').then(r => r.ok ? r.text() : ''),
     fetch('gtfs/fare_attributes.txt').then(r => r.ok ? r.text() : ''),
-]).then(([stopsTxt, routesTxt, tripsTxt, stopTimesTxt, shapesTxt, frequenciesTxt, fareRulesTxt, fareAttributesTxt]) => {
+    fetch('gtfs/transfers.txt').then(r => r.ok ? r.text() : ''),
+    fetch('gtfs/calendar.txt').then(r => r.ok ? r.text() : ''),
+    fetch('gtfs/agency.txt').then(r => r.ok ? r.text() : ''),
+  ]).then(([stopsTxt, routesTxt, tripsTxt, stopTimesTxt, shapesTxt, frequenciesTxt, fareRulesTxt, fareAttributesTxt, transfersTxt, calendarTxt, agencyTxt]) => {
     stops = parseCSV(stopsTxt);
     routes = parseCSV(routesTxt);
     trips = parseCSV(tripsTxt);
@@ -64,9 +64,9 @@ Promise.all([
     }
     setupSearch();
     // setupRouteSearch(); // dikomentari agar tidak error
-});
-
-function parseCSV(text) {
+  });
+  
+  function parseCSV(text) {
     const lines = text.split('\n').filter(line => line.trim() !== '');
     const headers = lines[0].split(',').map(h => h.trim());
     return lines.slice(1).map(line => {
@@ -75,42 +75,41 @@ function parseCSV(text) {
         headers.forEach((h, i) => obj[h] = values[i]);
         return obj;
     });
-}
-
-// Tambahkan fungsi kosong agar error hilang
-function saveUserProgress() {}
-
-// Deklarasi variabel global agar dropdown dan map bisa berjalan
-let polylineLayers = [];
-let markersLayer = null;
-let polylineLayer = null;
-let map = null;
-let routes = [];
-let stops = [];
-let trips = [];
-let stop_times = [];
-let shapes = [];
-let filteredRoutes = [];
-let selectedRouteId = null;
-let stopToRoutes = {};
-let frequencies = [];
-let radiusHalteMarkers = [];
-let lastRadiusPopupMarker = null;
-let lastRadiusPopupStopId = null;
-window.radiusHalteActive = false;
-window.searchResultMarker = null;
-// Simpan ke localStorage setiap kali user memilih koridor
-function saveActiveRouteId(routeId) {
+  }
+  
+  // Tambahkan fungsi kosong agar error hilang
+  function saveUserProgress() {}
+  
+  // Deklarasi variabel global agar dropdown dan map bisa berjalan
+  let polylineLayers = [];
+  let markersLayer = null;
+  let polylineLayer = null;
+  let map = null;
+  let routes = [];
+  let stops = [];
+  let trips = [];
+  let stop_times = [];
+  let shapes = [];
+  let filteredRoutes = [];
+  let selectedRouteId = null;
+  let stopToRoutes = {};
+  let frequencies = [];
+  let radiusHalteMarkers = [];
+  let lastRadiusPopupMarker = null;
+  let lastRadiusPopupStopId = null;
+  window.radiusHalteActive = false;
+  window.searchResultMarker = null;
+  // Simpan ke localStorage setiap kali user memilih koridor
+  function saveActiveRouteId(routeId) {
     if (routeId) {
         localStorage.setItem('activeRouteId', routeId);
     } else {
         localStorage.removeItem('activeRouteId');
     }
-}
-
-
-
-function initMap() {
+  }
+  
+  
+  function initMap() {
     if (!map) {
         map = L.map('map', { fullscreenControl: true }).setView([-6.2, 106.8], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -182,7 +181,7 @@ function initMap() {
                 // Sync other dropdowns if present
                 const mainDropdown = document.getElementById('routesDropdown');
                 if (mainDropdown) mainDropdown.value = selectedRouteId;
-
+  
                 // --- Tambahkan/Update dropdown varian trayek di map ---
                 addOrUpdateMapVariantDropdown(selectedRouteId);
             };
@@ -198,8 +197,8 @@ function initMap() {
         };
         // Tambahkan dropdown varian trayek saat init jika ada selectedRouteId
         addOrUpdateMapVariantDropdown(selectedRouteId || (routes[0] && routes[0].route_id));
-// Fungsi untuk menambah atau update dropdown varian trayek di map
-function addOrUpdateMapVariantDropdown(routeId) {
+  // Fungsi untuk menambah atau update dropdown varian trayek di map
+  function addOrUpdateMapVariantDropdown(routeId) {
     // Hapus dropdown lama jika ada
     let old = document.getElementById('mapRouteVariantDropdown');
     if (old) old.remove();
@@ -255,7 +254,7 @@ function addOrUpdateMapVariantDropdown(routeId) {
             container.appendChild(variantDropdown);
         }
     }
-}
+  }
     }, 300);
     // Tambahkan kembali kontrol geocoder (search box) di pojok kanan atas
     if (!map._geocoderControl && typeof L.Control.Geocoder !== 'undefined') {
@@ -267,9 +266,9 @@ function addOrUpdateMapVariantDropdown(routeId) {
             position: 'topright'
         }).addTo(map);
     }
-}
-
-function ensureCustomMapButtons() {
+  }
+  
+  function ensureCustomMapButtons() {
     const mapDiv = document.getElementById('map');
     // --- Live Location ---
     if (!document.getElementById('liveLocationBtnMap')) {
@@ -408,10 +407,10 @@ function ensureCustomMapButtons() {
         };
         document.getElementById('map').appendChild(btn);
     }
-}
-
-// 1. Restore marker halte (showHalteOnMap) ke versi sederhana tanpa badge layanan lain
-function showHalteOnMap(stopsArr, shape_id) {
+  }
+  
+  // 1. Restore marker halte (showHalteOnMap) ke versi sederhana tanpa badge layanan lain
+  function showHalteOnMap(stopsArr, shape_id) {
     initMap();
     if (polylineLayers && polylineLayers.length) {
         polylineLayers.forEach(pl => map.removeLayer(pl));
@@ -420,9 +419,16 @@ function showHalteOnMap(stopsArr, shape_id) {
     let latlngs = [];
     let activeRoute = routes.find(r => r.route_id === selectedRouteId);
     let polyColor = (activeRoute && activeRoute.route_color) ? ('#' + activeRoute.route_color) : 'blue';
-    let tripsForRoute = trips.filter(t => t.route_id === selectedRouteId);
+    // Gunakan shape_id yang diberikan jika ada, jika tidak gunakan semua shape_id dari route
     let shapeIds = new Set();
-    tripsForRoute.forEach(trip => { if (trip.shape_id) shapeIds.add(trip.shape_id); });
+    if (shape_id) {
+        // Jika shape_id diberikan, gunakan hanya itu
+        shapeIds.add(shape_id);
+    } else {
+        // Fallback: gunakan semua shape_id dari route (untuk kompatibilitas)
+        let tripsForRoute = trips.filter(t => t.route_id === selectedRouteId);
+        tripsForRoute.forEach(trip => { if (trip.shape_id) shapeIds.add(trip.shape_id); });
+    }
     let allLatlngs = [];
     shapeIds.forEach(shape_id => {
         const shapePoints = shapes.filter(s => s.shape_id === shape_id)
@@ -468,10 +474,32 @@ function showHalteOnMap(stopsArr, shape_id) {
             }
             let layananInfoPlus = layananInfo ? layananInfo.replace('mt-2 plus-jakarta-sans', 'mt-2 plus-jakarta-sans') : '';
             let popupContent = `
-                <b class='plus-jakarta-sans'>${stop.stop_name}</b><br>
-                <span class='plus-jakarta-sans text-muted'>(${stop.stop_id})</span>
-                ${labelTipe}
-                ${layananInfoPlus}
+                <div class='plus-jakarta-sans' style='min-width: 220px; font-family: "Plus Jakarta Sans", sans-serif;'>
+                    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 14px; margin: -9px -15px 10px -15px; border-radius: 8px 8px 0 0;'>
+                        <div style='font-size: 15px; font-weight: 700; margin-bottom: 3px; line-height: 1.3;'>${stop.stop_name}</div>
+                        <div style='font-size: 11px; opacity: 0.9; display: flex; align-items: center;'>
+                            <span style='margin-right: 6px;'>🆔</span>
+                            <span>${stop.stop_id}</span>
+                        </div>
+                    </div>
+                    
+                    ${labelTipe ? `<div style='margin-bottom: 10px; padding: 6px 10px; background: #f8f9fa; border-radius: 5px; border-left: 3px solid #007bff;'>
+                        <div style='font-size: 12px; font-weight: 600; color: #495057; display: flex; align-items: center;'>
+                            <span style='margin-right: 6px;'>🚏</span>
+                            ${labelTipe.replace(/<div[^>]*>|<\/div>/g, '')}
+                        </div>
+                    </div>` : ''}
+                    
+                    ${koridorBadges ? `<div style='margin-bottom: 10px;'>
+                        <div style='font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 6px; display: flex; align-items: center;'>
+                            <span style='margin-right: 6px;'>🚌</span>
+                            <span>Layanan Tersedia</span>
+                        </div>
+                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
+                            ${koridorBadges}
+                        </div>
+                    </div>` : ''}
+                </div>
             `;
             const marker = L.marker([lat, lon], {
                 icon: L.icon({
@@ -480,7 +508,7 @@ function showHalteOnMap(stopsArr, shape_id) {
                     iconAnchor: [9, 30],
                     popupAnchor: [1, -24]
                 })
-            }).bindPopup(popupContent);
+            }).bindPopup(popupContent, { className: 'custom-popup-transparent' });
             markersLayer.addLayer(marker);
             marker.on('popupopen', function() {
                 setTimeout(() => {
@@ -502,9 +530,9 @@ function showHalteOnMap(stopsArr, shape_id) {
         }
     });
     markersLayer.addTo(map);
-}
-
-function renderRoutes() {
+  }
+  
+  function renderRoutes() {
     const select = document.getElementById('routesDropdown');
     select.innerHTML = '';
     // Urutkan filteredRoutes secara natural
@@ -571,9 +599,9 @@ function renderRoutes() {
         if (markersLayer) { map.removeLayer(markersLayer); markersLayer = null; }
         if (polylineLayer) { map.removeLayer(polylineLayer); polylineLayer = null; }
     }
-}
-
-function showStopsByRoute(route_id, routeObj, highlightStopId) {
+  }
+  
+  function showStopsByRoute(route_id, routeObj, highlightStopId) {
     // Jika reset (route_id null), kosongkan UI tanpa pesan error
     if (!route_id) {
         const ul = document.getElementById('stopsByRoute');
@@ -1244,9 +1272,9 @@ function showStopsByRoute(route_id, routeObj, highlightStopId) {
         showHalteOnMap(allStops, tripsForRoute[0] && tripsForRoute[0].shape_id);
         }
     }
-}
-
-function setupSearch() {
+  }
+  
+  function setupSearch() {
     const input = document.getElementById('searchStop');
     const resultsDiv = document.getElementById('searchResults');
     input.addEventListener('input', function() {
@@ -1381,13 +1409,13 @@ function setupSearch() {
         }
         resultsDiv.appendChild(ul);
     });
-}
-
-// Hapus semua log debug dari showHalteOnMap dan showStopsByRoute
-// Tambahkan fitur deteksi lokasi user
-
-// Helper: hitung jarak dua koordinat (Haversine)
-function haversine(lat1, lon1, lat2, lon2) {
+  }
+  
+  // Hapus semua log debug dari showHalteOnMap dan showStopsByRoute
+  // Tambahkan fitur deteksi lokasi user
+  
+  // Helper: hitung jarak dua koordinat (Haversine)
+  function haversine(lat1, lon1, lat2, lon2) {
     function toRad(x) { return x * Math.PI / 180; }
     const R = 6371e3; // meter
     const dLat = toRad(lat2 - lat1);
@@ -1397,10 +1425,10 @@ function haversine(lat1, lon1, lat2, lon2) {
         Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
-}
-
-// Function: Mendapatkan halte sebelumnya dari currentStopId dan routeId
-function getPreviousStop(currentStopId, routeId) {
+  }
+  
+  // Function: Mendapatkan halte sebelumnya dari currentStopId dan routeId
+  function getPreviousStop(currentStopId, routeId) {
     // Cari semua trip untuk rute ini
     const tripsForRoute = trips.filter(t => t.route_id === routeId);
     for (const trip of tripsForRoute) {
@@ -1415,12 +1443,12 @@ function getPreviousStop(currentStopId, routeId) {
         }
     }
     return null; // Tidak ditemukan
-}
-
-let nearestStopMarker = null;
-let userToStopLine = null;
-
-function findNearestStop(userLat, userLon) {
+  }
+  
+  let nearestStopMarker = null;
+  let userToStopLine = null;
+  
+  function findNearestStop(userLat, userLon) {
     let minDist = Infinity;
     let nearest = null;
     stops.forEach(stop => {
@@ -1433,13 +1461,13 @@ function findNearestStop(userLat, userLon) {
         }
     });
     return { stop: nearest, distance: minDist };
-}
-
-// Simpan pilihan layanan user (routeId) jika sudah memilih
-window.selectedRouteIdForUser = null;
-window.selectedCurrentStopForUser = null;
-
-function showNearestStopFromUser(userLat, userLon) {
+  }
+  
+  // Simpan pilihan layanan user (routeId) jika sudah memilih
+  window.selectedRouteIdForUser = null;
+  window.selectedCurrentStopForUser = null;
+  
+  function showNearestStopFromUser(userLat, userLon) {
     if (!map) return;
     if (nearestStopMarker) { map.removeLayer(nearestStopMarker); nearestStopMarker = null; }
     if (userToStopLine) { map.removeLayer(userToStopLine); userToStopLine = null; }
@@ -1539,10 +1567,10 @@ function showNearestStopFromUser(userLat, userLon) {
             };
         });
     }, 100);
-}
-
-// Fungsi untuk menampilkan info di marker user setelah memilih layanan
-function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
+  }
+  
+  // Fungsi untuk menampilkan info di marker user setelah memilih layanan
+  function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
     // Cari trip yang sesuai dengan routeId dan halte ini
     const tripsForRoute = trips.filter(t => t.route_id === routeId);
     let nextStop = null;
@@ -1766,17 +1794,18 @@ function showUserRouteInfo(userLat, userLon, currentStop, routeId) {
                         ${layananSemuaBlock}
                     </div>
                     ${jarakInfo}
+                    ${speedInfo}
                     ${hr}
                     ${arrivalMsg}
                 `;
             }
         }
     }
-}
-
-// Patch: update info marker user setiap update posisi jika sudah pilih layanan
-// Ganti patching: deklarasikan enableLiveLocation sebagai function agar hoisted
-function enableLiveLocation(onError) {
+  }
+  
+  // Patch: update info marker user setiap update posisi jika sudah pilih layanan
+  // Ganti patching: deklarasikan enableLiveLocation sebagai function agar hoisted
+  function enableLiveLocation(onError) {
     if (!navigator.geolocation) {
         alert('Geolocation tidak didukung di browser ini.');
         if (onError) onError();
@@ -1836,7 +1865,41 @@ function enableLiveLocation(onError) {
                     }).join('');
                 }
                 let layananInfo = koridorBadges ? `<div class='mt-2 plus-jakarta-sans'>Layanan: ${koridorBadges}</div>` : '';
-                let popupContent = `<b class='plus-jakarta-sans'>${stop.stop_name}</b><br><span class='plus-jakarta-sans'>Jarak: ${distance < 1000 ? Math.round(distance) + ' m' : (distance/1000).toFixed(2) + ' km'}</span>${layananInfo}`;
+                let popupContent = `
+                    <div class='plus-jakarta-sans' style='min-width: 220px; font-family: "Plus Jakarta Sans", sans-serif;'>
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 14px; margin: -9px -15px 10px -15px; border-radius: 8px 8px 0 0;'>
+                            <div style='font-size: 15px; font-weight: 700; margin-bottom: 3px; line-height: 1.3;'>${stop.stop_name}</div>
+                            <div style='font-size: 11px; opacity: 0.9; display: flex; align-items: center;'>
+                                <span style='margin-right: 6px;'>🆔</span>
+                                <span>${stop.stop_id}</span>
+                            </div>
+                        </div>
+                        
+                        ${labelTipe ? `<div style='margin-bottom: 10px; padding: 6px 10px; background: #f8f9fa; border-radius: 5px; border-left: 3px solid #007bff;'>
+                            <div style='font-size: 12px; font-weight: 600; color: #495057; display: flex; align-items: center;'>
+                                <span style='margin-right: 6px;'>🚏</span>
+                                ${labelTipe.replace(/<div[^>]*>|<\/div>/g, '')}
+                            </div>
+                        </div>` : ''}
+                        
+                        ${koridorBadges ? `<div style='margin-bottom: 10px;'>
+                            <div style='font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 6px; display: flex; align-items: center;'>
+                                <span style='margin-right: 6px;'>🚌</span>
+                                <span>Layanan Tersedia</span>
+                            </div>
+                            <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
+                                ${koridorBadges}
+                            </div>
+                        </div>` : ''}
+                        
+                        <div style='padding: 8px 12px; background: linear-gradient(90deg, #e3f2fd 0%, #f3e5f5 100%); border-radius: 6px; border-left: 4px solid #2196f3;'>
+                            <div style='font-size: 13px; font-weight: 600; color: #1976d2; display: flex; align-items: center;'>
+                                <span style='margin-right: 8px;'>📍</span>
+                                <span>Jarak ke Anda: ${stop.dist < 1000 ? Math.round(stop.dist) + ' m' : (stop.dist/1000).toFixed(2) + ' km'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
                 window.nearestStopMarker.setPopupContent(popupContent);
             }
             if (window.userMarker) {
@@ -1893,9 +1956,9 @@ function enableLiveLocation(onError) {
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
     );
-}
-
-function disableLiveLocation() {
+  }
+  
+  function disableLiveLocation() {
     if (window.geoWatchId) {
         navigator.geolocation.clearWatch(window.geoWatchId);
         window.geoWatchId = null;
@@ -1911,10 +1974,10 @@ function disableLiveLocation() {
     }
     window.lastArrivedStopId = null;
     window.userCentered = false;
-}
-
-// 2. Tambahkan tombol 'Halte Terdekat' hanya saat live location aktif
-function setLiveBtnState(active) {
+  }
+  
+  // 2. Tambahkan tombol 'Halte Terdekat' hanya saat live location aktif
+  function setLiveBtnState(active) {
     const btn = document.getElementById('liveLocationBtn');
     let nearestBtn = document.getElementById('nearestStopsBtn');
     if (active) {
@@ -1939,11 +2002,11 @@ function setLiveBtnState(active) {
         // Sembunyikan tombol halte terdekat
         if (nearestBtn) nearestBtn.style.display = 'none';
     }
-}
-
-// 3. Logika tombol halte terdekat: tampilkan max 2 halte terdekat dari posisi user
-window.nearestStopsMarkers = [];
-function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
+  }
+  
+  // 3. Logika tombol halte terdekat: tampilkan max 2 halte terdekat dari posisi user
+  window.nearestStopsMarkers = [];
+  function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
     // Hapus marker halte terdekat sebelumnya
     window.nearestStopsMarkers.forEach(m => map.removeLayer(m));
     window.nearestStopsMarkers = [];
@@ -1980,11 +2043,39 @@ function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
             labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
         }
         let popupContent = `
-            <b class='plus-jakarta-sans'>${stop.stop_name}</b><br>
-            <span class='text-muted'>(${stop.stop_id})</span>
-            ${labelTipe}
-            ${layananInfo}
-            <br><span class='plus-jakarta-sans text-primary'>Jarak ke Anda: ${stop.dist < 1000 ? Math.round(stop.dist) + ' m' : (stop.dist/1000).toFixed(2) + ' km'}</span>
+            <div class='plus-jakarta-sans' style='min-width: 220px; font-family: "Plus Jakarta Sans", sans-serif;'>
+                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 14px; margin: -9px -15px 10px -15px; border-radius: 8px 8px 0 0;'>
+                    <div style='font-size: 15px; font-weight: 700; margin-bottom: 3px; line-height: 1.3;'>${stop.stop_name}</div>
+                    <div style='font-size: 11px; opacity: 0.9; display: flex; align-items: center;'>
+                        <span style='margin-right: 6px;'>🆔</span>
+                        <span>${stop.stop_id}</span>
+                    </div>
+                </div>
+                
+                ${labelTipe ? `<div style='margin-bottom: 10px; padding: 6px 10px; background: #f8f9fa; border-radius: 5px; border-left: 3px solid #007bff;'>
+                    <div style='font-size: 12px; font-weight: 600; color: #495057; display: flex; align-items: center;'>
+                        <span style='margin-right: 6px;'>🚏</span>
+                        ${labelTipe.replace(/<div[^>]*>|<\/div>/g, '')}
+                    </div>
+                </div>` : ''}
+                
+                ${koridorBadges ? `<div style='margin-bottom: 10px;'>
+                    <div style='font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 6px; display: flex; align-items: center;'>
+                        <span style='margin-right: 6px;'>🚌</span>
+                        <span>Layanan Tersedia</span>
+                    </div>
+                    <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
+                        ${koridorBadges}
+                    </div>
+                </div>` : ''}
+                
+                <div style='padding: 6px 10px; background: linear-gradient(90deg, #e3f2fd 0%, #f3e5f5 100%); border-radius: 5px; border-left: 3px solid #2196f3;'>
+                    <div style='font-size: 12px; font-weight: 600; color: #1976d2; display: flex; align-items: center;'>
+                        <span style='margin-right: 6px;'>📍</span>
+                        <span>Jarak ke Anda: ${stop.dist < 1000 ? Math.round(stop.dist) + ' m' : (stop.dist/1000).toFixed(2) + ' km'}</span>
+                    </div>
+                </div>
+            </div>
         `;
         const marker = L.marker([lat, lon], {
             icon: L.icon({
@@ -1993,7 +2084,7 @@ function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
                 iconAnchor: [9, 30],
                 popupAnchor: [1, -24]
             })
-        }).addTo(map).bindPopup(`<div class='plus-jakarta-sans'>${popupContent}</div>`);
+        }).addTo(map).bindPopup(`<div class='plus-jakarta-sans'>${popupContent}</div>`, { className: 'custom-popup-transparent' });
         marker.on('popupopen', function() {
             setTimeout(() => {
                 const popupEl = marker.getPopup().getElement();
@@ -2016,10 +2107,10 @@ function showMultipleNearestStops(userLat, userLon, maxStops = 6) {
         });
         window.nearestStopsMarkers.push(marker);
     });
-}
-
-// 4. Event tombol halte terdekat
-window.addEventListener('DOMContentLoaded', function() {
+  }
+  
+  // 4. Event tombol halte terdekat
+  window.addEventListener('DOMContentLoaded', function() {
     setLiveBtnState(false);
     const btn = document.getElementById('liveLocationBtn');
     btn.addEventListener('click', function() {
@@ -2091,12 +2182,12 @@ window.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
-
-// Tambahkan fitur tampilkan halte radius 300m dari center peta saat zoom cukup besar
-
-let radiusHalteActive = false;
-function showHalteRadius(centerLat, centerLon, radius = 300) {
+  });
+  
+  // Tambahkan fitur tampilkan halte radius 300m dari center peta saat zoom cukup besar
+  
+  let radiusHalteActive = false;
+  function showHalteRadius(centerLat, centerLon, radius = 300) {
     radiusHalteMarkers.forEach(m => map.removeLayer(m));
     radiusHalteMarkers = [];
     let markerToOpen = null;
@@ -2104,7 +2195,7 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
     const nearbyStops = stops
   .filter(s => s.stop_lat && s.stop_lon && haversine(centerLat, centerLon, parseFloat(s.stop_lat), parseFloat(s.stop_lon)) <= radius)
   .filter(s => stopToRoutes[s.stop_id] && stopToRoutes[s.stop_id].size > 0); // hanya halte dengan layanan
-    nearbyStops.forEach((stop, idx) => {
+    nearbyStops.forEach((stop) => {
         // Info layanan (koridor) di popup
         let koridorBadges = '';
         if (stopToRoutes[stop.stop_id]) {
@@ -2143,13 +2234,42 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
             labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
         }
         marker.bindPopup(
-            `<div class='plus-jakarta-sans'>
-                <b>${stop.stop_name}</b><br>
-                <span class='text-muted'>(${stop.stop_id})</span>
-                ${labelTipe}
-                ${layananInfo}
-                ${jarakUser}
-            </div>`
+            `<div class='plus-jakarta-sans' style='min-width: 220px; font-family: "Plus Jakarta Sans", sans-serif;'>
+                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 14px; margin: -9px -15px 10px -15px; border-radius: 8px 8px 0 0;'>
+                    <div style='font-size: 15px; font-weight: 700; margin-bottom: 3px; line-height: 1.3;'>${stop.stop_name}</div>
+                    <div style='font-size: 11px; opacity: 0.9; display: flex; align-items: center;'>
+                        <span style='margin-right: 6px;'>🆔</span>
+                        <span>${stop.stop_id}</span>
+                    </div>
+                </div>
+                
+                ${labelTipe ? `<div style='margin-bottom: 10px; padding: 6px 10px; background: #f8f9fa; border-radius: 5px; border-left: 3px solid #007bff;'>
+                    <div style='font-size: 12px; font-weight: 600; color: #495057; display: flex; align-items: center;'>
+                        <span style='margin-right: 6px;'>🚏</span>
+                        ${labelTipe.replace(/<div[^>]*>|<\/div>/g, '')}
+                    </div>
+                </div>` : ''}
+                
+                ${koridorBadges ? `<div style='margin-bottom: 10px;'>
+                    <div style='font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 6px; display: flex; align-items: center;'>
+                        <span style='margin-right: 6px;'>🚌</span>
+                        <span>Layanan Tersedia</span>
+                    </div>
+                    <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
+                        ${koridorBadges}
+                    </div>
+                </div>` : ''}
+                
+                ${jarakUser ? `<div style='padding: 6px 10px; background: linear-gradient(90deg, #e3f2fd 0%, #f3e5f5 100%); border-radius: 5px; border-left: 3px solid #2196f3;'>
+                    <div style='font-size: 12px; font-weight: 600; color: #1976d2; display: flex; align-items: center;'>
+                        <span style='margin-right: 6px;'>📍</span>
+                        <span>${jarakUser.replace(/<[^>]*>/g, '').replace('Jarak ke Anda: ', '')}</span>
+                    </div>
+                </div>` : ''}
+            </div>`,
+            {
+                className: 'custom-popup-transparent'
+            }
         );
         marker.addTo(map);
         marker.on('popupopen', function() {
@@ -2194,10 +2314,10 @@ function showHalteRadius(centerLat, centerLon, radius = 300) {
     if (markerToOpen) {
         setTimeout(() => { if (markerToOpen._map) markerToOpen.openPopup(); }, 100);
     }
-}
-function removeHalteRadiusMarkers() {
+  }
+  function removeHalteRadiusMarkers() {
     radiusHalteMarkers.forEach(m => map.removeLayer(m));
     radiusHalteMarkers = [];
     lastRadiusPopupMarker = null;
     lastRadiusPopupStopId = null;
-}
+  }

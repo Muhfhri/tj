@@ -19,6 +19,99 @@
         .badge { font-family: 'PT Sans Narrow', sans-serif; }
         .plus-jakarta-sans { font-family: 'Plus Jakarta Sans', sans-serif !important; letter-spacing: 0px; }
         .pt-sans { font-family: 'PT Sans Narrow', sans-serif; letter-spacing: 0.6px; }
+        
+        /* Custom transparent popup styling */
+        .custom-popup-transparent .leaflet-popup-content-wrapper {
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+            border-radius: 12px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .custom-popup-transparent .leaflet-popup-tip {
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: none !important;
+        }
+        
+        .custom-popup-transparent .leaflet-popup-close-button {
+            display: none !important;
+        }
+        
+        /* Only disable transitions for background effects, not positioning */
+        .custom-popup-transparent .leaflet-popup-content-wrapper,
+        .custom-popup-transparent .leaflet-popup-tip {
+            transition: background 0s, backdrop-filter 0s, border 0s !important;
+        }
+        
+        /* Dark mode glassmorphism */
+        [data-theme="dark"] .custom-popup-transparent .leaflet-popup-content-wrapper {
+            background: rgba(40, 49, 65, 0.85) !important;
+            border: 1px solid rgba(238, 238, 238, 0.15) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+        }
+        
+        [data-theme="dark"] .custom-popup-transparent .leaflet-popup-tip {
+            background: rgba(40, 49, 65, 0.85) !important;
+            border: 1px solid rgba(238, 238, 238, 0.15) !important;
+        }
+        
+        /* Dark mode text content styling */
+        [data-theme="dark"] .custom-popup-transparent .plus-jakarta-sans {
+            color: #eee !important;
+        }
+        
+        [data-theme="dark"] .custom-popup-transparent .plus-jakarta-sans div {
+            color: #eee !important;
+        }
+        
+        [data-theme="dark"] .custom-popup-transparent .plus-jakarta-sans span {
+            color: #eee !important;
+        }
+        
+        /* Specific styling for muted text in dark mode */
+        [data-theme="dark"] .custom-popup-transparent .text-muted {
+            color: rgb(141, 141, 141) !important;
+            opacity: 90% !important;
+        }
+        
+        /* Platform/type section background in dark mode */
+        [data-theme="dark"] .custom-popup-transparent div[style*="background: #f8f9fa"] {
+            background: rgba(238, 238, 238, 0.1) !important;
+            border-left-color: #84AFE0 !important;
+        }
+        
+        /* Distance section background in dark mode */
+        [data-theme="dark"] .custom-popup-transparent div[style*="background: linear-gradient(90deg, #e3f2fd 0%, #f3e5f5 100%)"] {
+            background: linear-gradient(90deg, rgba(132, 175, 224, 0.2) 0%, rgba(208, 228, 255, 0.2) 100%) !important;
+            border-left-color: #84AFE0 !important;
+        }
+        
+        /* Override inline color styles in dark mode */
+        [data-theme="dark"] .custom-popup-transparent div[style*="color: #495057"] {
+            color: #eee !important;
+        }
+        
+        [data-theme="dark"] .custom-popup-transparent div[style*="color: #1976d2"] {
+            color: #84AFE0 !important;
+        }
+        
+        /* Force all popup content to follow dark mode */
+        [data-theme="dark"] .custom-popup-transparent * {
+            color: #eee !important;
+        }
+        
+        /* Specific overrides for colored elements */
+        [data-theme="dark"] .custom-popup-transparent div[style*="color: white"] {
+            color: white !important;
+        }
+        
         .bg-2 { background-color:#264697 !important; }
         .bg-2a { background-color:#4FA8DE !important; }
         .bg-7F { background-color:#ff326b !important; }
@@ -178,7 +271,7 @@
         "MikroTrans",
         "Bus Wisata",
         "Royal Trans",
-        "24 Jam Koridor Utama",
+        "#INTEGRASI",
       ];
       let idx = 0;
       const el = document.getElementById('serviceTextSlider');
