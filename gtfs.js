@@ -10,12 +10,30 @@ function naturalSort(a, b) {
     return ax.localeCompare(bx, undefined, { numeric: true, sensitivity: 'base' });
   }
   // Ambil data GTFS dari folder gtfs/ untuk bus stop dan shapes
+  showLoadingProgress();
+  updateLoadingProgress(10, 'Menyiapkan aplikasi...');
+  
   Promise.all([
-    fetch('gtfs/stops.txt').then(r => r.text()),
-    fetch('gtfs/routes.txt').then(r => r.text()),
-    fetch('gtfs/trips.txt').then(r => r.text()),
-    fetch('gtfs/stop_times.txt').then(r => r.text()),
-    fetch('gtfs/shapes.txt').then(r => r.ok ? r.text() : ''),
+    fetch('gtfs/stops.txt').then(r => {
+        updateLoadingProgress(25, 'Memuat data halte...');
+        return r.text();
+    }),
+    fetch('gtfs/routes.txt').then(r => {
+        updateLoadingProgress(40, 'Memuat data rute...');
+        return r.text();
+    }),
+    fetch('gtfs/trips.txt').then(r => {
+        updateLoadingProgress(55, 'Memuat data perjalanan...');
+        return r.text();
+    }),
+    fetch('gtfs/stop_times.txt').then(r => {
+        updateLoadingProgress(70, 'Memuat jadwal...');
+        return r.text();
+    }),
+    fetch('gtfs/shapes.txt').then(r => {
+        updateLoadingProgress(85, 'Memuat bentuk jalur...');
+        return r.ok ? r.text() : '';
+    }),
     fetch('gtfs/frequencies.txt').then(r => r.ok ? r.text() : ''),
     fetch('gtfs/fare_rules.txt').then(r => r.ok ? r.text() : ''),
     fetch('gtfs/fare_attributes.txt').then(r => r.ok ? r.text() : ''),
@@ -23,6 +41,9 @@ function naturalSort(a, b) {
     fetch('gtfs/calendar.txt').then(r => r.ok ? r.text() : ''),
     fetch('gtfs/agency.txt').then(r => r.ok ? r.text() : ''),
   ]).then(([stopsTxt, routesTxt, tripsTxt, stopTimesTxt, shapesTxt, frequenciesTxt, fareRulesTxt, fareAttributesTxt, transfersTxt, calendarTxt, agencyTxt]) => {
+    
+    updateLoadingProgress(95, 'Menyiapkan peta...');
+    
     stops = parseCSV(stopsTxt);
     routes = parseCSV(routesTxt);
     trips = parseCSV(tripsTxt);
@@ -63,7 +84,18 @@ function naturalSort(a, b) {
         renderRoutes();
     }
     setupSearch();
-    // setupRouteSearch(); // dikomentari agar tidak error
+    
+    updateLoadingProgress(100, 'Selesai!');
+    
+    // Hide progress immediately after everything is loaded
+    hideLoadingProgress();
+    
+  }).catch(error => {
+    console.error('Error loading GTFS data:', error);
+    updateLoadingProgress(0, 'Error: Gagal memuat data');
+    setTimeout(() => {
+        hideLoadingProgress();
+    }, 3000);
   });
   
   function parseCSV(text) {
@@ -222,37 +254,145 @@ function naturalSort(a, b) {
     if (oldDropdown) oldDropdown.remove();
     // Only show if more than 1 variant
     if (variants.length > 1) {
-        let variantDropdown = document.createElement('select');
-        variantDropdown.id = 'mapRouteVariantDropdown';
-        variantDropdown.className = 'form-select form-select-sm plus-jakarta-sans';
-        variantDropdown.style.maxWidth = '220px';
-        variantDropdown.style.display = 'block';
-        variantDropdown.style.fontSize = '1em';
-        variantDropdown.style.fontWeight = '500';
-        variantDropdown.style.padding = '4px 8px';
-        variantDropdown.style.marginTop = '8px';
-        variantDropdown.style.marginBottom = '0';
+        // Container untuk label dan dropdown
+        let variantContainer = document.createElement('div');
+        variantContainer.className = 'variant-selector-container';
+        variantContainer.style.cssText = `
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        `;
+
+        // Label yang lebih modern
+        let label = document.createElement('label');
+        label.textContent = 'Pilih Varian Trayek';
+        label.className = 'variant-label';
+        label.style.cssText = `
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #264697;
+            margin-bottom: 12px;
+            display: block;
+            text-align: center;
+            letter-spacing: 0.5px;
+        `;
+
+        // Dropdown dengan style modern
+        variantDropdown = document.createElement('select');
+        variantDropdown.className = 'modern-variant-dropdown';
+        variantDropdown.style.cssText = `
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #264697;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(38, 70, 151, 0.2);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            outline: none;
+            display: block;
+            margin: 0 auto;
+        `;
+
+        // Hover effect untuk dropdown
+        variantDropdown.addEventListener('mouseenter', function() {
+            this.style.borderColor = 'rgba(38, 70, 151, 0.4)';
+            this.style.boxShadow = '0 6px 20px rgba(38, 70, 151, 0.2)';
+            this.style.transform = 'translateY(-2px)';
+        });
+
+        variantDropdown.addEventListener('mouseleave', function() {
+            this.style.borderColor = 'rgba(38, 70, 151, 0.2)';
+            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+            this.style.transform = 'translateY(0)';
+        });
+
+        // Focus effect
+        variantDropdown.addEventListener('focus', function() {
+            this.style.borderColor = '#4FA8DE';
+            this.style.boxShadow = '0 0 0 3px rgba(79, 168, 222, 0.2)';
+        });
+
+        variantDropdown.addEventListener('blur', function() {
+            this.style.borderColor = 'rgba(38, 70, 151, 0.2)';
+            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+        });
+
+        // Ambil default varian dari localStorage jika ada
+        let localVarKey = 'selectedRouteVariant_' + route_id;
+        let localVar = localStorage.getItem(localVarKey);
+        if (localVar && !window.selectedRouteVariant) {
+            window.selectedRouteVariant = localVar;
+        }
+
+        // Opsi default
         let defaultLabel = 'Default (Semua Varian)';
-        // Sort variants naturally like outside dropdown
-        const sortedVariants = [...variants].sort(naturalSort);
         variantDropdown.innerHTML = `<option value="">${defaultLabel}</option>` +
-            sortedVariants.map(v => {
+            variants.map(v => {
                 let trip = variantInfo[v];
                 let jurusan = trip.trip_headsign || trip.trip_long_name || '';
                 let label = v + (jurusan ? ' - ' + jurusan : '');
                 return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
             }).join('');
+
         variantDropdown.onchange = function() {
             window.selectedRouteVariant = this.value || null;
-            localStorage.setItem('selectedRouteVariant_' + routeId, window.selectedRouteVariant || '');
-            renderRoutes();
-            showStopsByRoute(routeId, routes.find(r => r.route_id === routeId));
+            // Simpan ke localStorage
+            localStorage.setItem(localVarKey, window.selectedRouteVariant || '');
+            showStopsByRoute(route_id, routeObj);
         };
-        // Insert below route dropdown
-        const container = document.getElementById('mapDropdownContainer');
-        if (container) {
-            container.appendChild(variantDropdown);
+
+        // Tambahkan label dan dropdown ke container
+        variantContainer.appendChild(label);
+        variantContainer.appendChild(variantDropdown);
+        
+        // Set ID untuk dropdown
+        variantDropdown.id = 'routeVariantDropdown';
+
+        // Sisipkan container sebelum ul
+        if (ul.parentNode && !document.getElementById('routeVariantDropdown')) {
+            ul.parentNode.insertBefore(variantContainer, ul);
+        } else if (document.getElementById('routeVariantDropdown')) {
+            // Update jika sudah ada
+            let old = document.getElementById('routeVariantDropdown');
+            let oldContainer = old.closest('.variant-selector-container');
+            if (oldContainer) {
+                // Hapus container lama dan ganti dengan yang baru
+                oldContainer.remove();
+                ul.parentNode.insertBefore(variantContainer, ul);
+            } else {
+                // Fallback jika tidak ada container
+                old.remove();
+                ul.parentNode.insertBefore(variantContainer, ul);
+            }
         }
+    } else {
+        // Hapus dropdown jika tidak ada varian atau hanya satu varian
+        let old = document.getElementById('routeVariantDropdown');
+        if (old) {
+            let oldContainer = old.closest('.variant-selector-container');
+            if (oldContainer) {
+                oldContainer.remove();
+            } else {
+                // Fallback: hapus dropdown dan label secara manual
+                let prevSibling = old.previousSibling;
+                if (prevSibling && prevSibling.tagName === 'LABEL') {
+                    prevSibling.remove();
+                }
+                old.remove();
+            }
+        }
+        window.selectedRouteVariant = null;
     }
   }
     }, 300);
@@ -427,7 +567,7 @@ function naturalSort(a, b) {
     } else {
         // Fallback: gunakan semua shape_id dari route (untuk kompatibilitas)
         let tripsForRoute = trips.filter(t => t.route_id === selectedRouteId);
-        tripsForRoute.forEach(trip => { if (trip.shape_id) shapeIds.add(trip.shape_id); });
+    tripsForRoute.forEach(trip => { if (trip.shape_id) shapeIds.add(trip.shape_id); });
     }
     let allLatlngs = [];
     shapeIds.forEach(shape_id => {
@@ -649,28 +789,87 @@ function naturalSort(a, b) {
     // Dropdown hanya jika varian > 1
     let variantDropdown = null;
     if (variants.length > 1) {
-        // Tambahkan label judul di atas dropdown
+        // Container untuk label dan dropdown
+        let variantContainer = document.createElement('div');
+        variantContainer.className = 'variant-selector-container';
+        variantContainer.style.cssText = `
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        `;
+
+        // Label yang lebih modern
         let label = document.createElement('label');
-        label.textContent = 'Pilih Varian Trayek:';
-        label.setAttribute('for', 'routeVariantDropdown');
-        label.style.fontWeight = 'bold';
-        label.style.marginBottom = '4px';
-        label.style.display = 'block';
+        label.textContent = 'Pilih Varian Trayek';
+        label.className = 'variant-label';
+        label.style.cssText = `
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #264697;
+            margin-bottom: 12px;
+            display: block;
+            text-align: center;
+            letter-spacing: 0.5px;
+        `;
+
+        // Dropdown dengan style modern
+        variantDropdown = document.createElement('select');
+        variantDropdown.className = 'modern-variant-dropdown';
+        variantDropdown.style.cssText = `
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #264697;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(38, 70, 151, 0.2);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            outline: none;
+            display: block;
+            margin: 0 auto;
+        `;
+
+        // Hover effect untuk dropdown
+        variantDropdown.addEventListener('mouseenter', function() {
+            this.style.borderColor = 'rgba(38, 70, 151, 0.4)';
+            this.style.boxShadow = '0 6px 20px rgba(38, 70, 151, 0.2)';
+            this.style.transform = 'translateY(-2px)';
+        });
+
+        variantDropdown.addEventListener('mouseleave', function() {
+            this.style.borderColor = 'rgba(38, 70, 151, 0.2)';
+            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+            this.style.transform = 'translateY(0)';
+        });
+
+        // Focus effect
+        variantDropdown.addEventListener('focus', function() {
+            this.style.borderColor = '#4FA8DE';
+            this.style.boxShadow = '0 0 0 3px rgba(79, 168, 222, 0.2)';
+        });
+
+        variantDropdown.addEventListener('blur', function() {
+            this.style.borderColor = 'rgba(38, 70, 151, 0.2)';
+            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+        });
+
         // Ambil default varian dari localStorage jika ada
         let localVarKey = 'selectedRouteVariant_' + route_id;
         let localVar = localStorage.getItem(localVarKey);
         if (localVar && !window.selectedRouteVariant) {
             window.selectedRouteVariant = localVar;
         }
-        // Dropdown dengan style lebih menarik
-        variantDropdown = document.createElement('select');
-        variantDropdown.className = 'form-select form-select-lg shadow-sm border-primary rounded-pill mb-3 plus-jakarta-sans';
-        variantDropdown.style.maxWidth = '340px';
-        variantDropdown.style.display = 'inline-block';
-        variantDropdown.style.fontSize = '1.1em';
-        variantDropdown.style.fontWeight = '500';
-        variantDropdown.style.padding = '0.7em 1.2em';
-        variantDropdown.style.marginBottom = '10px';
+
         // Opsi default
         let defaultLabel = 'Default (Semua Varian)';
         variantDropdown.innerHTML = `<option value="">${defaultLabel}</option>` +
@@ -680,31 +879,53 @@ function naturalSort(a, b) {
                 let label = v + (jurusan ? ' - ' + jurusan : '');
                 return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
             }).join('');
+
         variantDropdown.onchange = function() {
             window.selectedRouteVariant = this.value || null;
             // Simpan ke localStorage
             localStorage.setItem(localVarKey, window.selectedRouteVariant || '');
             showStopsByRoute(route_id, routeObj);
         };
-        // Sisipkan label dan dropdown sebelum ul
+
+        // Tambahkan label dan dropdown ke container
+        variantContainer.appendChild(label);
+        variantContainer.appendChild(variantDropdown);
+        
+        // Set ID untuk dropdown
+        variantDropdown.id = 'routeVariantDropdown';
+
+        // Sisipkan container sebelum ul
         if (ul.parentNode && !document.getElementById('routeVariantDropdown')) {
-            variantDropdown.id = 'routeVariantDropdown';
-            ul.parentNode.insertBefore(label, ul);
-            ul.parentNode.insertBefore(variantDropdown, ul);
+            ul.parentNode.insertBefore(variantContainer, ul);
         } else if (document.getElementById('routeVariantDropdown')) {
             // Update jika sudah ada
             let old = document.getElementById('routeVariantDropdown');
-            old.previousSibling && old.previousSibling.remove(); // remove old label
-            old.replaceWith(variantDropdown);
-            variantDropdown.id = 'routeVariantDropdown';
-            ul.parentNode.insertBefore(label, variantDropdown);
+            let oldContainer = old.closest('.variant-selector-container');
+            if (oldContainer) {
+                // Hapus container lama dan ganti dengan yang baru
+                oldContainer.remove();
+                ul.parentNode.insertBefore(variantContainer, ul);
+            } else {
+                // Fallback jika tidak ada container
+                old.remove();
+                ul.parentNode.insertBefore(variantContainer, ul);
+            }
         }
     } else {
         // Hapus dropdown jika tidak ada varian atau hanya satu varian
         let old = document.getElementById('routeVariantDropdown');
         if (old) {
-            old.previousSibling && old.previousSibling.remove(); // remove label
-            old.remove();
+            let oldContainer = old.closest('.variant-selector-container');
+            if (oldContainer) {
+                oldContainer.remove();
+            } else {
+                // Fallback: hapus dropdown dan label secara manual
+                let prevSibling = old.previousSibling;
+                if (prevSibling && prevSibling.tagName === 'LABEL') {
+                    prevSibling.remove();
+                }
+                old.remove();
+            }
         }
         window.selectedRouteVariant = null;
     }
@@ -855,47 +1076,100 @@ function naturalSort(a, b) {
             hariOperasiInfo = `<div class='mt-1 plus-jakarta-sans fw-normal' style='font-size:1em;'>${serviceIds.map(sid => serviceIdMap[sid] || sid).join(' / ')}</div>`;
         }
         // --- END Hari Operasi ---
-        // --- Tarif dan Jam Operasi dalam satu baris ---
-        let tarifJamOperasiInfo = '';
-        if (fareInfo || jamOperasiInfo) {
-            tarifJamOperasiInfo = `<div class='d-flex flex-wrap align-items-center gap-3 mt-2'>${fareInfo ? `<span>${fareInfo.replace('mt-1 ', '')}</span>` : ''}${jamOperasiInfo ? `<span>${jamOperasiInfo.replace('mt-1 ', '')}</span>` : ''}</div>`;
-        }
-        // --- END Tarif dan Jam Operasi ---
-        // --- Gabungkan ke title sesuai urutan UI baru dengan font dan icon berbeda ---
-        // Pastikan Iconify sudah ada di HTML utama: <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
-        // Badge
-        badgeLabel = `<div class='mb-2' style='font-size:1.5em;font-weight:bold;'>${badge}</div>`;
-        // Jurusan
+        // --- SUSUN ULANG INFORMASI LAYANAN ---
+        
+        // 1. BADGE LAYANAN (Route Badge)
+        let badgeLabel = `<div class='mb-3 text-center'>
+            <div class='route-badge-container'>
+                ${badge}
+                <div class='route-badge-subtitle'>Koridor TransJakarta</div>
+            </div>
+        </div>`;
+        
+        // 2. JURUSAN (Route Long Name)
+        let jurusanLabel = '';
         if (subjudul) {
-            jurusanLabel = `<div class='mb-1' style='font-size:1.2em;font-weight:bold;'>${subjudul}</div>`;
-        } else {
-            jurusanLabel = `<div class='mb-1' style='font-size:1.2em;font-weight:bold;'>-</div>`;
+            jurusanLabel = `<div class='mb-3 text-center'>
+                <h4 class='route-jurusan plus-jakarta-sans fw-bold'>${subjudul}</h4>
+            </div>`;
         }
-        // Tipe layanan (dari route_desc)
-        let tipeLayananLabel = '';
+        
+        // 3. JENIS LAYANAN (Service Type Badge)
+        let jenisLayananLabel = '';
         if (routeObj.route_desc) {
-            tipeLayananLabel = `<div class='mb-1' style='color:#16a34a;font-weight:bold;'><iconify-icon icon="mdi:bus" inline></iconify-icon> ${routeObj.route_desc}</div>`;
+            let serviceType = routeObj.route_desc;
+            // Mapping untuk jenis layanan yang lebih user-friendly
+            const serviceTypeMap = {
+                'BRT': 'Bus Rapid Transit',
+                'TransJakarta': 'Bus Rapid Transit',
+                'Angkutan Umum Integrasi': 'Angkutan Umum Integrasi',
+                'MikroTrans': 'MikroTrans',
+                'Royal Trans': 'Royal Trans',
+                'Bus Wisata': 'Bus Wisata'
+            };
+            let displayServiceType = serviceTypeMap[serviceType] || serviceType;
+            
+            // Warna badge berdasarkan jenis layanan
+            let serviceBadgeClass = 'bg-primary';
+            if (serviceType.includes('BRT') || serviceType.includes('TransJakarta')) {
+                serviceBadgeClass = 'bg-primary';
+            } else if (serviceType.includes('MikroTrans')) {
+                serviceBadgeClass = 'bg-success';
+            } else if (serviceType.includes('Royal')) {
+                serviceBadgeClass = 'bg-warning text-dark';
+            } else if (serviceType.includes('Wisata')) {
+                serviceBadgeClass = 'bg-info';
+            }
+            
+            jenisLayananLabel = `<div class='mb-3 text-center'>
+                <span class='badge ${serviceBadgeClass} fs-6 px-3 py-2 rounded-pill'>
+                    <iconify-icon icon="mdi:bus" inline></iconify-icon>
+                    ${displayServiceType}
+                </span>
+            </div>`;
         }
-        // Hari operasi
+        
+        // 4. HARI OPERASI (Operating Days)
+        let hariOperasiLabel = '';
         let serviceIdList = serviceIds && serviceIds.length > 0 ? serviceIds.join(', ') : '-';
         let infoTooltipHari = `Lihat data mentah calendar.txt untuk service_id: ${serviceIdList}`;
         let infoIconLinkHari = `<a href='gtfs-raw-viewer.html?file=calendar&service_id=${encodeURIComponent(serviceIdList)}&route_id=${encodeURIComponent(routeObj.route_id)}' target='_blank' title='${infoTooltipHari}' style='text-decoration:none;'><iconify-icon icon="mdi:information-outline" inline></iconify-icon></a>`;
+        
         if (hariOperasiInfo) {
-            hariOperasiLabel = `<div class='mb-1 text-secondary' style='font-size:1em;'><iconify-icon icon=\"mdi:calendar\" inline></iconify-icon> <b>Hari Operasi:</b> ${hariOperasiInfo.replace('mt-1 plus-jakarta-sans fw-normal','').replace('style=\'font-size:1em;\'','').replace(/<div.*?>|<\/div>/g,'').trim()} ${infoIconLinkHari}</div>`;
-        } else {
-            hariOperasiLabel = `<div class='mb-1 text-secondary' style='font-size:1em;'><iconify-icon icon=\"mdi:calendar\" inline></iconify-icon> <b>Hari Operasi:</b> - ${infoIconLinkHari}</div>`;
+            let hariText = hariOperasiInfo.replace('mt-1 plus-jakarta-sans fw-normal','').replace('style=\'font-size:1em;\'','').replace(/<div.*?>|<\/div>/g,'').trim();
+            hariOperasiLabel = `<div class='info-item mb-2'>
+                <div class='info-icon'>
+                    <iconify-icon icon="mdi:calendar-week" style="color: #264697;"></iconify-icon>
+                </div>
+                <div class='info-content'>
+                    <div class='info-label'>Hari Operasi</div>
+                    <div class='info-value'>${hariText} ${infoIconLinkHari}</div>
+                </div>
+            </div>`;
         }
-        // Jam Operasi
+        
+        // 5. JAM OPERASI (Operating Hours)
+        let jamOperasiLabel = '';
         let infoTooltipJam = `Lihat data mentah stop_times.txt untuk trip_id: ${tripIds && tripIds.length ? tripIds.join(',') : '-'}`;
         let infoIconLinkJam = `<a href='gtfs-raw-viewer.html?file=stop_times&trip_id=${encodeURIComponent(tripIds && tripIds.length ? tripIds.join(',') : '-')}' target='_blank' title='${infoTooltipJam}' style='text-decoration:none;'><iconify-icon icon="mdi:information-outline" inline></iconify-icon></a>`;
+        
         if (minStart && maxEnd) {
-            jamOperasiLabel = `<div class='mb-1'><iconify-icon icon="mdi:clock-outline" inline></iconify-icon> <b>Jam Operasi:</b> ${formatJamOperasi(minStart, maxEnd)} ${infoIconLinkJam}</div>`;
-        } else {
-            jamOperasiLabel = `<div class='mb-1'><iconify-icon icon="mdi:clock-outline" inline></iconify-icon> <b>Jam Operasi:</b> - ${infoIconLinkJam}</div>`;
+            jamOperasiLabel = `<div class='info-item mb-2'>
+                <div class='info-icon'>
+                    <iconify-icon icon="mdi:clock-outline" style="color: #264697;"></iconify-icon>
+                </div>
+                <div class='info-content'>
+                    <div class='info-label'>Jam Operasi</div>
+                    <div class='info-value'>${formatJamOperasi(minStart, maxEnd)} ${infoIconLinkJam}</div>
+                </div>
+            </div>`;
         }
-        // Headway/Frekuensi
+        
+        // 6. FREKUENSI (Headway/Frequency)
+        let frekuensiLabel = '';
         let infoTooltipFreq = `Lihat data mentah frequencies.txt untuk trip_id: ${tripIds && tripIds.length ? tripIds.join(',') : '-'}`;
         let infoIconLinkFreq = `<a href='gtfs-raw-viewer.html?file=frequencies&trip_id=${encodeURIComponent(tripIds && tripIds.length ? tripIds.join(',') : '-')}' target='_blank' title='${infoTooltipFreq}' style='text-decoration:none;'><iconify-icon icon="mdi:information-outline" inline></iconify-icon></a>`;
+        
         if (freqsForRoute.length > 0) {
             // Ambil semua nilai headway (min, max, headway_secs), konversi ke menit, urutkan, dan ambil unik
             let headwaySeconds = [];
@@ -910,21 +1184,39 @@ function naturalSort(a, b) {
                 .filter((v, i, arr) => arr.indexOf(v) === i) // unik
                 .sort((a, b) => a - b);
             let headwayText = headwayMinutes.length > 0 ? headwayMinutes.map(v => `${v} menit`).join(', ') : '-';
-            headwayLabel = `<div class='mb-1'><iconify-icon icon="mdi:repeat" inline></iconify-icon> <b>Frekuensi:</b> ${headwayText} ${infoIconLinkFreq}</div>`;
-        } else {
-            headwayLabel = `<div class='mb-1'><iconify-icon icon="mdi:repeat" inline></iconify-icon> <b>Frekuensi:</b> - ${infoIconLinkFreq}</div>`;
+            
+            frekuensiLabel = `<div class='info-item mb-2'>
+                <div class='info-icon'>
+                    <iconify-icon icon="mdi:repeat" style="color: #264697;"></iconify-icon>
+                </div>
+                <div class='info-content'>
+                    <div class='info-label'>Frekuensi</div>
+                    <div class='info-value'>${headwayText} ${infoIconLinkFreq}</div>
+                </div>
+            </div>`;
         }
-        // Tarif
+        
+        // 7. TARIF (Fare)
+        let tarifLabel = '';
         let fareId = '';
         if (fareRule) fareId = fareRule.fare_id;
         let infoTooltipTarif = `Lihat data mentah fare_attributes.txt untuk fare_id: ${fareId}`;
         let infoIconLinkTarif = `<a href='gtfs-raw-viewer.html?file=fare_attributes&fare_id=${encodeURIComponent(fareId)}&route_id=${encodeURIComponent(routeObj.route_id)}&show_rules=1' target='_blank' title='${infoTooltipTarif}' style='text-decoration:none;'><iconify-icon icon="mdi:information-outline" inline></iconify-icon></a>`;
+        
         if (fareInfo) {
-            tarifLabel = `<div class='mb-1'><iconify-icon icon="mdi:ticket-percent" inline></iconify-icon> <b>Tarif:</b> ${fareInfo.replace('<div class=\'mt-1 plus-jakarta-sans\'><b>Tarif:</b> ','').replace('</div>','')} ${infoIconLinkTarif}</div>`;
-        } else {
-            tarifLabel = `<div class='mb-1'><iconify-icon icon="mdi:ticket-percent" inline></iconify-icon> <b>Tarif:</b> - ${infoIconLinkTarif}</div>`;
+            let tarifText = fareInfo.replace('<div class=\'mt-1 plus-jakarta-sans\'><b>Tarif:</b> ','').replace('</div>','');
+            tarifLabel = `<div class='info-item mb-2'>
+                <div class='info-icon'>
+                    <iconify-icon icon="mdi:ticket-percent" style="color: #264697;"></iconify-icon>
+                </div>
+                <div class='info-content'>
+                    <div class='info-label'>Tarif</div>
+                    <div class='info-value'>${tarifText} ${infoIconLinkTarif}</div>
+                </div>
+            </div>`;
         }
-        // --- Panjang Trayek ---
+        
+        // 8. PANJANG TRAYEK (Route Length)
         let panjangTrayekLabel = '';
         // Ambil shape_id utama dari trip pertama
         let mainShapeId = filteredTrips.length > 0 ? filteredTrips[0].shape_id : null;
@@ -941,8 +1233,47 @@ function naturalSort(a, b) {
             }
         }
         if (totalLength > 0) {
-            panjangTrayekLabel = `<div class='mb-1'><iconify-icon icon="mdi:ruler" inline style="color:#888;"></iconify-icon> <b>Panjang Trayek:</b> ${(totalLength/1000).toFixed(2)} km</div>`;
+            panjangTrayekLabel = `<div class='info-item mb-2'>
+                <div class='info-icon'>
+                    <iconify-icon icon="mdi:ruler" style="color: #264697;"></iconify-icon>
+                </div>
+                <div class='info-content'>
+                    <div class='info-label'>Panjang Trayek</div>
+                    <div class='info-value'>${(totalLength/1000).toFixed(2)} km</div>
+                </div>
+            </div>`;
         }
+        
+        // --- GABUNGKAN SEMUA INFORMASI LAYANAN ---
+        // Pastikan semua variabel terdefinisi
+        badgeLabel = badgeLabel || '';
+        jurusanLabel = jurusanLabel || '';
+        jenisLayananLabel = jenisLayananLabel || '';
+        hariOperasiLabel = hariOperasiLabel || '';
+        jamOperasiLabel = jamOperasiLabel || '';
+        frekuensiLabel = frekuensiLabel || '';
+        tarifLabel = tarifLabel || '';
+        panjangTrayekLabel = panjangTrayekLabel || '';
+        
+        let serviceInfoHTML = `
+            <div class='service-info-container'>
+                ${badgeLabel}
+                ${jurusanLabel}
+                ${jenisLayananLabel}
+                <div class='service-details'>
+                    ${hariOperasiLabel}
+                    ${jamOperasiLabel}
+                    ${frekuensiLabel}
+                    ${tarifLabel}
+                    ${panjangTrayekLabel}
+                </div>
+            </div>
+        `;
+        
+        // --- TAMPILKAN INFORMASI LAYANAN ---
+        document.getElementById('stopsTitle').innerHTML = serviceInfoHTML;
+        document.getElementById('stopsTitle').className = 'mb-3 fs-3 fw-bold plus-jakarta-sans';
+        
         // Output mentah untuk semua file utama GTFS terkait rute ini
         function makeRawBlock(label, headers, rows) {
             if (!rows || rows.length === 0) return '';
@@ -994,16 +1325,7 @@ function naturalSort(a, b) {
             rawFareAttrRows = makeRawBlock('fare_attributes.txt', headers, rows);
         }
         // Gabungkan semua
-        title.innerHTML = `
-            ${badgeLabel}
-            ${jurusanLabel}
-            ${tipeLayananLabel}
-            ${hariOperasiLabel}
-            ${jamOperasiLabel}
-            ${headwayLabel}
-            ${tarifLabel}
-            ${panjangTrayekLabel}
-        `;
+        title.innerHTML = serviceInfoHTML;
         title.className = 'mb-3 fs-3 fw-bold plus-jakarta-sans';
         // --- Render daftar halte dan polyline ---
         let allStops = [];
@@ -1053,82 +1375,114 @@ function naturalSort(a, b) {
         ul.innerHTML = '';
         allStops.forEach((stop, idx) => {
             const li = document.createElement('li');
-            li.className = 'list-group-item d-flex flex-column bg-light align-items-start gap-1 py-3';
-            // Nama halte dan icon lokasi dalam satu baris (inline)
-            const halteRow = document.createElement('div');
-            halteRow.style.display = 'flex';
-            halteRow.style.flexDirection = 'row';
-            halteRow.style.alignItems = 'center';
+            li.className = 'stop-item';
+            
+            // Container utama untuk halte
+            const stopContainer = document.createElement('div');
+            stopContainer.className = 'stop-container';
+            
+            // Header halte dengan nama dan koordinat
+            const stopHeader = document.createElement('div');
+            stopHeader.className = 'stop-header';
+            
+            // Nomor urut halte
+            const stopNumber = document.createElement('div');
+            stopNumber.className = 'stop-number';
+            stopNumber.textContent = (idx + 1).toString().padStart(2, '0');
+            
             // Nama halte
-            const halteName = document.createElement('span');
-            halteName.className = 'fw-bold';
-            halteName.textContent = stop.stop_name;
-            halteRow.appendChild(halteName);
-            // Icon lokasi (link ke Google Maps) di kanan nama halte
+            const stopName = document.createElement('div');
+            stopName.className = 'stop-name';
+            stopName.textContent = stop.stop_name;
+            
+            // Icon koordinat (link ke Google Maps)
             if (stop.stop_lat && stop.stop_lon) {
-                const locLink = document.createElement('a');
-                locLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
-                locLink.target = '_blank';
-                locLink.rel = 'noopener';
-                locLink.style.marginLeft = '8px';
-                locLink.title = 'Lihat di Google Maps';
-                locLink.innerHTML = `<iconify-icon icon="mdi:map-marker" inline style="color:#d9534f;font-size:1.2em;vertical-align:middle;"></iconify-icon>`;
-                halteRow.appendChild(locLink);
+                const coordLink = document.createElement('a');
+                coordLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
+                coordLink.target = '_blank';
+                coordLink.rel = 'noopener';
+                coordLink.className = 'coord-link';
+                coordLink.title = 'Lihat di Google Maps';
+                coordLink.innerHTML = `<iconify-icon icon="mdi:map-marker" style="color: #d9534f;"></iconify-icon>`;
+                stopHeader.appendChild(coordLink);
             }
-            li.appendChild(halteRow);
-            // Label tipe halte di bawah nama
-            let labelTipe = '';
+            
+            stopHeader.appendChild(stopNumber);
+            stopHeader.appendChild(stopName);
+            
+            // Badge jenis halte
+            let stopTypeBadge = '';
             if (stop.stop_id && stop.stop_id.startsWith('B')) {
-                labelTipe = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+                stopTypeBadge = `<div class='stop-type-badge feeder'>Pengumpan</div>`;
             } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
-                labelTipe = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
+                stopTypeBadge = `<div class='stop-type-badge platform'>Platform ${stop.platform_code}</div>`;
             } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
-                labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
+                stopTypeBadge = `<div class='stop-type-badge access'>Akses Masuk</div>`;
+            } else {
+                stopTypeBadge = `<div class='stop-type-badge corridor'>Koridor</div>`;
             }
-            if (labelTipe) {
-                const labelDiv = document.createElement('div');
-                labelDiv.innerHTML = labelTipe;
-                li.appendChild(labelDiv);
-            }
+            
+            // Layanan lain yang melewati halte ini
+            let otherRoutesBadges = '';
             if (stopToRoutes[stop.stop_id]) {
-                const badgesDiv = document.createElement('div');
-                Array.from(stopToRoutes[stop.stop_id]).forEach(rid => {
-                    if (rid !== selectedRouteId) {
+                const otherRoutes = Array.from(stopToRoutes[stop.stop_id]).filter(rid => rid !== selectedRouteId);
+                if (otherRoutes.length > 0) {
+                    otherRoutesBadges = `<div class='other-routes'>
+                        <div class='other-routes-label'>Layanan lain:</div>
+                        <div class='other-routes-badges'>`;
+                    
+                    otherRoutes.forEach(rid => {
                         const route = routes.find(r => r.route_id === rid);
                         if (route) {
                             let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
-                            const badgeEl = document.createElement('span');
-                            badgeEl.className = 'badge badge-koridor-interaktif rounded-pill me-2';
-                            badgeEl.style.background = badgeColor;
-                            badgeEl.style.color = '#fff';
-                            badgeEl.style.cursor = 'pointer';
-                            badgeEl.style.fontWeight = 'bold';
-                            badgeEl.textContent = route.route_short_name;
-                            badgeEl.title = route.route_long_name;
-                            badgeEl.onclick = (e) => {
-                                e.stopPropagation();
-                                window.lastStopId = stop.stop_id;
-                                selectedRouteId = route.route_id;
-                                saveActiveRouteId(selectedRouteId);
-                                renderRoutes();
-                                showStopsByRoute(route.route_id, route);
-                            };
-                            badgesDiv.appendChild(badgeEl);
+                            otherRoutesBadges += `<span class='route-badge' style='background: ${badgeColor};' title='${route.route_long_name}'>${route.route_short_name}</span>`;
                         }
-                    }
-                });
-                li.appendChild(badgesDiv);
+                    });
+                    
+                    otherRoutesBadges += `</div></div>`;
+                }
             }
+            
+            // Gabungkan semua elemen
+            stopContainer.innerHTML = `
+                ${stopHeader.outerHTML}
+                ${stopTypeBadge}
+                ${otherRoutesBadges}
+            `;
+            
+            li.appendChild(stopContainer);
+            
+            // Event handler untuk klik pada halte
             li.onclick = function(e) {
                 // Jika klik pada link, jangan jalankan event ini
-                if (e.target.tagName === 'A') return;
+                if (e.target.tagName === 'A' || e.target.closest('a')) return;
                 window.lastStopId = stop.stop_id;
                 saveUserProgress();
             };
+            
+            // Event handler untuk badge layanan
+            const routeBadges = li.querySelectorAll('.route-badge');
+            routeBadges.forEach(badge => {
+                badge.onclick = function(e) {
+                    e.stopPropagation(); // Mencegah event bubbling ke li
+                    const routeShortName = this.textContent;
+                    const route = routes.find(r => r.route_short_name === routeShortName);
+                    if (route) {
+                        window.lastStopId = stop.stop_id;
+                        selectedRouteId = route.route_id;
+                        saveActiveRouteId(selectedRouteId);
+                        renderRoutes();
+                        showStopsByRoute(route.route_id, route);
+                    }
+                };
+            });
+            
+            // Highlight halte jika ada
             if (highlightStopId && stop.stop_id === highlightStopId) {
-                li.classList.add('bg-warning');
+                li.classList.add('highlighted');
                 setTimeout(() => { li.scrollIntoView({behavior:'smooth', block:'center'}); }, 200);
             }
+            
             ul.appendChild(li);
         });
         // --- Render polyline di peta ---
@@ -1190,82 +1544,114 @@ function naturalSort(a, b) {
     ul.innerHTML = '';
     allStops.forEach((stop, idx) => {
         const li = document.createElement('li');
-        li.className = 'list-group-item d-flex flex-column bg-light align-items-start gap-1 py-3';
-        // Nama halte dan icon lokasi dalam satu baris (inline)
-            const halteRow = document.createElement('div');
-        halteRow.style.display = 'flex';
-        halteRow.style.flexDirection = 'row';
-        halteRow.style.alignItems = 'center';
+        li.className = 'stop-item';
+        
+        // Container utama untuk halte
+        const stopContainer = document.createElement('div');
+        stopContainer.className = 'stop-container';
+        
+        // Header halte dengan nama dan koordinat
+        const stopHeader = document.createElement('div');
+        stopHeader.className = 'stop-header';
+        
+        // Nomor urut halte
+        const stopNumber = document.createElement('div');
+        stopNumber.className = 'stop-number';
+        stopNumber.textContent = (idx + 1).toString().padStart(2, '0');
+        
         // Nama halte
-        const halteName = document.createElement('span');
-        halteName.className = 'fw-bold';
-        halteName.textContent = stop.stop_name;
-        halteRow.appendChild(halteName);
-            // Icon lokasi (link ke Google Maps) di kanan nama halte
+        const stopName = document.createElement('div');
+        stopName.className = 'stop-name';
+        stopName.textContent = stop.stop_name;
+        
+        // Icon koordinat (link ke Google Maps)
         if (stop.stop_lat && stop.stop_lon) {
-            const locLink = document.createElement('a');
-            locLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
-            locLink.target = '_blank';
-            locLink.rel = 'noopener';
-            locLink.style.marginLeft = '8px';
-            locLink.title = 'Lihat di Google Maps';
-            locLink.innerHTML = `<iconify-icon icon="mdi:map-marker" inline style="color:#d9534f;font-size:1.2em;vertical-align:middle;"></iconify-icon>`;
-            halteRow.appendChild(locLink);
+            const coordLink = document.createElement('a');
+            coordLink.href = `https://www.google.com/maps/search/?api=1&query=${stop.stop_lat},${stop.stop_lon}`;
+            coordLink.target = '_blank';
+            coordLink.rel = 'noopener';
+            coordLink.className = 'coord-link';
+            coordLink.title = 'Lihat di Google Maps';
+            coordLink.innerHTML = `<iconify-icon icon="mdi:map-marker" style="color: #d9534f;"></iconify-icon>`;
+            stopHeader.appendChild(coordLink);
         }
-        li.appendChild(halteRow);
-            // Label tipe halte di bawah nama
-            let labelTipe = '';
+        
+        stopHeader.appendChild(stopNumber);
+        stopHeader.appendChild(stopName);
+        
+        // Badge jenis halte
+        let stopTypeBadge = '';
             if (stop.stop_id && stop.stop_id.startsWith('B')) {
-                labelTipe = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
+            stopTypeBadge = `<div class='stop-type-badge feeder'>Pengumpan</div>`;
             } else if (stop.stop_id && stop.stop_id.startsWith('G') && stop.platform_code) {
-                labelTipe = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${stop.platform_code}</div>`;
+            stopTypeBadge = `<div class='stop-type-badge platform'>Platform ${stop.platform_code}</div>`;
             } else if (stop.stop_id && (stop.stop_id.startsWith('E') || stop.stop_id.startsWith('H'))) {
-                labelTipe = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
-            }
-            if (labelTipe) {
-                const labelDiv = document.createElement('div');
-                labelDiv.innerHTML = labelTipe;
-                li.appendChild(labelDiv);
-            }
+            stopTypeBadge = `<div class='stop-type-badge access'>Akses Masuk</div>`;
+        } else {
+            stopTypeBadge = `<div class='stop-type-badge corridor'>Koridor</div>`;
+        }
+        
+        // Layanan lain yang melewati halte ini
+        let otherRoutesBadges = '';
         if (stopToRoutes[stop.stop_id]) {
-            const badgesDiv = document.createElement('div');
-            Array.from(stopToRoutes[stop.stop_id]).forEach(rid => {
-                if (rid !== selectedRouteId) {
+            const otherRoutes = Array.from(stopToRoutes[stop.stop_id]).filter(rid => rid !== selectedRouteId);
+            if (otherRoutes.length > 0) {
+                otherRoutesBadges = `<div class='other-routes'>
+                    <div class='other-routes-label'>Layanan lain:</div>
+                    <div class='other-routes-badges'>`;
+                
+                otherRoutes.forEach(rid => {
                     const route = routes.find(r => r.route_id === rid);
                     if (route) {
                         let badgeColor = (route.route_color) ? ('#' + route.route_color) : '#6c757d';
-                        const badgeEl = document.createElement('span');
-                        badgeEl.className = 'badge badge-koridor-interaktif rounded-pill me-2';
-                        badgeEl.style.background = badgeColor;
-                        badgeEl.style.color = '#fff';
-                        badgeEl.style.cursor = 'pointer';
-                        badgeEl.style.fontWeight = 'bold';
-                        badgeEl.textContent = route.route_short_name;
-                        badgeEl.title = route.route_long_name;
-                        badgeEl.onclick = (e) => {
-                            e.stopPropagation();
-                            window.lastStopId = stop.stop_id;
-                            selectedRouteId = route.route_id;
-                            saveActiveRouteId(selectedRouteId);
-                            renderRoutes();
-                            showStopsByRoute(route.route_id, route);
-                        };
-                        badgesDiv.appendChild(badgeEl);
+                        otherRoutesBadges += `<span class='route-badge' style='background: ${badgeColor};' title='${route.route_long_name}'>${route.route_short_name}</span>`;
                     }
-                }
-            });
-            li.appendChild(badgesDiv);
+                });
+                
+                otherRoutesBadges += `</div></div>`;
+            }
         }
+        
+        // Gabungkan semua elemen
+        stopContainer.innerHTML = `
+            ${stopHeader.outerHTML}
+            ${stopTypeBadge}
+            ${otherRoutesBadges}
+        `;
+        
+        li.appendChild(stopContainer);
+        
+        // Event handler untuk klik pada halte
         li.onclick = function(e) {
             // Jika klik pada link, jangan jalankan event ini
-            if (e.target.tagName === 'A') return;
+            if (e.target.tagName === 'A' || e.target.closest('a')) return;
             window.lastStopId = stop.stop_id;
             saveUserProgress();
         };
+        
+        // Event handler untuk badge layanan
+        const routeBadges = li.querySelectorAll('.route-badge');
+        routeBadges.forEach(badge => {
+            badge.onclick = function(e) {
+                e.stopPropagation(); // Mencegah event bubbling ke li
+                const routeShortName = this.textContent;
+                const route = routes.find(r => r.route_short_name === routeShortName);
+                if (route) {
+                    window.lastStopId = stop.stop_id;
+                    selectedRouteId = route.route_id;
+                    saveActiveRouteId(selectedRouteId);
+                    renderRoutes();
+                    showStopsByRoute(route.route_id, route);
+                }
+            };
+        });
+        
+        // Highlight halte jika ada
         if (highlightStopId && stop.stop_id === highlightStopId) {
-            li.classList.add('bg-warning');
+            li.classList.add('highlighted');
             setTimeout(() => { li.scrollIntoView({behavior:'smooth', block:'center'}); }, 200);
         }
+        
         ul.appendChild(li);
     });
     if (allStops.some(s => s.stop_lat && s.stop_lon)) {
@@ -2320,4 +2706,45 @@ function naturalSort(a, b) {
     radiusHalteMarkers = [];
     lastRadiusPopupMarker = null;
     lastRadiusPopupStopId = null;
+  }
+  
+  // Simple Progress Bar untuk Initial Loading
+  function showLoadingProgress() {
+    const loadingModal = document.getElementById('loadingProgress');
+    if (loadingModal) {
+        loadingModal.style.display = 'flex';
+        // Trigger animation after display
+        setTimeout(() => {
+            loadingModal.classList.add('show');
+        }, 10);
+    }
+  }
+  
+  function hideLoadingProgress() {
+    const loadingModal = document.getElementById('loadingProgress');
+    if (loadingModal) {
+        loadingModal.classList.remove('show');
+        // Wait for animation to complete before hiding
+        setTimeout(() => {
+            loadingModal.style.display = 'none';
+        }, 300);
+    }
+  }
+  
+  function updateLoadingProgress(percent, status) {
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressStatus = document.getElementById('progressStatus');
+    
+    if (progressBar) {
+        // Smooth transition for progress bar
+        progressBar.style.width = percent + '%';
+        progressBar.setAttribute('aria-valuenow', percent);
+    }
+    if (progressPercent) {
+        progressPercent.textContent = Math.round(percent) + '%';
+    }
+    if (progressStatus && status) {
+        progressStatus.textContent = status;
+    }
   }

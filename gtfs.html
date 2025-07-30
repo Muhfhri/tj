@@ -13,283 +13,304 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <style>
-       @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
-        body { font-family: 'PT Sans Narrow', sans-serif; background: #f8f9fa; letter-spacing: 0.6px; }
-        .badge { font-family: 'PT Sans Narrow', sans-serif; }
-        .plus-jakarta-sans { font-family: 'Plus Jakarta Sans', sans-serif !important; letter-spacing: 0px; }
-        .pt-sans { font-family: 'PT Sans Narrow', sans-serif; letter-spacing: 0.6px; }
-        
-        /* Custom transparent popup styling */
-        .custom-popup-transparent .leaflet-popup-content-wrapper {
-            background: rgba(255, 255, 255, 0.85) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-            border-radius: 12px !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        
-        .custom-popup-transparent .leaflet-popup-tip {
-            background: rgba(255, 255, 255, 0.85) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            box-shadow: none !important;
-        }
-        
-        .custom-popup-transparent .leaflet-popup-close-button {
-            display: none !important;
-        }
-        
-        /* Only disable transitions for background effects, not positioning */
-        .custom-popup-transparent .leaflet-popup-content-wrapper,
-        .custom-popup-transparent .leaflet-popup-tip {
-            transition: background 0s, backdrop-filter 0s, border 0s !important;
-        }
-        
-        /* Dark mode glassmorphism */
-        [data-theme="dark"] .custom-popup-transparent .leaflet-popup-content-wrapper {
-            background: rgba(40, 49, 65, 0.85) !important;
-            border: 1px solid rgba(238, 238, 238, 0.15) !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-        }
-        
-        [data-theme="dark"] .custom-popup-transparent .leaflet-popup-tip {
-            background: rgba(40, 49, 65, 0.85) !important;
-            border: 1px solid rgba(238, 238, 238, 0.15) !important;
-        }
-        
-        /* Dark mode text content styling */
-        [data-theme="dark"] .custom-popup-transparent .plus-jakarta-sans {
-            color: #eee !important;
-        }
-        
-        [data-theme="dark"] .custom-popup-transparent .plus-jakarta-sans div {
-            color: #eee !important;
-        }
-        
-        [data-theme="dark"] .custom-popup-transparent .plus-jakarta-sans span {
-            color: #eee !important;
-        }
-        
-        /* Specific styling for muted text in dark mode */
-        [data-theme="dark"] .custom-popup-transparent .text-muted {
-            color: rgb(141, 141, 141) !important;
-            opacity: 90% !important;
-        }
-        
-        /* Platform/type section background in dark mode */
-        [data-theme="dark"] .custom-popup-transparent div[style*="background: #f8f9fa"] {
-            background: rgba(238, 238, 238, 0.1) !important;
-            border-left-color: #84AFE0 !important;
-        }
-        
-        /* Distance section background in dark mode */
-        [data-theme="dark"] .custom-popup-transparent div[style*="background: linear-gradient(90deg, #e3f2fd 0%, #f3e5f5 100%)"] {
-            background: linear-gradient(90deg, rgba(132, 175, 224, 0.2) 0%, rgba(208, 228, 255, 0.2) 100%) !important;
-            border-left-color: #84AFE0 !important;
-        }
-        
-        /* Override inline color styles in dark mode */
-        [data-theme="dark"] .custom-popup-transparent div[style*="color: #495057"] {
-            color: #eee !important;
-        }
-        
-        [data-theme="dark"] .custom-popup-transparent div[style*="color: #1976d2"] {
-            color: #84AFE0 !important;
-        }
-        
-        /* Force all popup content to follow dark mode */
-        [data-theme="dark"] .custom-popup-transparent * {
-            color: #eee !important;
-        }
-        
-        /* Specific overrides for colored elements */
-        [data-theme="dark"] .custom-popup-transparent div[style*="color: white"] {
-            color: white !important;
-        }
-        
-        .bg-2 { background-color:#264697 !important; }
-        .bg-2a { background-color:#4FA8DE !important; }
-        .bg-7F { background-color:#ff326b !important; }
-        .title { font-size: 2rem; font-weight: bold; margin-top: 1rem; }
-        .rounded-input { border-radius: 1rem; padding: 0.75rem 1.25rem; }
-        .section-box { padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); margin-bottom: 2rem; }
-        .form-label { font-weight: 700; }
-        #map { height: 400px; margin-bottom: 1.5rem; border-radius: 1.5rem; }
-        .leaflet-control-livelocation {
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px #0002;
-  padding: 0;
-  margin: 8px 0 0 8px;
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.leaflet-control-livelocation.active {
-  background: #22c55e !important; /* hijau */
-  color: #fff !important;
-  border: 1.5px solid #16a34a;
-}
-.leaflet-control-livelocation.disabled {
-  background: #ef4444 !important; /* merah */
-  color: #fff !important;
-  border: 1.5px solid #b91c1c;
-}
-.leaflet-control-livelocation:hover {
-  background: #e6f0ff;
-}
-        .badge-koridor-interaktif:hover {
-            box-shadow: 0 0 0 2px #26469744;
-            transform: scale(1.08);
-            filter: brightness(1.1);
-        }
-        .badge.bg-2a[onclick], .badge.bg-7F[onclick] { transition: box-shadow 0.2s, transform 0.2s; }
-        .badge.bg-2a[onclick]:hover, .badge.bg-7F[onclick]:hover { box-shadow: 0 0 0 2px #26469744; transform: scale(1.08); filter: brightness(1.1); }
-        
-        body.dark-mode .leaflet-popup-content-wrapper, body.dark-mode .leaflet-popup-tip {
-            background: rgba(35,42,54,0.92) !important;
-            color: #f4f6fa !important;
-        }
-        .text-slider-container {
-          width: 100%;
-          overflow: hidden;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 2.2em;
-          position: relative;
-        }
-        .text-slider-inner {
-          display: inline-block;
-          white-space: nowrap;
-          transition: transform 0.5s cubic-bezier(.77,0,.18,1);
-          will-change: transform;
-          font-size: 2em;
-          font-weight: bold;
-        }
-    .leaflet-control-neareststops {
-      background: #22c55e !important;
-      color: #fff !important;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px #0002;
-      padding: 0;
-      margin: 8px 0 0 8px;
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1.5px solid #16a34a;
-    }
-    .leaflet-control-neareststops:hover {
-      background: #16a34a !important;
-    }
-    .leaflet-control-resetmap {
-      background: #f59e42 !important;
-      color: #fff !important;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px #0002;
-      padding: 0;
-      margin: 8px 0 0 8px;
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1.5px solid #ea580c;
-    }
-    .leaflet-control-resetmap:hover {
-      background: #ea580c !important;
-    }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="container py-4">
-    <div class="text-end mb-3">
-        <input type="checkbox" class="btn-check" id="darkSwitch" checked autocomplete="off">
-        <label class="btn btn-dark btn-sm rounded-pill" for="darkSwitch">
-            <iconify-icon id="darkmode"></iconify-icon>
-        </label>
-    </div>
-    <div class="text-center mb-4 plus-jakarta-sans">
-        <img src="image/tije.png" width="200" alt="Logo Transjakarta & JakLingko">
-        <div class="text-slider-container">
-          <span class="title text-slider-inner" id="serviceTextSlider">Transjakarta</span>
+    <!-- Modern Header -->
+    <div class="modern-header mb-4">
+        <div class="header-content container-fluid">
+            <div class="row align-items-center">
+                <!-- Logo Section -->
+                <div class="col-12 col-lg-6 mb-3 mb-lg-0">
+                    <div class="logo-section d-flex align-items-center gap-3">
+                        <img src="image/tije.png" width="180" alt="Logo Transjakarta & JakLingko" class="logo-img">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/%2BJakarta_Logo_%28Indonesian_Language%29.svg/330px-%2BJakarta_Logo_%28Indonesian_Language%29.svg.png" 
+                             width="120" alt="Logo Jakarta Kota Kolaborasi" class="jakarta-logo">
+                        <div class="brand-text">
+                            <h1 class="brand-title plus-jakarta-sans fw-bold mb-1">J<span class="lurus">a</span>kMov<span class="lurus">e</span></h1>
+                            <p class="brand-subtitle plus-jakarta-sans mb-0">Smart Transit Experience</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Header Info Section -->
+                <div class="col-12 col-lg-6">
+                    <div class="header-info d-flex flex-wrap justify-content-center justify-content-lg-end gap-2">
+                        <div class="live-clock-container d-flex align-items-center gap-2">
+                            <iconify-icon icon="mdi:clock-outline" class="clock-icon"></iconify-icon>
+                            <span id="liveClock" class="fw-bold plus-jakarta-sans"></span>
+                        </div>
+                        <div class="weather-container d-flex align-items-center gap-2">
+                            <span id="weather-label" class="weather-icon">☀️</span>
+                            <span id="weather-info" class="weather-info">Cerah 28°C</span>
+                        </div>
+                        <div class="status-indicator d-flex align-items-center gap-2">
+                            <div class="status-dot"></div>
+                            <span class="status-text plus-jakarta-sans">Diperbarui</span>
+                        </div>
+                        <!-- Dark Mode Toggle -->
+                        <div class="theme-toggle-container">
+                            <input type="checkbox" class="btn-check" id="darkSwitch" checked autocomplete="off">
+                            <label class="theme-toggle-btn" for="darkSwitch">
+                                <iconify-icon icon="mdi:theme-light-dark" class="theme-icon"></iconify-icon>
+                                <span class="theme-text">Dark</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Announcement Bar -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="announcement-bar d-flex align-items-center gap-2">
+                        <iconify-icon icon="mdi:information-outline" class="announcement-icon"></iconify-icon>
+                        <marquee class="announcement-text plus-jakarta-sans">
+                            GTFS Transjakarta ini dibuat untuk kalian yang penasaran berpergian menggunakan Layanan Transjakarta. Dibuat untuk edukasi dan Tidak berafiliasi dengan PT Transjakarta atau pihak manapun.
+                        </marquee>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
-            <span id="liveClock" class="fw-bold" style="min-width:70px"></span>
-            <marquee class="text-muted small flex-grow-1">GTFS Transjakarta ini dibuat untuk kalian yang penasaran berpergian menggunakan Layanan Transjakarta. Dibuat untuk edukasi dan Tidak berafiliasi dengan PT Transjakarta atau pihak manapun.</marquee>
+    </div>
+    
+    <!-- Progress Bar untuk Initial Loading -->
+    <div id="loadingProgress" class="loading-modal" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+            <div class="loading-text">
+                <h4 class="mb-3 plus-jakarta-sans">Memuat Data GTFS</h4>
+                <div class="progress-container">
+                    <div class="progress" style="height: 8px; border-radius: 10px;">
+                        <div id="progressBar" 
+                             class="progress-bar" 
+                             role="progressbar" 
+                             style="width: 0%; background: linear-gradient(90deg, #264697, #4FA8DE);"
+                             aria-valuenow="0" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span id="progressStatus" class="text-muted plus-jakarta-sans">Menyiapkan aplikasi...</span>
+                        <span id="progressPercent" class="text-muted fw-bold plus-jakarta-sans">0%</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="section-box mb-4">
-    <div id="map"></div>
-    <div class="mb-3 d-flex gap-2 align-items-center">
-        <button id="liveLocationBtn" class="btn btn-outline-primary rounded-5">Live Location: OFF</button>
-        <button id="resetRouteBtn" class="btn btn-outline-danger rounded-5">Reset Koridor</button>
-    </div>
-        <select id="routesDropdown" class="form-select py-3 px-4 rounded-pill shadow-sm border-0 fs-5 plus-jakarta-sans mb-4"></select>
-        <input type="text" id="searchStop" class="form-control py-3 px-4 rounded-pill shadow-sm border-0 fs-5 plus-jakarta-sans" placeholder="Cari Halte atau Koridor...">
-        <div id="searchResults" class="mt-2"></div>
-    <h2 class="mb-3 text-center fw-bold plus-jakarta-sans" id="stopsTitle"></h2>
-    <div id="directionTabs" class="mb-3"></div>
-    <ul id="stopsByRoute" class="list-group"></ul>
-    </div>
-    <div class="container text-center text-muted mt-5 plus-jakarta-sans">
-        <h5 class="fw-bold">Sumber Informasi</h5>
-        <a href="https://transjakarta.co.id/" class="link-none text-muted">Transjakarta</a> |
-        <a href="https://jaklingkoindonesia.co.id/" class="link-none text-muted">JakLingko</a> |
-        <a href="https://wikipedia.org" class="link-none text-muted">Wikipedia</a> |
-        <a href="https://maps.google.com" class="link-none text-muted">Google Maps</a>
-    </div>
-    <div class="footer mt-2 plus-jakarta-sans">
-        <div class="text-center fw-bold">
-            Dibuat oleh <a href="index"><img id="light" class="img-fluid" src="image/tije.png" alt="Logo Transjakarta & JakLingko" width="80"></a>
-            <br>2025, Free to Use & Open Source
+    
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Map Section -->
+        <div class="map-section mb-4">
+            <div class="section-header">
+                <h3 class="section-title plus-jakarta-sans fw-bold">
+                    <iconify-icon icon="mdi:map"></iconify-icon>
+                    Peta Interaktif
+                </h3>
+                <div class="section-actions">
+                    <button id="liveLocationBtn" class="action-btn primary">
+                        <iconify-icon icon="mdi:crosshairs-gps"></iconify-icon>
+                        <span>Live Location</span>
+                    </button>
+                    <button id="resetRouteBtn" class="action-btn danger">
+                        <iconify-icon icon="mdi:refresh"></iconify-icon>
+                        <span>Reset</span>
+                    </button>
+                </div>
+            </div>
+            <div class="map-container">
+                <div id="map" class="interactive-map"></div>
+            </div>
+        </div>
+        
+        <!-- Search & Selection Section -->
+        <div class="search-section mb-4">
+            <div class="search-container">
+                <div class="search-input-group">
+                    <iconify-icon icon="mdi:bus" class="search-icon"></iconify-icon>
+                    <select id="routesDropdown" class="form-select modern-select">
+                        <option value="">Pilih Rute TransJakarta...</option>
+                    </select>
+                </div>
+                <div class="search-input-group">
+                    <iconify-icon icon="mdi:magnify" class="search-icon"></iconify-icon>
+                    <input type="text" id="searchStop" class="form-control modern-input" placeholder="Cari halte atau koridor...">
+                </div>
+            </div>
+            <div id="searchResults" class="search-results"></div>
+        </div>
+        
+        <!-- Stops Section -->
+        <div class="stops-section mb-4">
+            <div class="section-header">
+                <h3 class="section-title plus-jakarta-sans fw-bold">
+                    <iconify-icon icon="mdi:map-marker-multiple"></iconify-icon>
+                    Daftar Halte
+                </h3>
+            </div>
+            <!-- Service Info Container akan ditampilkan di sini -->
+            <div id="stopsTitle"></div>
+            <div class="stops-content">
+                <div id="directionTabs" class="direction-tabs"></div>
+                <div class="stops-container">
+                    <ul id="stopsByRoute" class="stops-list"></ul>
+                </div>
+            </div>
         </div>
     </div>
+    
+    <!-- Modern Footer -->
+    <footer class="modern-footer">
+        <!-- Footer Main Content -->
+        <div class="row footer-main">
+            <!-- Brand Section -->
+            <div class="col-lg-3 col-md-6 col-12 mb-4">
+                <div class="footer-brand-section">
+                    <h3 class="footer-brand-title">J<span class="lurus">a</span>kMov<span class="lurus">e</span></h3>
+                    <p class="footer-brand-subtitle">Informasi Layanan TransJakarta Terlengkap</p>
+                    <div class="footer-brand-features">
+                        <span class="brand-feature">
+                            <iconify-icon icon="mdi:map-marker-multiple"></iconify-icon>
+                            Peta Interaktif
+                        </span>
+                        <span class="brand-feature">
+                            <iconify-icon icon="mdi:weather-partly-cloudy"></iconify-icon>
+                            Cuaca Real-time
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-lg-3 col-md-6 col-12 mb-4">
+                <div class="footer-section">
+                    <h5 class="footer-section-title">
+                        <iconify-icon icon="mdi:link-variant"></iconify-icon>
+                        Sumber Data
+                    </h5>
+                    <div class="footer-links">
+                        <a href="https://transjakarta.co.id/" target="_blank" class="footer-link-item">
+                            <iconify-icon icon="mdi:bus"></iconify-icon>
+                            <span>TransJakarta</span>
+                        </a>
+                        <a href="https://jaklingkoindonesia.co.id/" target="_blank" class="footer-link-item">
+                            <iconify-icon icon="mdi:map-marker"></iconify-icon>
+                            <span>JakLingko</span>
+                        </a>
+                        <a href="https://wikipedia.org" target="_blank" class="footer-link-item">
+                            <iconify-icon icon="mdi:book-open-variant"></iconify-icon>
+                            <span>Wikipedia</span>
+                        </a>
+                        <a href="https://maps.google.com" target="_blank" class="footer-link-item">
+                            <iconify-icon icon="mdi:google-maps"></iconify-icon>
+                            <span>Google Maps</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="col-lg-3 col-md-6 col-12 mb-4">
+                <div class="footer-section">
+                    <h5 class="footer-section-title">
+                        <iconify-icon icon="mdi:star"></iconify-icon>
+                        Fitur Unggulan
+                    </h5>
+                    <div class="footer-features">
+                        <div class="footer-feature-item">
+                            <iconify-icon icon="mdi:map-search"></iconify-icon>
+                            <span>Pencarian Halte</span>
+                        </div>
+                        <div class="footer-feature-item">
+                            <iconify-icon icon="mdi:bus-clock"></iconify-icon>
+                            <span>Live Layanan</span>
+                        </div>
+                        <div class="footer-feature-item">
+                            <iconify-icon icon="mdi:chart-line"></iconify-icon>
+                            <span>Rute Terintegrasi</span>
+                        </div>
+                        <div class="footer-feature-item">
+                            <iconify-icon icon="streamline-block:other-ui-layers"></iconify-icon>
+                            <span>Modern UI / UX</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technology -->
+            <div class="col-lg-3 col-md-6 col-12 mb-4">
+                <div class="footer-section">
+                    <h5 class="footer-section-title">
+                        <iconify-icon icon="mdi:code-braces"></iconify-icon>
+                        Teknologi
+                    </h5>
+                    <div class="footer-tech-stack">
+                        <div class="tech-item">
+                            <span class="tech-badge">GTFS</span>
+                            <span class="tech-desc">Data Transportasi</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-badge">Leaflet.js</span>
+                            <span class="tech-desc">Peta Interaktif</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-badge">Bootstrap 5</span>
+                            <span class="tech-desc">UI Framework</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-badge">OpenWeather</span>
+                            <span class="tech-desc">API Cuaca</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="row align-items-center">
+                <div class="col-lg-4 col-md-6 col-12 mb-3 mb-lg-0">
+                    <div class="footer-copyright">
+                        <p class="mb-0">
+                            <iconify-icon icon="mdi:heart" style="color: #FF6B6B;"></iconify-icon>
+                            &copy; 2025 JakMove. Dibuat oleh Muhammad Fachri dengan ❤️ untuk Daerah Kebanggaan Kota Jakarta
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12 mb-3 mb-lg-0">
+                    <div class="footer-logo text-center">
+                        <a href="https://muhfhri.github.io/-" class="footer-logo-link">
+                            <img id="light" alt="Muhfhri Logo" class="footer-logo-img">
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-12 col-12">
+                    <div class="footer-status text-center text-lg-end">
+                        <span class="status-badge">
+                            <iconify-icon icon="mdi:open-source-initiative"></iconify-icon>
+                            Open Source
+                        </span>
+                        <span class="status-badge">
+                            <iconify-icon icon="mdi:gift"></iconify-icon>
+                            Free to Use
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="gtfs.js"></script>
+    <script src="js/weather.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.2/iconify-icon.min.js"></script>
     <script src="js/dark-mode-switch.js"></script>
-    <script>
-    (function() {
-      const texts = [
-        "Transjakarta",
-        "MetroTrans",
-        "MiniTrans",
-        "MikroTrans",
-        "Bus Wisata",
-        "Royal Trans",
-        "#INTEGRASI",
-      ];
-      let idx = 0;
-      const el = document.getElementById('serviceTextSlider');
-      function slideToNext() {
-        el.style.transform = 'translateX(120%)';
-        setTimeout(() => {
-          idx = (idx + 1) % texts.length;
-          el.textContent = texts[idx];
-          el.style.transition = 'none';
-          el.style.transform = 'translateX(-120%)';
-          void el.offsetWidth;
-          el.style.transition = 'transform 0.5s cubic-bezier(.77,0,.18,1)';
-          el.style.transform = 'translateX(0)';
-        }, 400);
-      }
-      setInterval(slideToNext, 5000);
-    })();
-    </script>
+
     <script>
     function updateLiveClock() {
       const el = document.getElementById('liveClock');
@@ -302,3 +323,4 @@
     </script>
 </body>
 </html>
+
