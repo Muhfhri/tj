@@ -254,82 +254,17 @@ function naturalSort(a, b) {
     if (oldDropdown) oldDropdown.remove();
     // Only show if more than 1 variant
     if (variants.length > 1) {
-        // Container untuk label dan dropdown
-        let variantContainer = document.createElement('div');
-        variantContainer.className = 'variant-selector-container';
-        variantContainer.style.cssText = `
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        `;
-
-        // Label yang lebih modern
-        let label = document.createElement('label');
-        label.textContent = 'Pilih Varian Trayek';
-        label.className = 'variant-label';
-        label.style.cssText = `
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #264697;
-            margin-bottom: 12px;
-            display: block;
-            text-align: center;
-            letter-spacing: 0.5px;
-        `;
-
-        // Dropdown dengan style modern
-        variantDropdown = document.createElement('select');
-        variantDropdown.className = 'modern-variant-dropdown';
-        variantDropdown.style.cssText = `
-            width: 100%;
-            max-width: 400px;
-            padding: 12px 20px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #264697;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(38, 70, 151, 0.2);
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            outline: none;
-            display: block;
-            margin: 0 auto;
-        `;
-
-        // Hover effect untuk dropdown
-        variantDropdown.addEventListener('mouseenter', function() {
-            this.style.borderColor = 'rgba(38, 70, 151, 0.4)';
-            this.style.boxShadow = '0 6px 20px rgba(38, 70, 151, 0.2)';
-            this.style.transform = 'translateY(-2px)';
-        });
-
-        variantDropdown.addEventListener('mouseleave', function() {
-            this.style.borderColor = 'rgba(38, 70, 151, 0.2)';
-            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-            this.style.transform = 'translateY(0)';
-        });
-
-        // Focus effect
-        variantDropdown.addEventListener('focus', function() {
-            this.style.borderColor = '#4FA8DE';
-            this.style.boxShadow = '0 0 0 3px rgba(79, 168, 222, 0.2)';
-        });
-
-        variantDropdown.addEventListener('blur', function() {
-            this.style.borderColor = 'rgba(38, 70, 151, 0.2)';
-            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-        });
+        // Simple dropdown like route dropdown
+        let variantDropdown = document.createElement('select');
+        variantDropdown.id = 'mapRouteVariantDropdown';
+        variantDropdown.className = 'form-select form-select-sm plus-jakarta-sans';
+        variantDropdown.style.minWidth = '180px';
+        variantDropdown.style.fontSize = '1em';
+        variantDropdown.style.padding = '4px 8px';
+        variantDropdown.style.marginTop = '8px';
 
         // Ambil default varian dari localStorage jika ada
-        let localVarKey = 'selectedRouteVariant_' + route_id;
+        let localVarKey = 'selectedRouteVariant_' + routeId;
         let localVar = localStorage.getItem(localVarKey);
         if (localVar && !window.selectedRouteVariant) {
             window.selectedRouteVariant = localVar;
@@ -349,48 +284,29 @@ function naturalSort(a, b) {
             window.selectedRouteVariant = this.value || null;
             // Simpan ke localStorage
             localStorage.setItem(localVarKey, window.selectedRouteVariant || '');
-            showStopsByRoute(route_id, routeObj);
+            // Sync dengan dropdown di bagian daftar halte
+            const stopsVariantDropdown = document.getElementById('stopsVariantDropdown');
+            if (stopsVariantDropdown && stopsVariantDropdown.value !== this.value) {
+                stopsVariantDropdown.value = this.value;
+            }
+            showStopsByRoute(routeId, routes.find(r => r.route_id === routeId));
         };
 
-        // Tambahkan label dan dropdown ke container
-        variantContainer.appendChild(label);
-        variantContainer.appendChild(variantDropdown);
-        
-        // Set ID untuk dropdown
-        variantDropdown.id = 'routeVariantDropdown';
-
-        // Sisipkan container sebelum ul
-        if (ul.parentNode && !document.getElementById('routeVariantDropdown')) {
-            ul.parentNode.insertBefore(variantContainer, ul);
-        } else if (document.getElementById('routeVariantDropdown')) {
-            // Update jika sudah ada
-            let old = document.getElementById('routeVariantDropdown');
-            let oldContainer = old.closest('.variant-selector-container');
-            if (oldContainer) {
-                // Hapus container lama dan ganti dengan yang baru
-                oldContainer.remove();
-                ul.parentNode.insertBefore(variantContainer, ul);
-            } else {
-                // Fallback jika tidak ada container
-                old.remove();
-                ul.parentNode.insertBefore(variantContainer, ul);
-            }
+        // Insert into mapDropdownContainer
+        const container = document.getElementById('mapDropdownContainer');
+        if (container) {
+            container.appendChild(variantDropdown);
         }
     } else {
         // Hapus dropdown jika tidak ada varian atau hanya satu varian
-        let old = document.getElementById('routeVariantDropdown');
+        let old = document.getElementById('mapRouteVariantDropdown');
         if (old) {
-            let oldContainer = old.closest('.variant-selector-container');
-            if (oldContainer) {
-                oldContainer.remove();
-            } else {
-                // Fallback: hapus dropdown dan label secara manual
-                let prevSibling = old.previousSibling;
-                if (prevSibling && prevSibling.tagName === 'LABEL') {
-                    prevSibling.remove();
-                }
-                old.remove();
-            }
+            old.remove();
+        }
+        // Hapus dropdown di bagian daftar halte juga
+        let oldStops = document.getElementById('stopsVariantDropdown');
+        if (oldStops) {
+            oldStops.closest('.variant-selector-stops')?.remove();
         }
         window.selectedRouteVariant = null;
     }
@@ -756,6 +672,11 @@ function naturalSort(a, b) {
             old.previousSibling && old.previousSibling.remove();
             old.remove();
         }
+        // Hapus dropdown varian di bagian daftar halte juga
+        let oldStops = document.getElementById('stopsVariantDropdown');
+        if (oldStops) {
+            oldStops.closest('.variant-selector-stops')?.remove();
+        }
         return;
     }
     // Reset dropdown varian ke Default jika ganti koridor
@@ -768,168 +689,11 @@ function naturalSort(a, b) {
     const directionTabs = document.getElementById('directionTabs');
     ul.innerHTML = '';
     directionTabs.innerHTML = '';
-    // --- Tambahan: Dropdown varian trip jika ada ---
-    // Ambil semua trip untuk rute ini
+    
+    // Ambil semua trip untuk rute ini (dibutuhkan untuk filtering varian)
     const tripsForRoute = trips.filter(t => t.route_id === route_id);
-    // Deteksi varian dari trip_id, misal 12-L01, 12-R01, dst
     const variantRegex = /^(.*?)-(\w+)$/;
-    // Buat map varian -> trip utama (untuk label jurusan)
-    let variantInfo = {};
-    tripsForRoute.forEach(t => {
-        const m = t.trip_id.match(variantRegex);
-        if (m) {
-            const varKey = m[2];
-            // Pilih trip pertama untuk varian ini
-            if (!variantInfo[varKey]) variantInfo[varKey] = t;
-        }
-    });
-    let variants = Object.keys(variantInfo);
-    // Urutkan varian secara natural (misal L01, L02, R01, dst)
-    variants = variants.sort(naturalSort);
-    // Dropdown hanya jika varian > 1
-    let variantDropdown = null;
-    if (variants.length > 1) {
-        // Container untuk label dan dropdown
-        let variantContainer = document.createElement('div');
-        variantContainer.className = 'variant-selector-container';
-        variantContainer.style.cssText = `
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        `;
-
-        // Label yang lebih modern
-        let label = document.createElement('label');
-        label.textContent = 'Pilih Varian Trayek';
-        label.className = 'variant-label';
-        label.style.cssText = `
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #264697;
-            margin-bottom: 12px;
-            display: block;
-            text-align: center;
-            letter-spacing: 0.5px;
-        `;
-
-        // Dropdown dengan style modern
-        variantDropdown = document.createElement('select');
-        variantDropdown.className = 'modern-variant-dropdown';
-        variantDropdown.style.cssText = `
-            width: 100%;
-            max-width: 400px;
-            padding: 12px 20px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #264697;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(38, 70, 151, 0.2);
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            outline: none;
-            display: block;
-            margin: 0 auto;
-        `;
-
-        // Hover effect untuk dropdown
-        variantDropdown.addEventListener('mouseenter', function() {
-            this.style.borderColor = 'rgba(38, 70, 151, 0.4)';
-            this.style.boxShadow = '0 6px 20px rgba(38, 70, 151, 0.2)';
-            this.style.transform = 'translateY(-2px)';
-        });
-
-        variantDropdown.addEventListener('mouseleave', function() {
-            this.style.borderColor = 'rgba(38, 70, 151, 0.2)';
-            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-            this.style.transform = 'translateY(0)';
-        });
-
-        // Focus effect
-        variantDropdown.addEventListener('focus', function() {
-            this.style.borderColor = '#4FA8DE';
-            this.style.boxShadow = '0 0 0 3px rgba(79, 168, 222, 0.2)';
-        });
-
-        variantDropdown.addEventListener('blur', function() {
-            this.style.borderColor = 'rgba(38, 70, 151, 0.2)';
-            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-        });
-
-        // Ambil default varian dari localStorage jika ada
-        let localVarKey = 'selectedRouteVariant_' + route_id;
-        let localVar = localStorage.getItem(localVarKey);
-        if (localVar && !window.selectedRouteVariant) {
-            window.selectedRouteVariant = localVar;
-        }
-
-        // Opsi default
-        let defaultLabel = 'Default (Semua Varian)';
-        variantDropdown.innerHTML = `<option value="">${defaultLabel}</option>` +
-            variants.map(v => {
-                let trip = variantInfo[v];
-                let jurusan = trip.trip_headsign || trip.trip_long_name || '';
-                let label = v + (jurusan ? ' - ' + jurusan : '');
-                return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
-            }).join('');
-
-        variantDropdown.onchange = function() {
-            window.selectedRouteVariant = this.value || null;
-            // Simpan ke localStorage
-            localStorage.setItem(localVarKey, window.selectedRouteVariant || '');
-            showStopsByRoute(route_id, routeObj);
-        };
-
-        // Tambahkan label dan dropdown ke container
-        variantContainer.appendChild(label);
-        variantContainer.appendChild(variantDropdown);
-        
-        // Set ID untuk dropdown
-        variantDropdown.id = 'routeVariantDropdown';
-
-        // Sisipkan container sebelum ul
-        if (ul.parentNode && !document.getElementById('routeVariantDropdown')) {
-            ul.parentNode.insertBefore(variantContainer, ul);
-        } else if (document.getElementById('routeVariantDropdown')) {
-            // Update jika sudah ada
-            let old = document.getElementById('routeVariantDropdown');
-            let oldContainer = old.closest('.variant-selector-container');
-            if (oldContainer) {
-                // Hapus container lama dan ganti dengan yang baru
-                oldContainer.remove();
-                ul.parentNode.insertBefore(variantContainer, ul);
-            } else {
-                // Fallback jika tidak ada container
-                old.remove();
-                ul.parentNode.insertBefore(variantContainer, ul);
-            }
-        }
-    } else {
-        // Hapus dropdown jika tidak ada varian atau hanya satu varian
-        let old = document.getElementById('routeVariantDropdown');
-        if (old) {
-            let oldContainer = old.closest('.variant-selector-container');
-            if (oldContainer) {
-                oldContainer.remove();
-            } else {
-                // Fallback: hapus dropdown dan label secara manual
-                let prevSibling = old.previousSibling;
-                if (prevSibling && prevSibling.tagName === 'LABEL') {
-                    prevSibling.remove();
-                }
-                old.remove();
-            }
-        }
-        window.selectedRouteVariant = null;
-    }
-    // --- END Tambahan dropdown varian ---
+    
     if (routeObj) {
         let minHeadway = null;
         let badgeText = routeObj.route_short_name || routeObj.route_id || '';
@@ -937,6 +701,68 @@ function naturalSort(a, b) {
         // Gunakan class badge-koridor-interaktif agar konsisten
         let badge = `<span class='badge badge-koridor-interaktif rounded-pill me-2' style='background:${badgeColor};color:#fff;font-weight:bold;'>${badgeText}</span>`;
         let subjudul = routeObj.route_long_name ? `<span class='fw-bold' style='font-size:1.2em;'>${routeObj.route_long_name}</span>` : '';
+        
+        // --- Tambahan: Dropdown Varian Trayek di bagian daftar halte ---
+        let variantDropdownHTML = '';
+        let variantInfo = {};
+        tripsForRoute.forEach(t => {
+            const m = t.trip_id.match(variantRegex);
+            if (m) {
+                const varKey = m[2];
+                if (!variantInfo[varKey]) variantInfo[varKey] = t;
+            }
+        });
+        let variants = Object.keys(variantInfo).sort(naturalSort);
+        
+        if (variants.length > 1) {
+            // Ambil default varian dari localStorage jika ada
+            let localVarKey = 'selectedRouteVariant_' + route_id;
+            let localVar = localStorage.getItem(localVarKey);
+            if (localVar && !window.selectedRouteVariant) {
+                window.selectedRouteVariant = localVar;
+            }
+            
+            variantDropdownHTML = `
+                <div class="variant-selector-stops">
+                    <label class="form-label">
+                        <iconify-icon icon="mdi:routes"></iconify-icon>
+                        Pilih Varian Trayek
+                    </label>
+                    <select id="stopsVariantDropdown" class="form-select plus-jakarta-sans">
+                        <option value="">Default (Semua Varian)</option>
+                        ${variants.map(v => {
+                            let trip = variantInfo[v];
+                            let jurusan = trip.trip_headsign || trip.trip_long_name || '';
+                            let label = v + (jurusan ? ' - ' + jurusan : '');
+                            return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
+                        }).join('')}
+                    </select>
+                    <div class="help-text lurus">
+                        <iconify-icon icon="mdi:information-outline"></iconify-icon>
+                        Pilih varian untuk melihat arah spesifik
+                    </div>
+                </div>
+            `;
+            
+            // Add event listener after DOM is updated
+            setTimeout(() => {
+                const stopsVariantDropdown = document.getElementById('stopsVariantDropdown');
+                if (stopsVariantDropdown) {
+                    stopsVariantDropdown.onchange = function() {
+                        window.selectedRouteVariant = this.value || null;
+                        localStorage.setItem(localVarKey, window.selectedRouteVariant || '');
+                        // Sync dengan dropdown di map
+                        const mapVariantDropdown = document.getElementById('mapRouteVariantDropdown');
+                        if (mapVariantDropdown && mapVariantDropdown.value !== this.value) {
+                            mapVariantDropdown.value = this.value;
+                        }
+                        // Refresh the stops display
+                        showStopsByRoute(route_id, routeObj);
+                    };
+                }
+            }, 10);
+        }
+        
         // Cari tarif dari fare_rules dan fare_attributes
         let fareRule = null;
         if (window.fare_rules && window.fare_attributes) {
@@ -1113,7 +939,7 @@ function naturalSort(a, b) {
             let serviceBadgeClass = 'bg-primary';
             if (serviceType.includes('BRT') || serviceType.includes('TransJakarta')) {
                 serviceBadgeClass = 'bg-primary';
-            } else if (serviceType.includes('MikroTrans')) {
+            } else if (serviceType.includes('Angkutan Umum Integrasi')) {
                 serviceBadgeClass = 'bg-success';
             } else if (serviceType.includes('Royal')) {
                 serviceBadgeClass = 'bg-warning text-dark';
@@ -1268,6 +1094,7 @@ function naturalSort(a, b) {
                     ${panjangTrayekLabel}
                 </div>
             </div>
+            ${variantDropdownHTML}
         `;
         
         // --- TAMPILKAN INFORMASI LAYANAN ---
