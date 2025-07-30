@@ -136,11 +136,21 @@ border: 1.5px solid #b91c1c;
 .leaflet-control-livelocation:hover {
 background: #e6f0ff;
 }
+.badge-koridor-interaktif {
+    font-size: 1.2rem !important;
+    font-weight: 800 !important;
+    padding: 0.5em 1em !important;
+    letter-spacing: 0.5px !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.3s ease !important;
+}
+
 .badge-koridor-interaktif:hover {
     box-shadow: 0 0 0 2px #26469744;
     transform: scale(1.08);
     filter: brightness(1.1);
 }
+
 .badge.bg-2a[onclick], .badge.bg-7F[onclick] { transition: box-shadow 0.2s, transform 0.2s; }
 .badge.bg-2a[onclick]:hover, .badge.bg-7F[onclick]:hover { box-shadow: 0 0 0 2px #26469744; transform: scale(1.08); filter: brightness(1.1); }
 
@@ -2463,21 +2473,21 @@ border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 [data-theme="dark"] .stop-type-badge.platform {
-background: rgba(34, 197, 94, 0.2);
-color: #4ade80;
-border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-[data-theme="dark"] .stop-type-badge.access {
 background: rgba(59, 130, 246, 0.2);
 color: #60a5fa;
 border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+[data-theme="dark"] .stop-type-badge.access {
+background: rgba(56, 189, 248, 0.2);
+color: #0284c7;
+border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
 [data-theme="dark"] .stop-type-badge.corridor {
-background: rgba(79, 168, 222, 0.2);
-color: #4FA8DE;
-border: 1px solid rgba(79, 168, 222, 0.3);
+background: rgba(38, 70, 151, 0.2);
+color: #264697;
+border: 1px solid rgba(38, 70, 151, 0.3);
 }
 
 [data-theme="dark"] .direction-tab {
@@ -2728,5 +2738,333 @@ color: #4FA8DE;
         padding: 8px 12px;
         font-size: 0.85rem;
         border-radius: 12px;
+    }
+}
+
+/* Variant Selector for Stops Section */
+.variant-selector-stops {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    margin-bottom: 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.variant-selector-stops::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #264697, #4FA8DE, #264697);
+}
+
+.variant-selector-stops .form-label {
+    color: #264697;
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.variant-selector-stops .form-label iconify-icon {
+    font-size: 1.4rem;
+    color: #4FA8DE;
+    filter: drop-shadow(0 2px 4px rgba(79, 168, 222, 0.3));
+}
+
+.variant-selector-stops .form-select {
+    border: 2px solid rgba(38, 70, 151, 0.1);
+    border-radius: 15px;
+    padding: 15px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    max-width: 100%;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #264697;
+}
+
+.variant-selector-stops .form-select:hover {
+    border-color: rgba(38, 70, 151, 0.3);
+    box-shadow: 0 6px 20px rgba(38, 70, 151, 0.15);
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.variant-selector-stops .form-select:focus {
+    border-color: #4FA8DE;
+    box-shadow: 0 0 0 3px rgba(79, 168, 222, 0.2);
+    outline: none;
+    background: rgba(255, 255, 255, 1);
+}
+
+.variant-selector-stops .help-text {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 12px 16px;
+    background: rgba(38, 70, 151, 0.05);
+    border-radius: 10px;
+    border-left: 3px solid #4FA8DE;
+}
+
+.variant-selector-stops .help-text iconify-icon {
+    color: #4FA8DE;
+    font-size: 1.1rem;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .variant-selector-stops {
+    background: rgba(40, 49, 65, 0.9);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .variant-selector-stops .form-label {
+    color: #4FA8DE;
+}
+
+[data-theme="dark"] .variant-selector-stops .form-label iconify-icon {
+    color: #87CEEB;
+    filter: drop-shadow(0 2px 4px rgba(135, 206, 235, 0.3));
+}
+
+[data-theme="dark"] .variant-selector-stops .form-select {
+    background: rgba(40, 49, 65, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .variant-selector-stops .form-select:hover {
+    border-color: rgba(79, 168, 222, 0.3);
+    box-shadow: 0 6px 20px rgba(79, 168, 222, 0.15);
+    background: rgba(40, 49, 65, 0.95);
+}
+
+[data-theme="dark"] .variant-selector-stops .form-select:focus {
+    border-color: #87CEEB;
+    box-shadow: 0 0 0 3px rgba(135, 206, 235, 0.2);
+    background: rgba(40, 49, 65, 1);
+}
+
+[data-theme="dark"] .variant-selector-stops .help-text {
+    color: #a0aec0;
+    background: rgba(79, 168, 222, 0.1);
+    border-left-color: #87CEEB;
+}
+
+[data-theme="dark"] .variant-selector-stops .help-text iconify-icon {
+    color: #87CEEB;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .variant-selector-stops {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .variant-selector-stops .form-label {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    .variant-selector-stops .form-select {
+        padding: 12px 16px;
+        font-size: 0.95rem;
+    }
+    
+    .variant-selector-stops .help-text {
+        font-size: 0.85rem;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .variant-selector-stops {
+        padding: 15px;
+        border-radius: 15px;
+    }
+    
+    .variant-selector-stops .form-label {
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+    
+    .variant-selector-stops .form-select {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        border-radius: 12px;
+    }
+    
+    .variant-selector-stops .help-text {
+        font-size: 0.8rem;
+        padding: 8px 12px;
+    }
+}
+
+/* Modal Izin Lokasi */
+#locationPermissionModal .modal-content {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+#locationPermissionModal .modal-header {
+    background: linear-gradient(135deg, #264697 0%, #4FA8DE 100%);
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+#locationPermissionModal .modal-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+}
+
+#locationPermissionModal .modal-body {
+    padding: 2rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+#locationPermissionModal .modal-body h6 {
+    color: #264697;
+    font-size: 1.2rem;
+}
+
+#locationPermissionModal .modal-body ul {
+    padding-left: 1.5rem;
+}
+
+#locationPermissionModal .modal-body li {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+#locationPermissionModal .alert {
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+}
+
+#locationPermissionModal .alert-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    color: #1976d2;
+    border-left: 4px solid #2196f3;
+}
+
+#locationPermissionModal .alert-warning {
+    background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%);
+    color: #f57c00;
+    border-left: 4px solid #ff9800;
+}
+
+#locationPermissionModal .modal-footer {
+    border-top: none;
+    padding: 1.5rem 2rem;
+    background: #f8f9fa;
+}
+
+#locationPermissionModal .btn {
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: all 0.3s ease;
+}
+
+#locationPermissionModal .btn-primary {
+    background: linear-gradient(135deg, #264697 0%, #4FA8DE 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(38, 70, 151, 0.3);
+}
+
+#locationPermissionModal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(38, 70, 151, 0.4);
+}
+
+#locationPermissionModal .btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+#locationPermissionModal .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+}
+
+/* Dark mode untuk modal */
+[data-theme="dark"] #locationPermissionModal .modal-content {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] #locationPermissionModal .modal-body {
+    background: #2d3748;
+}
+
+[data-theme="dark"] #locationPermissionModal .modal-body h6 {
+    color: #4FA8DE;
+}
+
+[data-theme="dark"] #locationPermissionModal .modal-body li {
+    color: #cbd5e0;
+}
+
+[data-theme="dark"] #locationPermissionModal .alert-info {
+    background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+    color: #63b3ed;
+    border-left: 4px solid #3182ce;
+}
+
+[data-theme="dark"] #locationPermissionModal .alert-warning {
+    background: linear-gradient(135deg, #744210 0%, #2d3748 100%);
+    color: #f6ad55;
+    border-left: 4px solid #dd6b20;
+}
+
+[data-theme="dark"] #locationPermissionModal .modal-footer {
+    background: #1a202c;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #locationPermissionModal .modal-dialog {
+        margin: 1rem;
+    }
+    
+    #locationPermissionModal .modal-body {
+        padding: 1.5rem;
+    }
+    
+    #locationPermissionModal .modal-footer {
+        padding: 1rem 1.5rem;
+    }
+    
+    #locationPermissionModal .btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
     }
 }
