@@ -301,8 +301,8 @@ function naturalSort(a, b) {
         // Hapus dropdown jika tidak ada varian atau hanya satu varian
         let old = document.getElementById('mapRouteVariantDropdown');
         if (old) {
-            old.remove();
-        }
+                old.remove();
+            }
         // Hapus dropdown di bagian daftar halte juga
         let oldStops = document.getElementById('stopsVariantDropdown');
         if (oldStops) {
@@ -704,24 +704,24 @@ function naturalSort(a, b) {
         
         // --- Tambahan: Dropdown Varian Trayek di bagian daftar halte ---
         let variantDropdownHTML = '';
-        let variantInfo = {};
-        tripsForRoute.forEach(t => {
-            const m = t.trip_id.match(variantRegex);
-            if (m) {
-                const varKey = m[2];
-                if (!variantInfo[varKey]) variantInfo[varKey] = t;
-            }
-        });
+    let variantInfo = {};
+    tripsForRoute.forEach(t => {
+        const m = t.trip_id.match(variantRegex);
+        if (m) {
+            const varKey = m[2];
+            if (!variantInfo[varKey]) variantInfo[varKey] = t;
+        }
+    });
         let variants = Object.keys(variantInfo).sort(naturalSort);
         
         if (variants.length > 1) {
-            // Ambil default varian dari localStorage jika ada
-            let localVarKey = 'selectedRouteVariant_' + route_id;
-            let localVar = localStorage.getItem(localVarKey);
-            if (localVar && !window.selectedRouteVariant) {
-                window.selectedRouteVariant = localVar;
-            }
-            
+        // Ambil default varian dari localStorage jika ada
+        let localVarKey = 'selectedRouteVariant_' + route_id;
+        let localVar = localStorage.getItem(localVarKey);
+        if (localVar && !window.selectedRouteVariant) {
+            window.selectedRouteVariant = localVar;
+        }
+
             variantDropdownHTML = `
                 <div class="variant-selector-stops">
                     <label class="form-label">
@@ -731,10 +731,10 @@ function naturalSort(a, b) {
                     <select id="stopsVariantDropdown" class="form-select plus-jakarta-sans">
                         <option value="">Default (Semua Varian)</option>
                         ${variants.map(v => {
-                            let trip = variantInfo[v];
-                            let jurusan = trip.trip_headsign || trip.trip_long_name || '';
-                            let label = v + (jurusan ? ' - ' + jurusan : '');
-                            return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
+                let trip = variantInfo[v];
+                let jurusan = trip.trip_headsign || trip.trip_long_name || '';
+                let label = v + (jurusan ? ' - ' + jurusan : '');
+                return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
                         }).join('')}
                     </select>
                     <div class="help-text lurus">
@@ -749,16 +749,16 @@ function naturalSort(a, b) {
                 const stopsVariantDropdown = document.getElementById('stopsVariantDropdown');
                 if (stopsVariantDropdown) {
                     stopsVariantDropdown.onchange = function() {
-                        window.selectedRouteVariant = this.value || null;
-                        localStorage.setItem(localVarKey, window.selectedRouteVariant || '');
+            window.selectedRouteVariant = this.value || null;
+            localStorage.setItem(localVarKey, window.selectedRouteVariant || '');
                         // Sync dengan dropdown di map
                         const mapVariantDropdown = document.getElementById('mapRouteVariantDropdown');
                         if (mapVariantDropdown && mapVariantDropdown.value !== this.value) {
                             mapVariantDropdown.value = this.value;
                         }
                         // Refresh the stops display
-                        showStopsByRoute(route_id, routeObj);
-                    };
+            showStopsByRoute(route_id, routeObj);
+        };
                 }
             }, 10);
         }
@@ -907,7 +907,7 @@ function naturalSort(a, b) {
         // 1. BADGE LAYANAN (Route Badge)
         let badgeLabel = `<div class='mb-3 text-center'>
             <div class='route-badge-container'>
-                ${badge}
+                <span class='badge badge-koridor-interaktif rounded-pill me-2' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:2rem !important;padding:0.8em 1.6em;box-shadow:0 4px 15px rgba(38,70,151,0.2);border-radius:2em;letter-spacing:2px;'>${badgeText}</span>
                 <div class='route-badge-subtitle'>Koridor TransJakarta</div>
             </div>
         </div>`;
@@ -940,10 +940,14 @@ function naturalSort(a, b) {
             if (serviceType.includes('BRT') || serviceType.includes('TransJakarta')) {
                 serviceBadgeClass = 'bg-primary';
             } else if (serviceType.includes('Angkutan Umum Integrasi')) {
-                serviceBadgeClass = 'bg-success';
+                serviceBadgeClass = 'bg-warning';
             } else if (serviceType.includes('Royal')) {
-                serviceBadgeClass = 'bg-warning text-dark';
+                serviceBadgeClass = 'bg-success text-dark';
             } else if (serviceType.includes('Wisata')) {
+                serviceBadgeClass = 'bg-danger';
+            }  else if (serviceType.includes('Rusun')) {
+                serviceBadgeClass = 'bg-secondary';
+            }  else if (serviceType.includes('Mikro')) {
                 serviceBadgeClass = 'bg-info';
             }
             

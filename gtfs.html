@@ -303,6 +303,52 @@
             </div>
         </div>
     </footer>
+    
+    <!-- Modal Izin Lokasi -->
+    <div class="modal fade" id="locationPermissionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="locationPermissionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="locationPermissionModalLabel">
+                        <iconify-icon icon="mdi:map-marker-radius" inline></iconify-icon>
+                        Izin Akses Lokasi
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <iconify-icon icon="mdi:map-marker-question" style="font-size: 4rem; color: #264697;"></iconify-icon>
+                    </div>
+                    <h6 class="fw-bold mb-3">Selamat Datang di <span class="brand-title">J<span class="lurus brand">a</span>kMov<span class="lurus">e</span></span>!</h6>
+                    <p class="mb-3">Untuk memberikan pengalaman terbaik, aplikasi ini membutuhkan akses ke lokasi Anda untuk:</p>
+                    <ul class="mb-4">
+                        <li>Menampilkan halte terdekat dari posisi Anda</li>
+                        <li>Memberikan informasi rute yang optimal</li>
+                        <li>Menampilkan estimasi waktu tempuh</li>
+                        <li>Fitur navigasi yang lebih akurat</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <iconify-icon icon="mdi:shield-check" inline></iconify-icon>
+                        <strong>Keamanan Data:</strong> Lokasi Anda <strong>tidak akan dipublikasikan atau disebarkan</strong> ke pihak manapun. Data hanya digunakan untuk fitur aplikasi dan tidak mengandung kode berbahaya.
+                    </div>
+                    <div class="alert alert-warning">
+                        <iconify-icon icon="mdi:information" inline></iconify-icon>
+                        <strong>Penting:</strong> Jika Anda tidak mengizinkan akses lokasi, beberapa fitur aplikasi mungkin tidak berfungsi optimal.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="denyLocationBtn">
+                        <iconify-icon icon="mdi:close" inline></iconify-icon>
+                        Tidak Setuju
+                    </button>
+                    <button type="button" class="btn btn-primary" id="allowLocationBtn">
+                        <iconify-icon icon="mdi:check" inline></iconify-icon>
+                        Setuju & Lanjut
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
@@ -312,6 +358,50 @@
     <script src="js/dark-mode-switch.js"></script>
 
     <script>
+    // Modal Izin Lokasi
+    document.addEventListener('DOMContentLoaded', function() {
+        const locationModal = new bootstrap.Modal(document.getElementById('locationPermissionModal'));
+        const allowLocationBtn = document.getElementById('allowLocationBtn');
+        const denyLocationBtn = document.getElementById('denyLocationBtn');
+        
+        // Cek apakah sudah pernah memberikan izin
+        const hasLocationPermission = localStorage.getItem('locationPermission');
+        
+        if (!hasLocationPermission) {
+            // Tampilkan modal saat pertama kali
+            locationModal.show();
+        }
+        
+        // Handle tombol Setuju & Lanjut
+        allowLocationBtn.addEventListener('click', function() {
+            localStorage.setItem('locationPermission', 'granted');
+            locationModal.hide();
+            
+            // Minta izin lokasi dari browser
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        console.log('Lokasi diizinkan:', position.coords);
+                        // Lokasi berhasil didapat, aplikasi siap digunakan
+                    },
+                    function(error) {
+                        console.log('Error mendapatkan lokasi:', error);
+                        // Meskipun error, aplikasi tetap bisa digunakan
+                    }
+                );
+            }
+        });
+        
+        // Handle tombol Tidak Setuju
+        denyLocationBtn.addEventListener('click', function() {
+            localStorage.setItem('locationPermission', 'denied');
+            locationModal.hide();
+            
+            // Tampilkan pesan bahwa beberapa fitur mungkin tidak optimal
+            alert('Anda tidak mengizinkan akses lokasi. Beberapa fitur seperti halte terdekat mungkin tidak berfungsi optimal.');
+        });
+    });
+    
     function updateLiveClock() {
       const el = document.getElementById('liveClock');
       if (!el) return;
