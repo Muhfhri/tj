@@ -737,7 +737,7 @@ function naturalSort(a, b) {
                 return `<option value="${v}" ${window.selectedRouteVariant===v?'selected':''}>${label}</option>`;
                         }).join('')}
                     </select>
-                    <div class="help-text lurus">
+                    <div class="help-text lancip">
                         <iconify-icon icon="mdi:information-outline"></iconify-icon>
                         Pilih varian untuk melihat arah spesifik
                     </div>
