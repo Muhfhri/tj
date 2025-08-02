@@ -33,7 +33,81 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="container py-4">
+<body>
+    <!-- Sticky Navigation Bar -->
+    <nav class="navbar navbar-expand-lg sticky-top bg-white shadow-sm border-bottom" style="top: 0; z-index: 1030;">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand plus-jakarta-sans fw-bold text-primary">
+                <img class="brand-title">
+            </span>
+            
+            <!-- Desktop Navigation -->
+            <div class="navbar-nav me-auto d-none d-lg-flex">
+                <a class="nav-link active d-flex align-items-center gap-2" href="index.html">
+                    <iconify-icon icon="mdi:map-marker-multiple"></iconify-icon>
+                    <span>Peta Interaktif</span>
+                </a>
+                <a class="nav-link d-flex align-items-center gap-2" href="transportasi-jakarta.html">
+                    <iconify-icon icon="mdi:bus"></iconify-icon>
+                    <span>Transportasi Jakarta</span>
+                </a>
+                <a class="nav-link d-flex align-items-center gap-2" href="tentang-pembuat.html">
+                    <iconify-icon icon="mdi:account"></iconify-icon>
+                    <span>Tentang Pembuat</span>
+                </a>
+            </div>
+            
+            <!-- Mobile Toggle Button -->
+            <button class="navbar-toggler custom-toggler d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarOffcanvas" aria-controls="navbarOffcanvas" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Offcanvas Sidebar for Mobile -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="navbarOffcanvas" aria-labelledby="navbarOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title plus-jakarta-sans fw-bold text-primary" id="navbarOffcanvasLabel">
+                <img class="brand-title">
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="nav-menu">
+                <a class="nav-menu-item active" href="index.html">
+                    <div class="nav-menu-icon">
+                        <iconify-icon icon="mdi:map-marker-multiple"></iconify-icon>
+                    </div>
+                    <div class="nav-menu-content">
+                        <h6 class="nav-menu-title plus-jakarta-sans fw-bold">Peta Interaktif</h6>
+                        <p class="nav-menu-desc plus-jakarta-sans">Peta halte & rute Transjakarta</p>
+                    </div>
+                </a>
+                
+                <a class="nav-menu-item" href="transportasi-jakarta.html">
+                    <div class="nav-menu-icon">
+                        <iconify-icon icon="mdi:bus"></iconify-icon>
+                    </div>
+                    <div class="nav-menu-content">
+                        <h6 class="nav-menu-title plus-jakarta-sans fw-bold">Transportasi Jakarta</h6>
+                        <p class="nav-menu-desc plus-jakarta-sans">Info lengkap transportasi Jakarta</p>
+                    </div>
+                </a>
+                
+                <a class="nav-menu-item" href="tentang-pembuat.html">
+                    <div class="nav-menu-icon">
+                        <iconify-icon icon="mdi:account"></iconify-icon>
+                    </div>
+                    <div class="nav-menu-content">
+                        <h6 class="nav-menu-title plus-jakarta-sans fw-bold">Tentang Pembuat</h6>
+                        <p class="nav-menu-desc plus-jakarta-sans">Informasi developer website</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Modern Header -->
     <div class="modern-header mb-4">
         <div class="header-content container-fluid">
@@ -45,7 +119,7 @@
                         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/%2BJakarta_Logo_%28Indonesian_Language%29.svg/330px-%2BJakarta_Logo_%28Indonesian_Language%29.svg.png" 
                              width="120" alt="Logo Jakarta Kota Kolaborasi" class="jakarta-logo">
                         <div class="brand-text">
-                            <h1 class="brand-title plus-jakarta-sans fw-bold mb-1">J<span class="lurus">a</span>kMov<span class="lurus">e</span></h1>
+                            <img class="brand-title plus-jakarta-sans fw-bold mb-1">
                             <p class="brand-subtitle plus-jakarta-sans mb-0">Smart Transit Experience</p>
                         </div>
                     </div>
@@ -59,8 +133,8 @@
                             <span id="liveClock" class="fw-bold plus-jakarta-sans"></span>
                         </div>
                         <div class="weather-container d-flex align-items-center gap-2">
-                            <span id="weather-label" class="weather-icon">☀️</span>
-                            <span id="weather-info" class="weather-info">Cerah 28°C</span>
+                            <span id="weather-label" class="weather-icon">🌤️</span>
+                            <span id="weather-info" class="weather-info">Memuat cuaca...</span>
                         </div>
                         <div class="status-indicator d-flex align-items-center gap-2">
                             <div class="status-dot"></div>
@@ -92,6 +166,8 @@
         </div>
     </div>
     
+    
+    
     <!-- Progress Bar untuk Initial Loading -->
     <div id="loadingProgress" class="loading-modal" style="display: none;">
         <div class="loading-content">
@@ -121,7 +197,7 @@
     </div>
     
     <!-- Main Content Area -->
-    <div class="main-content">
+    <div class="main-content container">
         <!-- Map Section -->
         <div class="map-section mb-4">
             <div class="section-header">
@@ -183,139 +259,136 @@
     
     <!-- Modern Footer -->
     <footer class="modern-footer">
-        <!-- Footer Main Content -->
-        <div class="row footer-main">
-            <!-- Brand Section -->
-            <div class="col-lg-3 col-md-6 col-12 mb-4">
-                <div class="footer-brand-section">
-                    <h3 class="footer-brand-title">J<span class="lurus">a</span>kMov<span class="lurus">e</span></h3>
-                    <p class="footer-brand-subtitle">Informasi Layanan Transjakarta Fan Made</p>
-                    <div class="footer-brand-features">
-                        <span class="brand-feature">
-                            <iconify-icon icon="mdi:map-marker-multiple"></iconify-icon>
-                            Peta Interaktif
-                        </span>
-                        <span class="brand-feature">
-                            <iconify-icon icon="mdi:weather-partly-cloudy"></iconify-icon>
-                            Cuaca Real-time
-                        </span>
+        <div class="container">
+            <div class="footer-main py-4">
+                <div class="row align-items-center">
+                    <!-- Brand Section -->
+                    <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
+                        <div class="footer-brand">
+                            <div class="footer-brand-text">
+                                <h4 class="footer-title">
+                                    
+                                    <img class="brand-title" alt="JakMove">
+                                </h4>
+                                <p class="footer-subtitle">Smart Transit Experience</p>
+                            </div>
+                            <p class="footer-description">
+                                Platform peta interaktif dan informasi layanan Transjakarta yang membantu Anda menjelajahi transportasi Jakarta dengan mudah.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Links -->
+                    <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+                        <h5 class="footer-heading">
+                            <iconify-icon icon="mdi:link-variant" inline></iconify-icon>
+                            Quick Links
+                        </h5>
+                        <ul class="footer-links">
+                            <li><a href="index.html">
+                                <iconify-icon icon="mdi:map-marker-multiple" inline></iconify-icon>
+                                Peta Interaktif
+                            </a></li>
+                            <li><a href="transportasi-jakarta.html">
+                                <iconify-icon icon="mdi:bus" inline></iconify-icon>
+                                Transportasi Jakarta
+                            </a></li>
+                            <li><a href="tentang-pembuat.html">
+                                <iconify-icon icon="mdi:account" inline></iconify-icon>
+                                Tentang Pembuat
+                            </a></li>
+                            <li><a href="#">
+                                <iconify-icon icon="mdi:help-circle" inline></iconify-icon>
+                                Bantuan
+                            </a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Features -->
+                    <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+                        <h5 class="footer-heading">
+                            <iconify-icon icon="mdi:star" inline></iconify-icon>
+                            Fitur
+                        </h5>
+                        <ul class="footer-links">
+                            <li><a href="#">
+                                <iconify-icon icon="mdi:map-search" inline></iconify-icon>
+                                Pencarian Halte
+                            </a></li>
+                            <li><a href="#">
+                                <iconify-icon icon="mdi:clock-outline" inline></iconify-icon>
+                                Rute Optimal
+                            </a></li>
+                            <li><a href="#">
+                                <iconify-icon icon="mdi:crosshairs-gps" inline></iconify-icon>
+                                Live Location
+                            </a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Contact -->
+                    <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+                        <h5 class="footer-heading">
+                            <iconify-icon icon="mdi:contact" inline></iconify-icon>
+                            Kontak
+                        </h5>
+                        <div class="footer-contact">
+                            <div class="contact-item">
+                                <iconify-icon icon="mdi:map-marker-outline" inline></iconify-icon>
+                                <span>Jakarta, Indonesia</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Social -->
+                    <div class="col-lg-2 col-md-6">
+                        <h5 class="footer-heading">
+                            <iconify-icon icon="mdi:share-variant" inline></iconify-icon>
+                            Social
+                        </h5>
+                        <div class="footer-social">
+                            <a href="https://github.com/muhfhri" class="social-link" title="GitHub" target="_blank" rel="noopener noreferrer">
+                                <iconify-icon icon="mdi:github" inline></iconify-icon>
+                            </a>
+                            <a href="https://www.instagram.com/muhfhri._/" class="social-link" title="Instagram" target="_blank" rel="noopener noreferrer">
+                                <iconify-icon icon="mdi:instagram" inline></iconify-icon>
+                            </a>
+                            <a href="https://muhfhri.github.io/-/" class="social-link" title="Website" target="_blank" rel="noopener noreferrer">
+                                <iconify-icon icon="mdi:web" inline></iconify-icon>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Quick Links -->
-            <div class="col-lg-3 col-md-6 col-12 mb-4">
-                <div class="footer-section">
-                    <h5 class="footer-section-title">
-                        <iconify-icon icon="mdi:link-variant"></iconify-icon>
-                        Sumber Data
-                    </h5>
-                    <div class="footer-links">
-                        <a href="https://transjakarta.co.id/" target="_blank" class="footer-link-item">
-                            <iconify-icon icon="mdi:bus"></iconify-icon>
-                            <span>TransJakarta</span>
-                        </a>
-                        <a href="https://jaklingkoindonesia.co.id/" target="_blank" class="footer-link-item">
-                            <iconify-icon icon="mdi:map-marker"></iconify-icon>
-                            <span>JakLingko</span>
-                        </a>
-                        <a href="https://wikipedia.org" target="_blank" class="footer-link-item">
-                            <iconify-icon icon="mdi:book-open-variant"></iconify-icon>
-                            <span>Wikipedia</span>
-                        </a>
-                        <a href="https://maps.google.com" target="_blank" class="footer-link-item">
-                            <iconify-icon icon="mdi:google-maps"></iconify-icon>
-                            <span>Google Maps</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Features -->
-            <div class="col-lg-3 col-md-6 col-12 mb-4">
-                <div class="footer-section">
-                    <h5 class="footer-section-title">
-                        <iconify-icon icon="mdi:star"></iconify-icon>
-                        Fitur Unggulan
-                    </h5>
-                    <div class="footer-features">
-                        <div class="footer-feature-item">
-                            <iconify-icon icon="mdi:map-search"></iconify-icon>
-                            <span>Pencarian Halte</span>
-                        </div>
-                        <div class="footer-feature-item">
-                            <iconify-icon icon="mdi:bus-clock"></iconify-icon>
-                            <span>Live Layanan</span>
-                        </div>
-                        <div class="footer-feature-item">
-                            <iconify-icon icon="mdi:chart-line"></iconify-icon>
-                            <span>Rute Terintegrasi</span>
-                        </div>
-                        <div class="footer-feature-item">
-                            <iconify-icon icon="streamline-block:other-ui-layers"></iconify-icon>
-                            <span>Modern UI / UX</span>
+            
+            <!-- Footer Bottom -->
+            <div class="footer-bottom py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="footer-copyright">
+                            <div class="copyright-line">
+                                <iconify-icon icon="mdi:copyright" inline></iconify-icon>
+                                2025 <img class="brand-title" alt="JakMove">
+                            </div>
+                            <div class="copyright-line">
+                                Dibuat dengan 
+                                <iconify-icon icon="mdi:heart" style="color: #e74c3c;" inline></iconify-icon> 
+                                oleh Muhammad Fachri
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Technology -->
-            <div class="col-lg-3 col-md-6 col-12 mb-4">
-                <div class="footer-section">
-                    <h5 class="footer-section-title">
-                        <iconify-icon icon="mdi:code-braces"></iconify-icon>
-                        Teknologi
-                    </h5>
-                    <div class="footer-tech-stack">
-                        <div class="tech-item">
-                            <span class="tech-badge">GTFS</span>
-                            <span class="tech-desc">Data Transportasi</span>
+                    <div class="col-md-6">
+                        <div class="footer-legal">
+                            <a href="legal.html" class="legal-link plus-jakarta-sans">
+                                <iconify-icon icon="mdi:file-document"></iconify-icon>
+                                Kebijakan Penggunaan
+                            </a>
+                            <span class="separator">•</span>
+                            <a href="#" class="legal-link plus-jakarta-sans">
+                                <iconify-icon icon="mdi:github"></iconify-icon>
+                                Contribute
+                            </a>
                         </div>
-                        <div class="tech-item">
-                            <span class="tech-badge">Leaflet.js</span>
-                            <span class="tech-desc">Peta Interaktif</span>
-                        </div>
-                        <div class="tech-item">
-                            <span class="tech-badge">Bootstrap 5</span>
-                            <span class="tech-desc">UI Framework</span>
-                        </div>
-                        <div class="tech-item">
-                            <span class="tech-badge">OpenWeather</span>
-                            <span class="tech-desc">API Cuaca</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer Bottom -->
-        <div class="footer-bottom">
-            <div class="row align-items-center">
-                <div class="col-lg-4 col-md-6 col-12 mb-3 mb-lg-0">
-                    <div class="footer-copyright">
-                        <p class="mb-0">
-                            <iconify-icon icon="mdi:heart" style="color: #FF6B6B;"></iconify-icon>
-                            &copy; 2025 JakMove. Dibuat oleh Muhammad Fachri dengan ❤️ untuk Daerah Kebanggaan Kota Jakarta
-                        </p>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-12 mb-3 mb-lg-0">
-                    <div class="footer-logo text-center">
-                        <a href="https://muhfhri.github.io/-" class="footer-logo-link">
-                            <img id="light" alt="Muhfhri Logo" class="footer-logo-img">
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-12 col-12">
-                    <div class="footer-status text-center text-lg-end">
-                        <span class="status-badge">
-                            <iconify-icon icon="mdi:open-source-initiative"></iconify-icon>
-                            Open Source
-                        </span>
-                        <span class="status-badge">
-                            <iconify-icon icon="mdi:gift"></iconify-icon>
-                            Free to Use
-                        </span>
                     </div>
                 </div>
             </div>
@@ -336,7 +409,7 @@
                     <div class="text-center mb-4">
                         <iconify-icon icon="mdi:map-marker-question" style="font-size: 4rem; color: #264697;"></iconify-icon>
                     </div>
-                    <h6 class="fw-bold mb-3">Selamat Datang di <span class="brand-title">J<span class="lurus brand">a</span>kMov<span class="lurus">e</span></span>!</h6>
+                    <h6 class="fw-bold mb-3">Selamat Datang di <img class="brand-title">!</h6>
                     <p class="mb-3">Untuk memberikan pengalaman terbaik, aplikasi ini membutuhkan akses ke lokasi Anda untuk:</p>
                     <ul class="mb-4">
                         <li>Menampilkan halte terdekat dari posisi Anda</li>
@@ -374,6 +447,7 @@
     <script src="js/weather.js"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.2/iconify-icon.min.js"></script>
     <script src="js/dark-mode-switch.js"></script>
+    <script src="js/navbar.js"></script>
 
     <script>
     // Modal Izin Lokasi

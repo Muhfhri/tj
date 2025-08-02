@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kebijakan Penggunaan - JakMove</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top bg-white shadow-sm border-bottom" style="top: 0; z-index: 1030;">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand plus-jakarta-sans fw-bold text-primary">
+                <img class="brand-title" alt="JakMove">
+            </span>
+            
+            <!-- Desktop Navigation -->
+            <div class="navbar-nav me-auto d-none d-lg-flex">
+                <a class="nav-link d-flex align-items-center gap-2" href="index.html">
+                    <iconify-icon icon="mdi:map-marker-multiple"></iconify-icon>
+                    <span>Peta Interaktif</span>
+                </a>
+                <a class="nav-link d-flex align-items-center gap-2" href="transportasi-jakarta.html">
+                    <iconify-icon icon="mdi:bus"></iconify-icon>
+                    <span>Transportasi Jakarta</span>
+                </a>
+                <a class="nav-link d-flex align-items-center gap-2" href="tentang-pembuat.html">
+                    <iconify-icon icon="mdi:account"></iconify-icon>
+                    <span>Tentang Pembuat</span>
+                </a>
+            </div>
+            
+            <!-- Mobile Toggle Button -->
+            <button class="navbar-toggler custom-toggler d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarOffcanvas" aria-controls="navbarOffcanvas" aria-expanded="false" aria-label="Toggle navigation">
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Offcanvas -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="navbarOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title plus-jakarta-sans fw-bold text-primary" id="navbarOffcanvasLabel">
+                <img class="brand-title" alt="JakMove">
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-menu-item">
+                    <div class="nav-menu-icon">
+                        <iconify-icon icon="mdi:map-marker"></iconify-icon>
+                    </div>
+                    <div class="nav-menu-content">
+                        <div class="nav-menu-title">Peta Interaktif</div>
+                        <div class="nav-menu-desc">Jelajahi rute Transjakarta</div>
+                    </div>
+                </a>
+                <a href="transportasi-jakarta.html" class="nav-menu-item">
+                    <div class="nav-menu-icon">
+                        <iconify-icon icon="mdi:bus"></iconify-icon>
+                    </div>
+                    <div class="nav-menu-content">
+                        <div class="nav-menu-title">Transportasi Jakarta</div>
+                        <div class="nav-menu-desc">Info lengkap transportasi</div>
+                    </div>
+                </a>
+                <a href="tentang-pembuat.html" class="nav-menu-item">
+                    <div class="nav-menu-icon">
+                        <iconify-icon icon="mdi:account"></iconify-icon>
+                    </div>
+                    <div class="nav-menu-content">
+                        <div class="nav-menu-title">Tentang Pembuat</div>
+                        <div class="nav-menu-desc">Informasi developer website</div>
+                    </div>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container py-5" style="margin-top: 80px;">
+            <!-- Breadcrumb Navigation -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="index.html" class="breadcrumb-link">
+                            <iconify-icon icon="mdi:home" inline></iconify-icon>
+                            Beranda
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Kebijakan Penggunaan</li>
+                </ol>
+            </nav>
+            
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="policy-section">
+                        <h1 class="policy-title plus-jakarta-sans fw-bold mb-4">
+                            <iconify-icon icon="mdi:file-document"></iconify-icon>
+                            Kebijakan Penggunaan
+                        </h1>
+                        
+                        <div class="policy-content">
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Tentang JakMove</h2>
+                            <p class="policy-text">
+                                JakMove adalah platform informasi transportasi Jakarta yang bersifat open source dan dapat digunakan secara bebas oleh siapa saja. 
+                                Website ini dikembangkan untuk kepentingan publik dan menggunakan data GTFS (General Transit Feed Specification) yang bersifat publik.
+                            </p>
+
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Penggunaan Data</h2>
+                            <p class="policy-text">
+                                JakMove tidak mengumpulkan data pribadi pengguna. Website ini hanya menggunakan data GTFS yang bersifat publik untuk menampilkan 
+                                informasi transportasi Jakarta seperti rute, halte, dan jadwal. Tidak ada data pribadi yang disimpan atau diproses.
+                            </p>
+
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Penggunaan yang Diizinkan</h2>
+                            <p class="policy-text">
+                                Anda diperbolehkan untuk:
+                            </p>
+                            <ul class="policy-list">
+                                <li>Menggunakan website untuk mendapatkan informasi transportasi Jakarta</li>
+                                <li>Menggunakan data GTFS yang tersedia untuk tujuan pendidikan</li>
+                                <li>Berkontribusi pada pengembangan proyek melalui GitHub</li>
+                                <li>Menggunakan website untuk tujuan pribadi atau non-komersial</li>
+                                <li>Mengadaptasi atau memodifikasi kode untuk keperluan pribadi</li>
+                            </ul>
+
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Penggunaan yang Dilarang</h2>
+                            <p class="policy-text">
+                                Anda tidak diperbolehkan untuk:
+                            </p>
+                            <ul class="policy-list">
+                                <li>Menggunakan website untuk tujuan komersial tanpa izin</li>
+                                <li>Menghapus atau mengubah atribusi sumber (JakMove)</li>
+                                <li>Menyalahgunakan data untuk tujuan yang merugikan</li>
+                                <li>Melakukan reverse engineering atau hacking website</li>
+                                <li>Menggunakan konten tanpa mencantumkan sumber asli</li>
+                            </ul>
+
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Atribusi Sumber (Wajib)</h2>
+                            <p class="policy-text">
+                                Jika Anda menggunakan atau mengadaptasi konten dari JakMove, Anda wajib mencantumkan:
+                            </p>
+                            <ul class="policy-list">
+                                <li><strong>Nama Proyek:</strong> "JakMove"</li>
+                                <li><strong>Link Website:</strong> jakmove.com</li>
+                                <li><strong>Pembuat:</strong> "Muhammad Fachri"</li>
+                                <li><strong>Lisensi:</strong> Open Source</li>
+                            </ul>
+
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Kontribusi</h2>
+                            <p class="policy-text">
+                                JakMove adalah proyek open source yang mengundang kontribusi dari siapa saja. Dengan berkontribusi, Anda menyetujui bahwa:
+                            </p>
+                            <ul class="policy-list">
+                                <li>Kontribusi Anda akan menjadi bagian dari proyek open source</li>
+                                <li>Kontribusi akan dilisensikan di bawah lisensi yang sama dengan proyek</li>
+                                <li>Anda memiliki hak untuk memberikan kontribusi tersebut</li>
+                                <li>Setiap kontribusi akan dipertimbangkan dan dihargai</li>
+                            </ul>
+
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Pembatasan Tanggung Jawab</h2>
+                            <p class="policy-text">
+                                JakMove disediakan "sebagaimana adanya" tanpa jaminan apapun. Kami tidak bertanggung jawab atas kerugian yang timbul dari 
+                                penggunaan website ini. Data transportasi yang ditampilkan dapat berubah dan tidak selalu 100% akurat.
+                            </p>
+
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Perubahan Kebijakan</h2>
+                            <p class="policy-text">
+                                Kami berhak untuk mengubah kebijakan penggunaan ini kapan saja. Perubahan akan diumumkan di website ini dan 
+                                akan berlaku sejak tanggal publikasi.
+                            </p>
+
+                            <h2 class="section-title plus-jakarta-sans fw-bold">Kontak</h2>
+                            <p class="policy-text">
+                                Untuk pertanyaan mengenai kebijakan penggunaan ini, silakan hubungi melalui GitHub repository.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="modern-footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="row g-4">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="footer-brand">
+                            <h4 class="footer-title plus-jakarta-sans fw-bold">
+                                <img class="brand-title" alt="JakMove">
+                            </h4>
+                            <p class="footer-subtitle plus-jakarta-sans">Platform Peta Interaktif Transportasi Jakarta</p>
+                            <p class="footer-description plus-jakarta-sans">
+                                Informasi lengkap transportasi Jakarta dengan peta interaktif dan data GTFS Resmi TransJakarta.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <h5 class="footer-heading plus-jakarta-sans fw-bold">
+                            <iconify-icon icon="mdi:link"></iconify-icon>
+                            Links
+                        </h5>
+                        <ul class="footer-links">
+                            <li><a href="index.html">Beranda</a></li>
+                            <li><a href="transportasi-jakarta.html">Transportasi</a></li>
+                            <li><a href="legal.html">Kebijakan</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <h5 class="footer-heading plus-jakarta-sans fw-bold">
+                            <iconify-icon icon="mdi:phone"></iconify-icon>
+                            Kontak
+                        </h5>
+                        <div class="footer-contact">
+                            <div class="contact-item">
+                                <iconify-icon icon="mdi:github"></iconify-icon>
+                                <span>GitHub Repository</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <h5 class="footer-heading plus-jakarta-sans fw-bold">
+                            <iconify-icon icon="mdi:share-variant"></iconify-icon>
+                            Social
+                        </h5>
+                        <div class="footer-social">
+                            <a href="https://github.com/muhfhri" class="social-link" target="_blank" rel="noopener noreferrer">
+                                <iconify-icon icon="mdi:github"></iconify-icon>
+                            </a>
+                            <a href="https://www.instagram.com/muhfhri._/" class="social-link" target="_blank" rel="noopener noreferrer">
+                                <iconify-icon icon="mdi:instagram"></iconify-icon>
+                            </a>
+                            <a href="https://muhfhri.github.io/-/" class="social-link" target="_blank" rel="noopener noreferrer">
+                                <iconify-icon icon="mdi:web"></iconify-icon>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="footer-copyright plus-jakarta-sans">
+                            <div class="copyright-line">
+                                <iconify-icon icon="mdi:copyright"></iconify-icon>
+                                2025 <img class="brand-title" alt="JakMove">
+                            </div>
+                            <div class="copyright-line">
+                                Dibuat dengan <iconify-icon icon="mdi:heart" style="color: #e74c3c;"></iconify-icon> oleh Muhammad Fachri
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="footer-legal">
+                            <a href="legal.html" class="legal-link plus-jakarta-sans">
+                                <iconify-icon icon="mdi:file-document"></iconify-icon>
+                                Kebijakan Penggunaan
+                            </a>
+                            <span class="separator">•</span>
+                            <a href="#" class="legal-link plus-jakarta-sans">
+                                <iconify-icon icon="mdi:github"></iconify-icon>
+                                Contribute
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.2/iconify-icon.min.js"></script>
+    <script src="js/dark-mode-switch.js"></script>
+    <script src="js/navbar.js"></script>
+</body>
+</html> 
