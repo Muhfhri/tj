@@ -2812,7 +2812,7 @@ B03270P,,Rusun Cipinang Besar Selatan,,-6.231625,106.88288,1,,0,2,,
 B03274P,,Rusun Jatinegara Barat,,-6.223016,106.86585,1,,0,2,,
 B03276P,,Rusun Jatinegara Kaum Depan,,-6.212768,106.89945,1,,0,2,,
 B03277P,,Rusun Kapuk Muara,,-6.135667,106.76299,1,,0,2,,
-G00021,,Dukuh Atas 1,,-6.205627,106.822295,1,,0,0,H00047P,A-B-C
+G00021,,Dukuh Atas,,-6.205627,106.822295,1,,0,0,H00047P,A-B-C
 B03279P,,Rusun Kemayoran,,-6.153101,106.85347,1,,0,2,,
 B03280P,,Rusun Klender,,-6.216567,106.92868,1,,0,2,,
 B03282P,,Rusun Marunda,,-6.097099,106.96231,1,,0,2,,
@@ -3056,7 +3056,7 @@ B03561P,,Sbr. Gg. Rw Ulujami Raya,,-6.24941,106.76355,1,,0,2,,
 B03562P,,Sbr. Gg. Sabar 2 Lingkar Timur,,-6.199863,106.94476,1,,0,2,,
 B03563P,,Sbr. Gg. Saminten,,-6.379273,106.84919,1,,0,2,,
 B03564P,,Sbr. Gg. Saorma Kalisari,,-6.338269,106.85886,1,,0,2,,
-G00022,,Dukuh Atas 1,,-6.205733,106.822284,1,,0,0,H00047P,D-E-F
+G00022,,Dukuh Atas,,-6.205733,106.822284,1,,0,0,H00047P,D-E-F
 B03566P,,Sbr. Gg. Sejahtera Lingkar Timur,,-6.200486,106.94504,1,,0,2,,
 B03568P,,Sbr. Gg. Swadaya Pagelarang,,-6.302718,106.91662,1,,0,2,,
 B03570P,,Sbr. Gg. Trijaya IV Timur,,-6.232282,106.85287,1,,0,2,,
@@ -3073,7 +3073,7 @@ B03580P,,Sbr. Gedung Pompa Pinang,,-6.112351,106.90317,1,,0,2,,
 B03582P,,Sbr. Gelanggang Remaja Ciracas,,-6.339531,106.88217,1,,0,2,,
 B03583P,,Sbr. Gelanggang Remaja Tj. Priok,,-6.138765,106.87197,1,,0,2,,
 B03584P,,Sbr. Gereja HKBP Cilangkap,,-6.334694,106.89746,1,,0,2,,
-G00023,,Dukuh Atas 1,,-6.205723,106.822182,1,,0,0,H00047P,G-H-J
+G00023,,Dukuh Atas,,-6.205723,106.822182,1,,0,0,H00047P,G-H-J
 B03586P,,Sbr. Gereja HKBP Duren Sawit,,-6.223357,106.91359,1,,0,2,,
 B03588P,,Gereja Jemaat Kiwi,,-6.339179,106.87221,1,,0,2,,
 B03589P,,Sbr. Gereja Katholik Salib Suci,,-6.125715,106.91969,1,,0,2,,
@@ -3259,7 +3259,7 @@ B03795P,,Sbr. Jln. Mini II,,-6.308966,106.90774,1,,0,2,,
 B03796P,,Sbr. Jln. Mini III,,-6.305938,106.91007,1,,0,2,,
 B03797P,,Sbr. Jln. Muhidin KDW,,-6.335121,106.87961,1,,0,2,,
 B03798P,,Sbr. Jln. Mundu,,-6.294387,106.8895,1,,0,2,,
-G00024,,Dukuh Atas 1,,-6.205621,106.822203,1,,0,0,H00047P,K-L-M
+G00024,,Dukuh Atas,,-6.205621,106.822203,1,,0,0,H00047P,K-L-M
 B03800P,,Sbr. Jln. Nagrak Marunda,,-6.126834,106.95683,1,,0,2,,
 B03801P,,Sbr. Jln. Nanas Lap Bola,,-6.200877,106.76047,1,,0,2,,
 B03802P,,Sbr. Jln. Nanggala Dewa Kembar,,-6.107408,106.9253,1,,0,2,,
