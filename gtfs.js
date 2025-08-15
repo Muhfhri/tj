@@ -407,6 +407,9 @@ function naturalSort(a, b) {
                 // Jika live location aktif, info marker user kembali ke 'Posisi Anda'
                 if (window.userMarker) window.userMarker.bindPopup('Posisi Anda');
             }
+            
+            // Sembunyikan card live layanan
+            hideLiveServiceCard();
         };
         mapDiv.appendChild(btn);
     }
@@ -654,6 +657,9 @@ function naturalSort(a, b) {
         if (directionTabs) directionTabs.innerHTML = '';
         if (markersLayer) { map.removeLayer(markersLayer); markersLayer = null; }
         if (polylineLayer) { map.removeLayer(polylineLayer); polylineLayer = null; }
+        
+        // Sembunyikan card live layanan
+        hideLiveServiceCard();
     }
   }
   
@@ -677,6 +683,10 @@ function naturalSort(a, b) {
         if (oldStops) {
             oldStops.closest('.variant-selector-stops')?.remove();
         }
+        
+        // Sembunyikan card live layanan
+        hideLiveServiceCard();
+        
         return;
     }
     // Reset dropdown varian ke Default jika ganti koridor
@@ -1772,7 +1782,7 @@ function naturalSort(a, b) {
                 
                 window.selectedRouteIdForUser = routeId;
                 window.selectedCurrentStopForUser = stop;
-                showUserRouteInfo(userLat, userLon, stop, routeId);
+                updateLiveServiceCard(userLat, userLon, stop, routeId);
                 // Tampilkan jalur trayek dan halte untuk layanan ini
                 const route = routes.find(r => r.route_id === routeId);
                 if (route) {
@@ -1817,7 +1827,6 @@ function naturalSort(a, b) {
         }
     }
     let jarakNext = nextStop ? haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon)) : null;
-    let arrivalMsg = '';
     
     // Pastikan global untuk riwayat halte sudah terdefinisi
     if (typeof window.currentStopId === 'undefined') window.currentStopId = null;
@@ -1827,196 +1836,13 @@ function naturalSort(a, b) {
     if (window.currentStopId !== currentStop.stop_id) {
         window.currentStopId = currentStop.stop_id;
     }
-    // Sistem arrival dengan timer 10 detik (tanpa pembatalan)
-    if (nextStop && jarakNext !== null) {
-        // Arrival card hanya muncul jika user sudah < 30m dari halte berikutnya dan belum pernah arrival di halte itu
-        if (jarakNext < 30 && window.lastArrivedStopId !== nextStop.stop_id) {
-            // Mulai timer 10 detik
-            console.log(`Timer dimulai untuk halte: ${nextStop.stop_name}`);
-            window.arrivalTimer = setTimeout(() => {
-                console.log(`Timer selesai, pindah dari ${currentStop.stop_name} ke ${nextStop.stop_name}`);
-                window.currentStopId = nextStop.stop_id;
-                window.selectedCurrentStopForUser = nextStop;
-                window.lastArrivedStopId = null;
-                if (window.userMarker) {
-                    showUserRouteInfo(userLat, userLon, nextStop, routeId);
-                }
-            }, 10000);
-            arrivalMsg = `<div style='background:linear-gradient(135deg, #10b981, #059669);color:white;padding:12px;border-radius:8px;margin-top:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);border-left:4px solid #047857;'>
-                <div style='display:flex;align-items:center;gap:8px;'>
-                    <div style='font-size:1.2em;'>🎉</div>
-                    <div style='flex:1;'>
-                        <div style='font-weight:bold;font-size:1.1em;margin-bottom:2px;'>Tiba di Halte!</div>
-                        <div style='font-size:0.95em;opacity:0.9;'>${nextStop.stop_name}</div>
-                    </div>
-                </div>
-            </div>`;
-            window.lastArrivedStopId = nextStop.stop_id;
-        } else if (window.lastArrivedStopId === nextStop.stop_id) {
-            // Jika sudah arrival, card tetap tampil sampai timeout selesai, meskipun user menjauh > 30m
-            arrivalMsg = `<div style='background:linear-gradient(135deg, #10b981, #059669);color:white;padding:12px;border-radius:8px;margin-top:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);border-left:4px solid #047857;'>
-                <div style='display:flex;align-items:center;gap:8px;'>
-                    <div style='font-size:1.2em;'>🎉</div>
-                    <div style='flex:1;'>
-                        <div style='font-weight:bold;font-size:1.1em;margin-bottom:2px;'>Tiba di Halte!</div>
-                        <div style='font-size:0.95em;opacity:0.9;'>${nextStop.stop_name}</div>
-                    </div>
-                </div>
-            </div>`;
-        }
-    }
     
-    let route = routes.find(r => r.route_id === routeId);
-    let badgeColor = route && route.route_color ? ('#' + route.route_color) : '#264697';
-    let badgeText = route && route.route_short_name ? route.route_short_name : routeId;
-    let badgeLayanan = `<span id='popup-badge-layanan' class='badge badge-koridor-interaktif rounded-pill' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:1.2em;padding:0.5em 1.1em;'>${badgeText}</span>`;
+    // Update card live layanan alih-alih popup
+    updateLiveServiceCard(userLat, userLon, currentStop, routeId, window._lastUserSpeed);
     
-    // --- Informasi Jurusan ---
-    let jurusanInfo = '';
-    if (route && route.route_long_name) {
-        jurusanInfo = `<div style='margin-bottom:4px;font-size:0.95em;font-weight:600;color:#374151;'>${route.route_long_name}</div>`;
-    }
-    
-    // --- Halte Selanjutnya ---
-    let nextStopTitle = nextStop ? `<div class='text-muted' style='font-size:0.95em;font-weight:600;margin-bottom:2px;'>Halte Selanjutnya</div>` : '';
-    let nextStopName = nextStop ? `<div style='font-size:1.1em;font-weight:bold;'>${nextStop.stop_name}</div>` : '';
-    let labelTipeNext = '';
-    if (nextStop) {
-        const nameLower = nextStop.stop_name ? nextStop.stop_name.toLowerCase() : '';
-        if (nextStop.stop_id && nextStop.stop_id.startsWith('B') && !nameLower.includes('pengumpan')) {
-            labelTipeNext = `<div style='font-size:0.97em;color:#facc15;font-weight:500;'>Pengumpan</div>`;
-        } else if (nextStop.stop_id && nextStop.stop_id.startsWith('G') && nextStop.platform_code && !nameLower.includes('platform')) {
-            labelTipeNext = `<div class='text-muted' style='font-size:0.97em;'>Platform: ${nextStop.platform_code}</div>`;
-        } else if (nextStop.stop_id && (nextStop.stop_id.startsWith('E') || nextStop.stop_id.startsWith('H')) && !nameLower.includes('akses masuk')) {
-            labelTipeNext = `<div style='font-size:0.97em;color:#38bdf8;font-weight:500;'>Akses Masuk</div>`;
-        }
-    }
-    // --- Layanan lain di halte selanjutnya ---
-    let layananSemuaBadges = '';
-    if (nextStop && stopToRoutes[nextStop.stop_id]) {
-        layananSemuaBadges = Array.from(stopToRoutes[nextStop.stop_id])
-            .map(rid => {
-                const r = routes.find(rt => rt.route_id === rid);
-                if (r) {
-                    let color = r.route_color ? ('#' + r.route_color) : '#6c757d';
-                    let isActive = rid === routeId;
-                    return `<span class='badge badge-koridor-interaktif rounded-pill me-1' style='background:${color};color:#fff;cursor:pointer;font-weight:bold;font-size:0.95em;${isActive ? 'border:2px solid #264697;' : ''}' data-routeid='${r.route_id}'>${r.route_short_name}</span>`;
-                }
-                return '';
-            }).join('');
-    }
-    let layananSemuaBlock = layananSemuaBadges ? `<div style='margin-bottom:2px;'><b>Layanan di halte ini:</b> ${layananSemuaBadges}</div>` : '';
-    let jarakInfo = nextStop ? `<div style='margin-bottom:2px;'><b>Jarak:</b> ${jarakNext < 1000 ? Math.round(jarakNext) + ' m' : (jarakNext/1000).toFixed(2) + ' km'}</div>` : '';
-    // --- Kecepatan User ---
-    let speedInfo = '';
-    let speedVal = (typeof arguments[4] === 'number' && !isNaN(arguments[4])) ? arguments[4] : (typeof window._lastUserSpeed === 'number' ? window._lastUserSpeed : null);
-    let speedKmh = (speedVal !== null && speedVal >= 0) ? speedVal * 3.6 : 0;
-    // Jika speed null atau sangat kecil (<0.2 km/jam), anggap berhenti
-    if (speedVal === null || speedKmh < 0.2) {
-        speedInfo = `<div style='margin-bottom:2px;'><b>Kecepatan:</b> 0 km/jam</div>`;
-    } else if (speedKmh < 1) {
-        speedInfo = `<div style='margin-bottom:2px;'><b>Kecepatan:</b> ${(speedKmh*1000).toFixed(0)} m/jam</div>`;
-    } else {
-        speedInfo = `<div style='margin-bottom:2px;'><b>Kecepatan:</b> ${speedKmh.toFixed(1)} km/jam</div>`;
-    }
-    // --- Garis pemisah ---
-    let hr = `<hr style='margin:6px 0 4px 0;border-top:1.5px solid #e5e7eb;'>`;
-    // Tombol Maps dihapus sesuai permintaan
-    let mapsBtn = '';
-    let popupContent = `
-    <div class='plus-jakarta-sans popup-card-friendly' style='min-width:220px;max-width:340px;line-height:1.45;background:rgba(248,250,252,0.95);border-radius:18px;box-shadow:none;padding:18px 18px 12px 18px;position:relative;'>
-        <div style='display:flex;align-items:center;gap:12px;margin-bottom:8px;'>
-            <div style='flex:1;'>${badgeLayanan}</div>
-        </div>
-        <div id='popup-dinamis-info'>
-            ${jurusanInfo}
-            <div style='margin-bottom:6px;'>
-                ${nextStopTitle}
-                ${nextStopName}
-                ${labelTipeNext}
-                ${layananSemuaBlock}
-            </div>
-            ${jarakInfo}
-            ${speedInfo}
-            ${hr}
-            ${arrivalMsg}
-        </div>
-        <div style='position:absolute;bottom:0;right:0;opacity:0.09;font-size:6em;pointer-events:none;'>🚌</div>
-    </div>
-    <style>
-    .popup-card-friendly .btn { transition:box-shadow 0.2s,background 0.2s; }
-    .popup-card-friendly .btn:hover { box-shadow:0 2px 8px rgba(38,70,151,0.13); background:#e0e7ff; }
-    /* Custom Leaflet popup style */
-    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-    .leaflet-popup-content {
-        margin:0 !important;
-        padding:0 !important;
-        background: transparent !important;
-    }
-    .leaflet-popup-tip {
-        display: none !important;
-    }
-    </style>
-    `;
+    // Update popup marker user menjadi sederhana
     if (window.userMarker) {
-        // Only animate on first open, not every update
-        let popupEl = window.userMarker.getPopup() && window.userMarker.getPopup().getElement();
-        if (!popupEl || !popupEl.classList.contains('popup-card-friendly')) {
-            window.userMarker.bindPopup(popupContent).openPopup();
-            setTimeout(() => {
-                const popupEl2 = window.userMarker.getPopup().getElement();
-                if (!popupEl2) return;
-                popupEl2.querySelectorAll('.badge-koridor-interaktif').forEach(badge => {
-                    badge.onclick = function(e) {
-                        e.stopPropagation();
-                        const newRouteId = this.getAttribute('data-routeid');
-                        if (newRouteId && newRouteId !== routeId) {
-                            // Reset timer jika ada
-                            if (window.arrivalTimer) {
-                                clearTimeout(window.arrivalTimer);
-                                window.arrivalTimer = null;
-                            }
-                            // Reset status arrival
-                            window.lastArrivedStopId = null;
-                            // Jangan set lastStopId saat berganti rute
-                            window.selectedRouteIdForUser = newRouteId;
-                            window.selectedCurrentStopForUser = nextStop;
-                            showUserRouteInfo(userLat, userLon, nextStop, newRouteId);
-                            const newRoute = routes.find(r => r.route_id === newRouteId);
-                            if (newRoute) {
-                                selectedRouteId = newRouteId;
-                                saveActiveRouteId(selectedRouteId);
-                                renderRoutes();
-                                showStopsByRoute(newRouteId, newRoute);
-                            }
-                        }
-                    };
-                });
-            }, 100);
-        } else {
-            // Update hanya bagian dinamis, badge dan tombol Maps tetap
-            // Hindari setPopupContent, update DOM langsung
-            const dinamis = popupEl.querySelector('#popup-dinamis-info');
-            if (dinamis) {
-                dinamis.innerHTML = `
-                    ${jurusanInfo}
-                    <div style='margin-bottom:6px;'>
-                        ${nextStopTitle}
-                        ${nextStopName}
-                        ${labelTipeNext}
-                        ${layananSemuaBlock}
-                    </div>
-                    ${jarakInfo}
-                    ${speedInfo}
-                    ${hr}
-                    ${arrivalMsg}
-                `;
-            }
-        }
+        window.userMarker.bindPopup('Posisi Anda');
     }
   }
   
@@ -2124,8 +1950,8 @@ function naturalSort(a, b) {
                 if (!window.selectedRouteIdForUser || !window.selectedCurrentStopForUser) {
                     window.userMarker.bindPopup('Posisi Anda');
                 } else {
-                    // Jika sudah pilih layanan, tampilkan info rute (termasuk saat arrival)
-                    showUserRouteInfo(
+                    // Jika sudah pilih layanan, update card live layanan
+                    updateLiveServiceCard(
                         window.userMarker.getLatLng().lat,
                         window.userMarker.getLatLng().lng,
                         window.selectedCurrentStopForUser,
@@ -2153,16 +1979,13 @@ function naturalSort(a, b) {
                     const nextSt = stopTimes[idx + 1];
                     const nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
                     if (nextStop) {
-                        // Hanya deteksi arrival, timer akan ditangani di showUserRouteInfo
+                        // Hanya deteksi arrival, timer akan ditangani di updateLiveServiceCard
                         // Tidak ada pembatalan timer saat menjauh
                     }
                 }
-                // Hanya panggil showUserRouteInfo jika tidak sedang dalam status arrival
+                // Hanya panggil updateLiveServiceCard jika tidak sedang dalam status arrival
                 if (!window.lastArrivedStopId) {
-                    showUserRouteInfo(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
-                } else {
-                    // Jika sedang dalam status arrival, hanya update popup tanpa memulai timer baru
-                    updatePopupOnly(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
+                    updateLiveServiceCard(lat, lon, window.selectedCurrentStopForUser, window.selectedRouteIdForUser);
                 }
             }
         },
@@ -2191,6 +2014,9 @@ function naturalSort(a, b) {
     }
     window.lastArrivedStopId = null;
     window.userCentered = false;
+    
+    // Sembunyikan card live layanan
+    hideLiveServiceCard();
   }
   
   // 2. Tambahkan tombol 'Halte Terdekat' hanya saat live location aktif
@@ -2313,11 +2139,21 @@ function naturalSort(a, b) {
                         window.lastStopId = stop.stop_id;
                         window.selectedRouteIdForUser = routeId;
                         window.selectedCurrentStopForUser = stop;
-                        showUserRouteInfo(userLat, userLon, stop, routeId);
+                        updateLiveServiceCard(userLat, userLon, stop, routeId);
                         selectedRouteId = routeId;
                         saveActiveRouteId(selectedRouteId);
                         renderRoutes();
                         showStopsByRoute(routeId, routes.find(r => r.route_id === routeId));
+                        
+                        // Update card live layanan jika user marker aktif
+                        if (window.userMarker) {
+                            const userLatLng = window.userMarker.getLatLng();
+                            window.selectedRouteIdForUser = routeId;
+                            window.selectedCurrentStopForUser = stop;
+                            updateLiveServiceCard(userLatLng.lat, userLatLng.lng, stop, routeId);
+                        }
+                        
+                        map.closePopup();
                     };
                 });
             }, 50);
@@ -2397,6 +2233,9 @@ function naturalSort(a, b) {
                 // Jika live location aktif, info marker user kembali ke 'Posisi Anda'
                 if (window.userMarker) window.userMarker.bindPopup('Posisi Anda');
             }
+            
+            // Sembunyikan card live layanan
+            hideLiveServiceCard();
         });
     }
   });
@@ -2579,3 +2418,171 @@ function naturalSort(a, b) {
         progressStatus.textContent = status;
     }
   }
+  
+  // Fungsi untuk mengupdate card live layanan
+  function updateLiveServiceCard(userLat, userLon, currentStop, routeId, speed = null) {
+    const card = document.getElementById('liveServiceCard');
+    if (!card) return;
+    
+    // Tampilkan card
+    card.style.display = 'block';
+    
+    // Cari route info
+    const route = routes.find(r => r.route_id === routeId);
+    if (!route) return;
+    
+    // Update badge layanan
+    const badge = document.getElementById('liveServiceBadge');
+    if (badge) {
+      let badgeColor = route.route_color ? ('#' + route.route_color) : '#264697';
+      let badgeText = route.route_short_name ? route.route_short_name : routeId;
+      badge.innerHTML = `<span class='badge badge-koridor-interaktif rounded-pill' style='background:${badgeColor};color:#fff;font-weight:bold;font-size:1.5rem;padding:0.8em 1.6em;box-shadow:0 4px 15px rgba(38,70,151,0.2);border-radius:2em;letter-spacing:2px;'>${badgeText}</span>`;
+    }
+    
+    // Update jurusan
+    const jurusanEl = document.getElementById('liveServiceJurusan');
+    if (jurusanEl) {
+      jurusanEl.textContent = route.route_long_name || 'Tidak ada informasi jurusan';
+    }
+    
+    // Cari trip yang sesuai dengan routeId dan halte ini
+    const tripsForRoute = trips.filter(t => t.route_id === routeId);
+    let nextStop = null;
+    let prevStop = null;
+    let minSeq = Infinity;
+    let tripUsed = null;
+    let stopTimes = [];
+    
+    for (const trip of tripsForRoute) {
+      const stTimes = stop_times.filter(st => st.trip_id === trip.trip_id)
+        .sort((a, b) => parseInt(a.stop_sequence) - parseInt(b.stop_sequence));
+      const idx = stTimes.findIndex(st => st.stop_id === currentStop.stop_id);
+      if (idx !== -1) {
+        if (idx < stTimes.length - 1) {
+          const nextSt = stTimes[idx + 1];
+          if (parseInt(nextSt.stop_sequence) < minSeq) {
+            minSeq = parseInt(nextSt.stop_sequence);
+            nextStop = stops.find(s => s.stop_id === nextSt.stop_id);
+            prevStop = idx > 0 ? stops.find(s => s.stop_id === stTimes[idx - 1].stop_id) : null;
+            tripUsed = trip;
+            stopTimes = stTimes;
+          }
+        } else if (idx > 0 && !nextStop) {
+          prevStop = stops.find(s => s.stop_id === stTimes[idx - 1].stop_id);
+          tripUsed = trip;
+          stopTimes = stTimes;
+        }
+      }
+    }
+    
+    // Update tujuan akhir (halte terakhir dalam sequence)
+    const tujuanEl = document.getElementById('liveServiceTujuan');
+    if (tujuanEl && tripUsed && stopTimes.length > 0) {
+      const lastStop = stops.find(s => s.stop_id === stopTimes[stopTimes.length - 1].stop_id);
+      if (lastStop) {
+        tujuanEl.textContent = lastStop.stop_name;
+      } else {
+        tujuanEl.textContent = 'Tidak ada informasi tujuan';
+      }
+    } else {
+      tujuanEl.textContent = 'Tidak ada informasi tujuan';
+    }
+    
+    // Update halte selanjutnya
+    const nextStopEl = document.getElementById('liveServiceNextStop');
+    if (nextStopEl) {
+      if (nextStop) {
+        let nextStopText = nextStop.stop_name;
+        // Tambahkan label tipe halte
+        if (nextStop.stop_id && nextStop.stop_id.startsWith('B')) {
+          nextStopText += ' (Pengumpan)';
+        } else if (nextStop.stop_id && nextStop.stop_id.startsWith('G') && nextStop.platform_code) {
+          nextStopText += ` (Platform ${nextStop.platform_code})`;
+        } else if (nextStop.stop_id && (nextStop.stop_id.startsWith('E') || nextStop.stop_id.startsWith('H'))) {
+          nextStopText += ' (Akses Masuk)';
+        }
+        nextStopEl.textContent = nextStopText;
+      } else {
+        nextStopEl.textContent = 'Tidak ada halte selanjutnya';
+      }
+    }
+    
+    // Update jarak ke halte selanjutnya
+    const distanceEl = document.getElementById('liveServiceDistance');
+    if (distanceEl && nextStop) {
+      const jarakNext = haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
+      if (jarakNext < 1000) {
+        distanceEl.textContent = `${Math.round(jarakNext)} m`;
+      } else {
+        distanceEl.textContent = `${(jarakNext/1000).toFixed(2)} km`;
+      }
+    } else {
+      distanceEl.textContent = '-';
+    }
+    
+    // Update kecepatan
+    const speedEl = document.getElementById('liveServiceSpeed');
+    if (speedEl) {
+      let speedVal = speed !== null ? speed : (typeof window._lastUserSpeed === 'number' ? window._lastUserSpeed : null);
+      let speedKmh = (speedVal !== null && speedVal >= 0) ? speedVal * 3.6 : 0;
+      
+      if (speedVal === null || speedKmh < 0.2) {
+        speedEl.textContent = '0 km/jam';
+      } else if (speedKmh < 1) {
+        speedEl.textContent = `${(speedKmh*1000).toFixed(0)} m/jam`;
+      } else {
+        speedEl.textContent = `${speedKmh.toFixed(1)} km/jam`;
+      }
+    }
+    
+    // Update arrival card jika perlu
+    const arrivalCard = document.getElementById('liveServiceArrival');
+    const arrivalStopName = document.getElementById('arrivalStopName');
+    
+    if (nextStop && arrivalCard && arrivalStopName) {
+      const jarakNext = haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
+      
+      // Arrival card hanya muncul jika user sudah < 30m dari halte berikutnya dan belum pernah arrival di halte itu
+      if (jarakNext < 30 && window.lastArrivedStopId !== nextStop.stop_id) {
+        arrivalCard.style.display = 'block';
+        arrivalStopName.textContent = nextStop.stop_name;
+        
+        // Mulai timer 10 detik
+        if (window.arrivalTimer) {
+          clearTimeout(window.arrivalTimer);
+        }
+        
+        window.arrivalTimer = setTimeout(() => {
+          window.currentStopId = nextStop.stop_id;
+          window.selectedCurrentStopForUser = nextStop;
+          window.lastArrivedStopId = null;
+          
+          // Update card dengan halte baru
+          if (window.userMarker) {
+            const newLatLng = window.userMarker.getLatLng();
+            updateLiveServiceCard(newLatLng.lat, newLatLng.lng, nextStop, routeId);
+          }
+        }, 10000);
+        
+        window.lastArrivedStopId = nextStop.stop_id;
+      } else if (window.lastArrivedStopId === nextStop.stop_id) {
+        // Jika sudah arrival, card tetap tampil sampai timeout selesai
+        arrivalCard.style.display = 'block';
+        arrivalStopName.textContent = nextStop.stop_name;
+      } else {
+        arrivalCard.style.display = 'none';
+      }
+    } else {
+      if (arrivalCard) arrivalCard.style.display = 'none';
+    }
+  }
+  
+  // Fungsi untuk menyembunyikan card live layanan
+  function hideLiveServiceCard() {
+    const card = document.getElementById('liveServiceCard');
+    if (card) {
+      card.style.display = 'none';
+    }
+  }
+  
+  // Patch: update info marker user setiap update posisi jika sudah pilih layanan

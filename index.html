@@ -219,6 +219,80 @@
             <div class="map-container">
                 <div id="map" class="interactive-map"></div>
             </div>
+            
+            <!-- Live Service Card -->
+            <div id="liveServiceCard" class="live-service-card" style="display: none;">
+                <div class="live-service-header">
+                    <div class="live-service-badge" id="liveServiceBadge"></div>
+                    <div class="live-service-title">
+                        <h4 id="liveServiceTitle" class="plus-jakarta-sans fw-bold mb-1">Live Layanan</h4>
+                        <p id="liveServiceSubtitle" class="plus-jakarta-sans text-muted mb-0">Informasi perjalanan real-time</p>
+                    </div>
+                </div>
+                
+                <div class="live-service-content">
+                    <div class="info-row">
+                        <div class="info-icon">
+                            <iconify-icon icon="mdi:map-marker-path" style="color: #264697;"></iconify-icon>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Jurusan</div>
+                            <div class="info-value" id="liveServiceJurusan">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-icon">
+                            <iconify-icon icon="mdi:flag-checkered" style="color: #264697;"></iconify-icon>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Tujuan Akhir</div>
+                            <div class="info-value" id="liveServiceTujuan">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-icon">
+                            <iconify-icon icon="mdi:map-marker" style="color: #264697;"></iconify-icon>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Halte Selanjutnya</div>
+                            <div class="info-value" id="liveServiceNextStop">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-icon">
+                            <iconify-icon icon="mdi:ruler" style="color: #264697;"></iconify-icon>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Jarak ke Halte</div>
+                            <div class="info-value" id="liveServiceDistance">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-icon">
+                            <iconify-icon icon="mdi:speedometer" style="color: #264697;"></iconify-icon>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Kecepatan</div>
+                            <div class="info-value" id="liveServiceSpeed">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Arrival Card -->
+                <div id="liveServiceArrival" class="arrival-card" style="display: none;">
+                    <div class="arrival-content">
+                        <div class="arrival-icon">🎉</div>
+                        <div class="arrival-text">
+                            <div class="arrival-title">Tiba di Halte!</div>
+                            <div class="arrival-subtitle" id="arrivalStopName">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Search & Selection Section -->
