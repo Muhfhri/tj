@@ -230,65 +230,78 @@
                     </div>
                 </div>
                 
-                <div class="live-service-content">
-                    <div class="info-row">
-                        <div class="info-icon">
-                            <iconify-icon icon="mdi:map-marker-path" style="color: #264697;"></iconify-icon>
-                        </div>
-                        <div class="info-content">
-                            <div class="info-label">Jurusan</div>
-                            <div class="info-value" id="liveServiceJurusan">-</div>
-                        </div>
+                <!-- Status Perjalanan -->
+                <div class="journey-status" id="journeyStatus">
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text" id="statusText">Sedang di Jalan</span>
                     </div>
-                    
-                    <div class="info-row">
-                        <div class="info-icon">
-                            <iconify-icon icon="mdi:flag-checkered" style="color: #264697;"></iconify-icon>
-                        </div>
-                        <div class="info-content">
-                            <div class="info-label">Tujuan Akhir</div>
-                            <div class="info-value" id="liveServiceTujuan">-</div>
-                        </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-icon">
-                            <iconify-icon icon="mdi:map-marker" style="color: #264697;"></iconify-icon>
-                        </div>
-                        <div class="info-content">
-                            <div class="info-label">Halte Selanjutnya</div>
-                            <div class="info-value" id="liveServiceNextStop">-</div>
-                        </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-icon">
-                            <iconify-icon icon="mdi:ruler" style="color: #264697;"></iconify-icon>
-                        </div>
-                        <div class="info-content">
-                            <div class="info-label">Jarak ke Halte</div>
-                            <div class="info-value" id="liveServiceDistance">-</div>
-                        </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-icon">
-                            <iconify-icon icon="mdi:speedometer" style="color: #264697;"></iconify-icon>
-                        </div>
-                        <div class="info-content">
-                            <div class="info-label">Kecepatan</div>
-                            <div class="info-value" id="liveServiceSpeed">-</div>
-                        </div>
+                    <div class="eta-info" id="etaInfo">
+                        <span class="eta-label">Estimasi Tiba:</span>
+                        <span class="eta-time" id="etaTime">Menghitung...</span>
                     </div>
                 </div>
                 
-                <!-- Arrival Card -->
-                <div id="liveServiceArrival" class="arrival-card" style="display: none;">
-                    <div class="arrival-content">
-                        <div class="arrival-icon">🎉</div>
-                        <div class="arrival-text">
-                            <div class="arrival-title">Tiba di Halte!</div>
-                            <div class="arrival-subtitle" id="arrivalStopName">-</div>
+                <div class="live-service-content">
+                    <!-- Info utama dalam grid 2 kolom -->
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">🚌</div>
+                            <div class="info-content">
+                                <div class="info-label">Jurusan</div>
+                                <div class="info-value" id="liveServiceJurusan">-</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">🎯</div>
+                            <div class="info-content">
+                                <div class="info-label">Tujuan Akhir</div>
+                                <div class="info-value" id="liveServiceTujuan">-</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">🚏</div>
+                            <div class="info-content">
+                                <div class="info-label">Halte Selanjutnya</div>
+                                <div class="info-value" id="liveServiceNextStop">-</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">📏</div>
+                            <div class="info-content">
+                                <div class="info-label">Jarak</div>
+                                <div class="info-value" id="liveServiceDistance">-</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">⚡</div>
+                            <div class="info-content">
+                                <div class="info-label">Kecepatan</div>
+                                <div class="info-value" id="liveServiceSpeed">-</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">🕐</div>
+                            <div class="info-content">
+                                <div class="info-label">Waktu Perjalanan</div>
+                                <div class="info-value" id="liveServiceTravelTime">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Badge layanan lain di bawah halte selanjutnya -->
+                    <div class="other-routes-section" id="otherRoutesSection" style="display: none;">
+                        <div class="other-routes-label">Layanan lain di halte selanjutnya:</div>
+                        <div class="other-routes-badges" id="liveServiceOtherRoutes"></div>
+                    </div>
+                    
+                    <!-- Arrival notification -->
+                    <div class="arrival-notification" id="liveServiceArrival" style="display: none;">
+                        <div class="arrival-content">
+                            <div class="arrival-icon">🚌</div>
+                            <div class="arrival-text">
+                                <strong>Anda akan tiba di halte <span id="arrivalStopName"></span> dalam 10 detik!</strong>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -410,6 +410,9 @@ function naturalSort(a, b) {
             
             // Sembunyikan card live layanan
             hideLiveServiceCard();
+            
+            // Hentikan perjalanan
+            stopJourney();
         };
         mapDiv.appendChild(btn);
     }
@@ -1840,6 +1843,11 @@ function naturalSort(a, b) {
     // Update card live layanan alih-alih popup
     updateLiveServiceCard(userLat, userLon, currentStop, routeId, window._lastUserSpeed);
     
+    // Mulai perjalanan jika belum dimulai
+    if (!window._journeyStartTime) {
+        startJourney();
+    }
+    
     // Update popup marker user menjadi sederhana
     if (window.userMarker) {
         window.userMarker.bindPopup('Posisi Anda');
@@ -2236,6 +2244,9 @@ function naturalSort(a, b) {
             
             // Sembunyikan card live layanan
             hideLiveServiceCard();
+            
+            // Hentikan perjalanan
+            stopJourney();
         });
     }
   });
@@ -2516,8 +2527,8 @@ function naturalSort(a, b) {
       } else {
         distanceEl.textContent = `${(jarakNext/1000).toFixed(2)} km`;
       }
-    } else {
-      distanceEl.textContent = '-';
+    } else if (distanceEl) {
+      distanceEl.textContent = 'Tidak ada halte selanjutnya';
     }
     
     // Update kecepatan
@@ -2527,7 +2538,7 @@ function naturalSort(a, b) {
       let speedKmh = (speedVal !== null && speedVal >= 0) ? speedVal * 3.6 : 0;
       
       if (speedVal === null || speedKmh < 0.2) {
-        speedEl.textContent = '0 km/jam';
+        speedEl.textContent = 'Berhenti';
       } else if (speedKmh < 1) {
         speedEl.textContent = `${(speedKmh*1000).toFixed(0)} m/jam`;
       } else {
@@ -2575,6 +2586,172 @@ function naturalSort(a, b) {
     } else {
       if (arrivalCard) arrivalCard.style.display = 'none';
     }
+    
+    // Update status perjalanan dan estimasi waktu tiba
+    updateJourneyStatus(userLat, userLon, nextStop, speed);
+    
+    // Update waktu perjalanan
+    updateTravelTime();
+    
+    // Update badge layanan lain di halte selanjutnya
+    updateOtherRoutes(nextStop, routeId);
+  }
+  
+  // Fungsi untuk mengupdate status perjalanan
+  function updateJourneyStatus(userLat, userLon, nextStop, speed) {
+    const statusText = document.getElementById('statusText');
+    const etaTime = document.getElementById('etaTime');
+    
+    if (!statusText || !etaTime) return;
+    
+    if (nextStop) {
+      // Hitung jarak ke halte selanjutnya
+      const jarak = haversine(userLat, userLon, parseFloat(nextStop.stop_lat), parseFloat(nextStop.stop_lon));
+      
+      // Status berdasarkan kecepatan dan jarak
+      if (speed && speed > 0.1) {
+        statusText.textContent = 'Sedang di Jalan';
+      } else if (speed === 0 || speed < 0.1) {
+        if (jarak < 50) {
+          statusText.textContent = 'Mendekati Halte';
+        } else {
+          statusText.textContent = 'Berhenti / Jalan Kaki';
+        }
+      } else {
+        statusText.textContent = 'Sedang di Jalan';
+      }
+      
+      // Perbaikan logika estimasi waktu
+      if (speed && speed > 0.1) { // Minimal 0.1 m/s (0.36 km/h)
+        const estimasiDetik = Math.round(jarak / speed);
+        
+        if (estimasiDetik < 60) {
+          etaTime.textContent = `${estimasiDetik} detik`;
+        } else if (estimasiDetik < 3600) {
+          const menit = Math.round(estimasiDetik / 60);
+          etaTime.textContent = `${menit} menit`;
+        } else {
+          const jam = Math.round(estimasiDetik / 3600);
+          etaTime.textContent = `${jam} jam`;
+        }
+      } else if (speed === 0 || speed < 0.1) {
+        // Jika kecepatan 0 atau sangat lambat, tampilkan estimasi berdasarkan kecepatan berjalan kaki
+        const kecepatanJalanKaki = 1.4; // 1.4 m/s (5 km/jam) - kecepatan berjalan kaki normal
+        const estimasiDetik = Math.round(jarak / kecepatanJalanKaki);
+        
+        if (estimasiDetik < 60) {
+          etaTime.textContent = `${estimasiDetik} detik (jalan kaki)`;
+        } else if (estimasiDetik < 3600) {
+          const menit = Math.round(estimasiDetik / 60);
+          etaTime.textContent = `${menit} menit (jalan kaki)`;
+        } else {
+          const jam = Math.round(estimasiDetik / 3600);
+          etaTime.textContent = `${jam} jam (jalan kaki)`;
+        }
+      } else {
+        // Jika belum ada data kecepatan, tampilkan jarak saja
+        if (jarak < 1000) {
+          etaTime.textContent = `${Math.round(jarak)} m (estimasi)`;
+        } else {
+          etaTime.textContent = `${(jarak/1000).toFixed(1)} km (estimasi)`;
+        }
+      }
+    } else {
+      statusText.textContent = 'Tidak ada halte selanjutnya';
+      etaTime.textContent = '-';
+    }
+  }
+  
+  // Fungsi untuk mengupdate waktu perjalanan
+  function updateTravelTime() {
+    const travelTimeEl = document.getElementById('liveServiceTravelTime');
+    if (!travelTimeEl) return;
+    
+    if (window._journeyStartTime) {
+      const now = Date.now();
+      const elapsed = Math.round((now - window._journeyStartTime) / 1000); // dalam detik
+      
+      if (elapsed < 60) {
+        travelTimeEl.textContent = `${elapsed} detik`;
+      } else if (elapsed < 3600) {
+        const menit = Math.round(elapsed / 60);
+        travelTimeEl.textContent = `${menit} menit`;
+      } else {
+        const jam = Math.round(elapsed / 3600);
+        const sisaMenit = Math.round((elapsed % 3600) / 60);
+        travelTimeEl.textContent = `${jam} jam ${sisaMenit} menit`;
+      }
+    } else {
+      travelTimeEl.textContent = 'Belum mulai';
+    }
+  }
+  
+  // Fungsi untuk mengupdate badge layanan lain
+  function updateOtherRoutes(nextStop, currentRouteId) {
+    const otherRoutesSection = document.getElementById('otherRoutesSection');
+    const otherRoutesEl = document.getElementById('liveServiceOtherRoutes');
+    
+    if (!otherRoutesSection || !otherRoutesEl || !nextStop) {
+      if (otherRoutesSection) otherRoutesSection.style.display = 'none';
+      return;
+    }
+    
+    if (stopToRoutes[nextStop.stop_id]) {
+      const otherRoutes = Array.from(stopToRoutes[nextStop.stop_id]).filter(rid => rid !== currentRouteId);
+      
+      if (otherRoutes.length > 0) {
+        let badgesHTML = '';
+        otherRoutes.forEach(rid => {
+          const otherRoute = routes.find(r => r.route_id === rid);
+          if (otherRoute) {
+            let badgeColor = otherRoute.route_color ? ('#' + otherRoute.route_color) : '#6c757d';
+            badgesHTML += `<span class='route-badge' style='background: ${badgeColor};' title='${otherRoute.route_long_name || otherRoute.route_id}'>${otherRoute.route_short_name || otherRoute.route_id}</span>`;
+          }
+        });
+        
+        otherRoutesEl.innerHTML = badgesHTML;
+        otherRoutesSection.style.display = 'block';
+        
+        // Event handler untuk badge layanan lain
+        otherRoutesEl.querySelectorAll('.route-badge').forEach(badge => {
+          badge.onclick = function(e) {
+            e.stopPropagation();
+            const routeShortName = this.textContent;
+            const otherRoute = routes.find(r => r.route_short_name === routeShortName || r.route_id === routeShortName);
+            if (otherRoute) {
+              // Update card dengan layanan baru
+              window.selectedRouteIdForUser = otherRoute.route_id;
+              window.selectedCurrentStopForUser = nextStop;
+              
+              if (window.userMarker) {
+                const userLatLng = window.userMarker.getLatLng();
+                updateLiveServiceCard(userLatLng.lat, userLatLng.lng, nextStop, otherRoute.route_id);
+              }
+              
+              // Update UI utama
+              selectedRouteId = otherRoute.route_id;
+              saveActiveRouteId(selectedRouteId);
+              renderRoutes();
+              showStopsByRoute(otherRoute.route_id, otherRoute);
+            }
+          };
+        });
+      } else {
+        otherRoutesSection.style.display = 'none';
+      }
+    } else {
+      otherRoutesSection.style.display = 'none';
+    }
+  }
+  
+  // Fungsi untuk memulai perjalanan
+  function startJourney() {
+    window._journeyStartTime = Date.now();
+  }
+  
+  // Fungsi untuk menghentikan perjalanan
+  function stopJourney() {
+    window._journeyStartTime = null;
   }
   
   // Fungsi untuk menyembunyikan card live layanan
